@@ -1,0 +1,270 @@
+<%- include("partials/header") %>
+<%- include("partials/sidebar") %>
+
+<main class="admin-main">
+    <link rel="stylesheet" href="/css/admin.css">
+    <div class="admin-page-header">
+        <div>
+            <h1>Crear Artículo con IA (Interconectado con Provincia y Sector)</h1>
+            <p>Genera artículos SEO con IA como en SocialsForce. Al elegir la Provincia y el Sector, la página mostrará automáticamente abajo el formulario exclusivo de ese sector y se enlazará con el resto de artículos de esa zona.</p>
+        </div>
+    </div>
+    <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
+    <div class="admin-create-layout">
+
+        <div class="admin-card">
+
+            <div class="admin-card-header">
+                <h2>AI Generator</h2>
+            </div>
+
+            <form id="aiForm">
+
+                <div class="admin-form-group">
+                    <label>Tema / Búsqueda del cliente (ej: "Cómo arreglar mi baño en Madrid o hacer una reforma pequeña en casa")</label>
+                    <textarea type="text" id="aiPrompt" placeholder="Ej: Guía completa para arreglar un cuarto de baño en Madrid, cambiar bañera por plato de ducha y solucionar humedades..."></textarea>
+                </div>
+
+                <button
+                    type="submit"
+                    class="admin-primary-button"
+                >
+                    Generate Article
+                </button>
+
+            </form>
+            <div class="admin-ai-status" id="aiStatus">
+                Waiting...
+            </div>
+            <button type="button" class="admin-ai-clear" onclick="document.getElementById('aiStatus').innerHTML = ''">
+                Clear Console
+            </button>
+        </div>
+
+        <div class="admin-card">
+
+            <div class="admin-card-header">
+                <h2>Información del Artículo, Sector, Formulario e Impulso en Algoritmo</h2>
+            </div>
+
+            <form
+                action="/admin/articles/create"
+                method="POST"
+            >
+
+                <div class="admin-form-group">
+                    <label>Title</label>
+                    <input
+                        type="text"
+                        name="title"
+                        id="title"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Slug</label>
+                    <input
+                        type="text"
+                        name="slug"
+                        id="slug"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label>Provincia SEO (interconexión local)</label>
+                        <select name="provincia_slug" id="provincia_slug" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
+                            <% (allLocations || []).forEach(function(loc) { %>
+                                <option value="<%= loc.slug %>"><%= loc.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                    <div>
+                        <label>Sector (inserta abajo el formulario exclusivo de este sector)</label>
+                        <select name="sector_slug" id="sector_slug" onchange="var sel=this.options[this.selectedIndex]; document.getElementById('category').value=sel.text;" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
+                            <% (allSectors || []).forEach(function(sec) { %>
+                                <option value="<%= sec.slug %>"><%= sec.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="admin-form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
+                        <input type="checkbox" name="is_pinned" value="1">
+                        📌 Fijar arriba (Pinned)
+                    </label>
+                    <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
+                        <input type="checkbox" name="is_selected" value="1" checked>
+                        ⭐ Recomendar con algoritmo
+                    </label>
+                    <div>
+                        <label style="font-size:12px;font-weight:700;">Peso en Algoritmo (1-10)</label>
+                        <input type="number" name="priority_weight" min="1" max="10" value="9" style="width:70px;padding:6px;">
+                    </div>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Category</label>
+                    <input
+                        type="text"
+                        name="category"
+                        id="category"
+                        value="Reformas Integrales y Baños/Cocinas"
+                        required
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Tags / Palabras clave SEO</label>
+                    <input
+                        type="text"
+                        name="tags"
+                        id="tags"
+                        placeholder="arreglar baño madrid, reforma pequeña casa, cambiar bañera por ducha"
+                    >
+                    <small>
+                        Separa las etiquetas con comas.
+                    </small>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Topics (recommendations)</label>
+                    <input
+                        type="text"
+                        name="topics"
+                        id="topics"
+                        placeholder="reformas baño:9, fontanería:7, humedades:6"
+                    >
+                    <small>
+                        Nombre:peso (1-10), separados por comas.
+                    </small>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Evergreen (0 = noticia puntual, 10 = guía siempre relevante para SEO)</label>
+                    <input type="number" name="evergreen" id="evergreen" min="0" max="10" value="9">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Depth (1 = corto, 10 = guía completa en profundidad)</label>
+                    <input type="number" name="depth" id="depth" min="1" max="10" value="8">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Excerpt (Meta Description SEO)</label>
+                    <textarea
+                        name="excerpt"
+                        id="excerpt"
+                        rows="4"
+                    ></textarea>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Featured Image</label>
+                    <input
+                        type="text"
+                        name="image"
+                        id="image"
+                        placeholder="https://..."
+                    >
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Content (HTML)</label>
+                    <textarea name="content" id="content"></textarea>
+                </div>
+
+                <button
+                    type="submit"
+                    class="admin-primary-button"
+                >
+                    Publish Article
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</main>
+
+<script>
+document.getElementById("aiForm").addEventListener("submit", async e => {
+    e.preventDefault();
+
+    const prompt = document.getElementById("aiPrompt").value;
+    const button = e.target.querySelector("button");
+    const status = document.getElementById("aiStatus");
+
+    function log(message) {
+        const time = new Date().toLocaleTimeString();
+        status.textContent += `\n[${time}] ${message}`;
+        status.scrollTop = status.scrollHeight;
+    }
+
+    status.textContent = "";
+    log("Starting article generation...");
+    log(`Prompt length: ${prompt.length} characters`);
+
+    button.disabled = true;
+    button.textContent = "Generating...";
+
+    try {
+        log("Sending request to /createArticle...");
+        const response = await fetch("/createArticle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                prompt,
+                category: document.getElementById("category").value
+            })
+        });
+
+        log(`Response received: HTTP ${response.status}`);
+        if (!response.ok) {
+            throw new Error(`Server returned HTTP ${response.status}`);
+        }
+
+        const article = await response.json();
+        if (!article.success) {
+            throw new Error(article.error || "No se pudo generar el artículo");
+        }
+
+        log("Article generated successfully.");
+        document.getElementById("title").value = article.title || "";
+        document.getElementById("slug").value = article.slug || "";
+        document.getElementById("excerpt").value = article.excerpt || "";
+        document.getElementById("category").value = article.category || document.getElementById("category").value;
+        document.getElementById("image").value = article.image || "";
+        document.getElementById("tags").value = Array.isArray(article.tags) ? article.tags.join(", ") : "";
+
+        const editor = tinymce.get("content");
+        if (editor) {
+            editor.setContent(article.content || "");
+        } else {
+            document.getElementById("content").value = article.content || "";
+        }
+
+        log("Form updated successfully. Done.");
+    } catch (err) {
+        log(`ERROR: ${err.message}`);
+    } finally {
+        button.disabled = false;
+        button.textContent = "Generate Article";
+    }
+});
+
+tinymce.init({
+    selector: "#content",
+    height: 600,
+    menubar: true,
+    plugins: ["lists", "link", "image", "table", "code", "fullscreen", "preview"],
+    toolbar: "undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image table | code fullscreen preview"
+});
+</script>
+
+<%- include("partials/footer") %>

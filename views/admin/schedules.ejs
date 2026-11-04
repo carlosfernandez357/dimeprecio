@@ -1,0 +1,185 @@
+<%- include("partials/header") %>
+<%- include("partials/sidebar") %>
+
+<main class="admin-main">
+    <link rel="stylesheet" href="/css/admin.css">
+    <link rel="stylesheet" href="/css/rankrent.css">
+    <div class="admin-page-header">
+        <div>
+            <h1>⏱ Cron & Generación Automática Programada</h1>
+            <p>Programa la creación automática de Noticias Locales, Guías de Precios y Posts del Muro Social combinando [Sector] + [Provincia] + [Barrio/Problema].</p>
+        </div>
+    </div>
+
+    <% const st = (typeof status !== "undefined" && status) ? status : null; %>
+    <% const cfg = st && st.config ? st.config : {}; %>
+
+    <% if (typeof saved !== "undefined" && saved) { %>
+    <div class="ins-flash">Configuración guardada correctamente.</div>
+    <% } %>
+
+    <div class="admin-stats-grid">
+        <div class="admin-stat-card">
+            <span class="admin-stat-label">Estado del Cron</span>
+            <strong class="admin-stat-value">
+                <% if (cfg.enabled) { %>
+                    <span class="index-status indexed"><span></span>Activo</span>
+                <% } else { %>
+                    <span class="index-status not-indexed"><span></span>Pausado</span>
+                <% } %>
+            </strong>
+            <span class="admin-stat-description">
+                <%= cfg.enabled ? `Cada ${cfg.intervalMinutes} min` : "Ejecución manual o bajo programación" %>
+            </span>
+        </div>
+
+        <div class="admin-stat-card">
+            <span class="admin-stat-label">Motor Activo</span>
+            <strong class="admin-stat-value"><%= cfg.seoMatrixMode !== false ? "Matriz SEO 52×30" : "Google News IA" %></strong>
+            <span class="admin-stat-description">
+                <%= cfg.seoMatrixMode !== false ? "Guías de Precios + Muro Social" : "Búsqueda SerpApi + LLM" %>
+            </span>
+        </div>
+
+        <div class="admin-stat-card">
+            <span class="admin-stat-label">Publicaciones / ciclo</span>
+            <strong class="admin-stat-value"><%= cfg.maxPerRun || 2 %></strong>
+            <span class="admin-stat-description">Máx <%= cfg.maxPerRun || 2 %> por ejecución</span>
+        </div>
+
+        <div class="admin-stat-card">
+            <span class="admin-stat-label">Última ejecución</span>
+            <strong class="admin-stat-value">
+                <%= st && st.lastRun ? new Date(st.lastRun.started_at).toLocaleString("es-ES") : "Nunca" %>
+            </strong>
+            <span class="admin-stat-description">
+                <% if (st && st.lastRun) { %>
+                    <%= st.lastRun.published %>/<%= st.lastRun.found %> publicados · <%= st.lastRun.status %>
+                <% } else { %>
+                    Sin ejecuciones previas
+                <% } %>
+            </span>
+        </div>
+    </div>
+
+    <div class="admin-dashboard-grid">
+        <section class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h2>Configuración de la Tarea Programada (Cron)</h2>
+                    <p>Automatización SEO local y muro de especialistas.</p>
+                </div>
+            </div>
+
+            <form action="/admin/schedules" method="POST">
+                <div class="admin-form-group">
+                    <label>
+                        <input type="checkbox" name="enabled" value="on" <%= cfg.enabled ? "checked" : "" %>>
+                        Activar generación automática periódica (Cron)
+                    </label>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>
+                        <input type="checkbox" name="seoMatrixMode" value="on" <%= cfg.seoMatrixMode !== false ? "checked" : "" %>>
+                        Modo Matriz Rank & Rent ([Provincia] + [Sector] + [Barrio/Problema frecuente])
+                    </label>
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Intervalo (minutos)</label>
+                    <input type="number" name="intervalMinutes" min="15" max="1440" value="<%= cfg.intervalMinutes || 120 %>">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Problema frecuente o temática prioritaria (Opcional)</label>
+                    <input type="text" name="query" value="<%= cfg.query || "" %>" placeholder="Vacío = rotación inteligente por todos los servicios">
+                </div>
+
+                <div class="admin-form-group">
+                    <label>Contenidos híbridos por ejecución (1 a 6)</label>
+                    <input type="number" name="maxPerRun" min="1" max="6" value="<%= cfg.maxPerRun || 2 %>">
+                </div>
+
+                <button type="submit" class="admin-primary-button">Guardar configuración Cron</button>
+            </form>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h2>Ejecutar Ahora e Historial</h2>
+                    <p>Lanza un ciclo inmediato y revisa el registro.</p>
+                </div>
+            </div>
+
+            <button type="button" class="rr-btn-primary" id="runNowBtn" style="width:100%;">
+                ⚡ Ejecutar Ciclo de Generación Ahora
+            </button>
+
+            <div class="admin-ai-status" id="runStatus" style="margin-top: 12px;">
+                Pulsa el botón para generar nuevas Guías Locales y Posts del Muro Social.
+            </div>
+
+            <div style="margin-top: 24px;">
+                <h3 style="margin-bottom: 12px;">Historial de Ejecuciones</h3>
+                <% const runs = (st && Array.isArray(st.runs)) ? st.runs : []; %>
+                <% if (runs.length === 0) { %>
+                <div class="admin-empty">Aún no hay ejecuciones registradas.</div>
+                <% } else { %>
+                <div class="admin-article-list">
+                    <% runs.forEach(run => { %>
+                    <div class="admin-article-row">
+                        <div class="admin-article-main">
+                            <div class="admin-article-details">
+                                <span class="admin-article-title"><%= new Date(run.started_at).toLocaleString("es-ES") %></span>
+                                <div class="admin-article-meta">
+                                    <span><%= run.status %></span>
+                                    <span>•</span>
+                                    <span><%= run.published %>/<%= run.found %> publicados</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <% if (run.log && run.log.length) { %>
+                    <details style="margin: -8px 0 12px; font-size: 13px; color: #475569;">
+                        <summary style="cursor: pointer;">Ver registro detallado</summary>
+                        <pre style="white-space: pre-wrap; margin-top: 8px; background:#f8fafc; padding:10px; border-radius:8px;"><%= run.log.join("\n") %></pre>
+                    </details>
+                    <% } %>
+                    <% }) %>
+                </div>
+                <% } %>
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+(function () {
+    var btn = document.getElementById("runNowBtn");
+    var status = document.getElementById("runStatus");
+    if (!btn) return;
+    btn.addEventListener("click", async function () {
+        btn.disabled = true;
+        status.textContent = "Generando contenidos híbridos [Provincia + Sector + Barrio]...";
+        try {
+            var response = await fetch("/admin/schedules/run", { method: "POST" });
+            var data = await response.json();
+            if (!response.ok || data.success === false) throw new Error(data.error || "Error");
+            var lines = [
+                "Estado: " + data.status,
+                "Contenidos publicados: " + data.published,
+                ""
+            ].concat(data.log || []);
+            status.textContent = lines.join("\n");
+        } catch (error) {
+            status.textContent = "Error: " + error.message;
+        } finally {
+            btn.disabled = false;
+        }
+    });
+})();
+</script>
+
+<%- include("partials/footer") %>

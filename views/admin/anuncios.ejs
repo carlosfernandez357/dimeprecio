@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Control del Algoritmo, Páginas Fijadas y Anuncios — PidePrecio.es</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
+
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main" style="padding:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:24px;">
+        <div>
+          <h1 style="margin:0 0 6px;font-size:26px;color:#0f172a;">🎯 Control del Algoritmo de Recomendación, Fijados y Anuncios</h1>
+          <p style="margin:0;color:#475569;font-size:14.5px;">
+            Configura cómo recomienda el algoritmo los artículos y anuncios en cada provincia y sector, y fija o impulsa las páginas y anuncios que tú quieras que salgan primero.
+          </p>
+        </div>
+        <a href="/admin/articles" style="background:#0f172a;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13.5px;">
+          ▤ Ver todos los Artículos IA →
+        </a>
+      </div>
+
+      <!-- 1. PANEL DE CONTROL DEL ALGORITMO DE RECOMENDACIÓN -->
+      <div style="background:#0f172a;color:#f8fafc;border-radius:14px;padding:24px;margin-bottom:28px;">
+        <h2 style="margin:0 0 8px;font-size:19px;">⚙️ Pesos del Algoritmo de Recomendación (SocialsForce + Sectores y Provincias)</h2>
+        <p style="margin:0 0 18px;font-size:13.5px;color:#94a3b8;">
+          Ajusta el peso de cada señal para decidir qué páginas y anuncios recomienda la web en Portada, Provincias, Sectores, Buscador y Artículos:
+        </p>
+
+        <form method="POST" action="/admin/algoritmo/config" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;align-items:end;">
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">📌 Peso Fijados (Pinned) (0-100)</label>
+            <input type="number" name="peso_fijados" min="0" max="100" value="<%= algorithmConfig.peso_fijados ?? 65 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">⭐ Peso Recomendados Admin (0-100)</label>
+            <input type="number" name="peso_anuncio_seleccionado" min="0" max="100" value="<%= algorithmConfig.peso_anuncio_seleccionado ?? 40 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">📍 Peso Provincia Detectada (0-100)</label>
+            <input type="number" name="peso_provincia_detectada" min="0" max="100" value="<%= algorithmConfig.peso_provincia_detectada ?? 45 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">🛠️ Peso Afinidad de Sector (0-100)</label>
+            <input type="number" name="peso_afinidad_sector" min="0" max="100" value="<%= algorithmConfig.peso_afinidad_sector ?? 30 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">🎚️ Peso Prioridad Manual 1-10 (0-100)</label>
+            <input type="number" name="peso_prioridad_manual" min="0" max="100" value="<%= algorithmConfig.peso_prioridad_manual ?? 25 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <div>
+            <label style="display:block;font-size:12px;color:#cbd5e1;margin-bottom:6px;font-weight:700;">🔥 Peso Lectura / CTR (0-100)</label>
+            <input type="number" name="peso_popularidad" min="0" max="100" value="<%= algorithmConfig.peso_popularidad ?? 15 %>" style="width:100%;padding:10px;border-radius:8px;border:1px solid #334155;background:#1e293b;color:#fff;font-weight:700;">
+          </div>
+          <button type="submit" style="background:#2563eb;color:#fff;border:none;padding:11px 18px;border-radius:8px;font-weight:800;cursor:pointer;">
+            Guardar Algoritmo
+          </button>
+        </form>
+      </div>
+
+      <!-- 2. CREAR / EDITAR ANUNCIO DESTACADO INTERNO (DIRIGE AL FORMULARIO DEL SECTOR) -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:24px;margin-bottom:28px;">
+        <h2 style="margin:0 0 6px;font-size:19px;">➕ Crear Anuncio o Bloque Destacado en una Provincia y Sector</h2>
+        <p style="margin:0 0 16px;font-size:13px;color:#64748b;">
+          Estos bloques destacados aparecen en las páginas del sector y provincia elegidos e invitan al visitante a rellenar el formulario del sector.
+        </p>
+        <form method="POST" action="/admin/anuncios/guardar" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;">
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Provincia Objetivo</label>
+            <select name="provincia_slug" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              <% (allLocations || []).forEach(function(loc) { %>
+                <option value="<%= loc.slug %>"><%= loc.nombre %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Sector (conecta con su formulario)</label>
+            <select name="sector_slug" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              <% (allSectors || []).forEach(function(sec) { %>
+                <option value="<%= sec.slug %>"><%= sec.icono %> <%= sec.nombre %></option>
+              <% }); %>
+            </select>
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Título del Anuncio / Destacado</label>
+            <input type="text" name="titulo" placeholder="Ej: ¿Necesitas arreglar tu baño en Madrid? Cuéntanos tu caso" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Subtítulo de confianza</label>
+            <input type="text" name="subtitulo" placeholder="Ej: Rellena el formulario del sector al final de la página" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Sello / Etiqueta</label>
+            <input type="text" name="sello" placeholder="Ej: 📌 Destacado en tu zona" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </div>
+
+          <div>
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Prioridad en Algoritmo (1–10)</label>
+            <input type="number" name="prioridad" min="1" max="10" value="10" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+          </div>
+
+          <div style="display:flex;align-items:center;gap:14px;padding-top:18px;">
+            <label style="font-size:13px;font-weight:700;cursor:pointer;">
+              <input type="checkbox" name="fijado" checked> 📌 Fijar arriba
+            </label>
+            <label style="font-size:13px;font-weight:700;cursor:pointer;">
+              <input type="checkbox" name="seleccionado" checked> ⭐ Recomendar
+            </label>
+          </div>
+
+          <div style="display:flex;align-items:end;">
+            <button type="submit" style="width:100%;background:#16a34a;color:#fff;border:none;padding:12px 18px;border-radius:8px;font-weight:800;cursor:pointer;">
+              Guardar Destacado →
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- 3. LISTADO DE ANUNCIOS DESTACADOS POR PROVINCIA Y SECTOR -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:19px;">📢 Anuncios y Bloques Destacados (<%= (ads || []).length %>)</h2>
+          <form method="GET" action="/admin/anuncios" style="display:flex;gap:8px;flex-wrap:wrap;">
+            <select name="provincia" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;">
+              <option value="">Todas las provincias</option>
+              <% (allLocations || []).forEach(function(loc) { %>
+                <option value="<%= loc.slug %>" <%= filters.provincia_slug === loc.slug ? 'selected' : '' %>><%= loc.nombre %></option>
+              <% }); %>
+            </select>
+            <select name="sector" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:13px;">
+              <option value="">Todos los sectores</option>
+              <% (allSectors || []).forEach(function(sec) { %>
+                <option value="<%= sec.slug %>" <%= filters.sector_slug === sec.slug ? 'selected' : '' %>><%= sec.nombre %></option>
+              <% }); %>
+            </select>
+            <button type="submit" style="background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;cursor:pointer;">Filtrar</button>
+          </form>
+        </div>
+
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e2e8f0;text-align:left;color:#475569;">
+                <th style="padding:10px;">Estado Algoritmo</th>
+                <th style="padding:10px;">Provincia / Sector</th>
+                <th style="padding:10px;">Título y Mensaje</th>
+                <th style="padding:10px;">Prioridad</th>
+                <th style="padding:10px;">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% (ads || []).forEach(function(ad) { %>
+                <tr style="border-bottom:1px solid #f1f5f9;<%= ad.fijado ? 'background:#fefce8;' : '' %>">
+                  <td style="padding:10px;">
+                    <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                      <form method="POST" action="/admin/anuncios/<%= ad.id %>/toggle" style="display:inline;">
+                        <input type="hidden" name="field" value="fijado">
+                        <button type="submit" style="border:1px solid #cbd5e1;padding:5px 9px;border-radius:6px;font-weight:800;font-size:11.5px;cursor:pointer;background:<%= ad.fijado ? '#0f172a' : '#fff' %>;color:<%= ad.fijado ? '#fff' : '#0f172a' %>;">
+                          📌 <%= ad.fijado ? 'Fijado' : 'Fijar' %>
+                        </button>
+                      </form>
+                      <form method="POST" action="/admin/anuncios/<%= ad.id %>/toggle" style="display:inline;">
+                        <input type="hidden" name="field" value="seleccionado">
+                        <button type="submit" style="border:1px solid #cbd5e1;padding:5px 9px;border-radius:6px;font-weight:800;font-size:11.5px;cursor:pointer;background:<%= ad.seleccionado ? '#dcfce7' : '#f1f5f9' %>;color:<%= ad.seleccionado ? '#15803d' : '#64748b' %>;">
+                          ⭐ <%= ad.seleccionado ? 'Recomendado' : 'Normal' %>
+                        </button>
+                      </form>
+                    </div>
+                  </td>
+                  <td style="padding:10px;">
+                    <strong><a href="/<%= ad.provincia_slug %>/<%= ad.sector_slug %>" target="_blank" style="color:#1d4ed8;text-decoration:none;"><%= ad.provincia_nombre %> · <%= ad.sector_nombre %> ↗</a></strong>
+                  </td>
+                  <td style="padding:10px;max-width:360px;">
+                    <strong><%= ad.titulo %></strong><br>
+                    <small style="color:#64748b;"><%= ad.subtitulo %></small>
+                  </td>
+                  <td style="padding:10px;font-weight:800;"><%= ad.prioridad %> / 10</td>
+                  <td style="padding:10px;">
+                    <form method="POST" action="/admin/anuncios/<%= ad.id %>/eliminar" style="display:inline;">
+                      <button type="submit" style="background:#fee2e2;color:#b91c1c;border:none;padding:5px 9px;border-radius:6px;font-weight:700;font-size:11.5px;cursor:pointer;">Eliminar</button>
+                    </form>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

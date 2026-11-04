@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sectores y Provincias SEO — PidePrecio.es</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
+
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main" style="padding:28px;">
+      <div style="margin-bottom:24px;">
+        <h1 style="margin:0 0 6px;font-size:26px;color:#0f172a;">🗺️ Red SEO de Sectores y Provincias (<%= (allLocations || []).length %> Provincias × <%= (allSectors || []).length %> Sectores)</h1>
+        <p style="margin:0;color:#475569;font-size:14.5px;">
+          Cada combinación de Provincia y Sector genera su propia página SEO interconectada y muestra abajo el formulario exclusivo de ese sector. Puedes añadir nuevos sectores o impulsar combinaciones concretas en el algoritmo.
+        </p>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:22px;margin-bottom:28px;">
+        <!-- 1. AÑADIR NUEVO SECTOR CON 1 CLIC -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+          <h2 style="margin:0 0 12px;font-size:18px;">➕ Añadir Nuevo Sector (Se activa con su Formulario en las 52 Provincias)</h2>
+          <form method="POST" action="/admin/sectores/nuevo" style="display:grid;gap:12px;">
+            <div style="display:grid;grid-template-columns:90px 1fr;gap:10px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Icono</label>
+                <input type="text" name="icono" value="🛠️" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Nombre del Sector *</label>
+                <input type="text" name="nombre" required placeholder="Ej: Reformas de Baños y Duchas" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              </div>
+            </div>
+            <div>
+              <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Palabras clave SEO (separadas por coma)</label>
+              <input type="text" name="keywords" placeholder="arreglar baño, cambiar bañera por ducha, reformar aseo..." style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+            </div>
+            <button type="submit" style="background:#0f172a;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:800;cursor:pointer;">
+              Crear Sector y su Formulario en las 52 Provincias →
+            </button>
+          </form>
+        </div>
+
+        <!-- 2. IMPULSAR O FIJAR UNA COMBINACIÓN DE [PROVINCIA + SECTOR] EN EL ALGORITMO -->
+        <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+          <h2 style="margin:0 0 12px;font-size:18px;">📌 Impulsar Provincia + Sector en el Algoritmo</h2>
+          <form method="POST" action="/admin/zonas/guardar" style="display:grid;gap:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Provincia (52)</label>
+                <select name="provincia_slug" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+                  <% (allLocations || []).forEach(function(loc) { %>
+                    <option value="<%= loc.slug %>"><%= loc.nombre %></option>
+                  <% }); %>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Sector</label>
+                <select name="sector_slug" required style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+                  <% (allSectors || []).forEach(function(sec) { %>
+                    <option value="<%= sec.slug %>"><%= sec.icono %> <%= sec.nombre %></option>
+                  <% }); %>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 120px;gap:10px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Título destacado SEO de esta página</label>
+                <input type="text" name="etiqueta_anuncio" placeholder="Ej: Especialistas en Reformas de Baño en Madrid" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Prioridad (1-10)</label>
+                <input type="number" name="prioridad_zona" min="1" max="10" value="10" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;">
+              </div>
+            </div>
+
+            <label style="font-size:13px;font-weight:700;">
+              <input type="checkbox" name="algoritmo_impulsado" checked> ⭐ Impulsar esta sección y sus artículos en el algoritmo de recomendación
+            </label>
+
+            <button type="submit" style="background:#2563eb;color:#fff;border:none;padding:12px;border-radius:8px;font-weight:800;cursor:pointer;">
+              Guardar Prioridad de Provincia + Sector →
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- CATÁLOGO COMPLETO DE SECTORES CON ACCESO A SU FORMULARIO -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+        <h2 style="margin:0 0 14px;font-size:18px;">🛠️ Sectores Activos (<%= (allSectors || []).length %>) y sus Formularios</h2>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;">
+          <% (allSectors || []).forEach(function(sec) { %>
+            <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc;display:flex;flex-direction:column;justify-content:space-between;gap:10px;">
+              <div>
+                <div style="font-weight:800;color:#0f172a;font-size:14.5px;"><%= sec.icono %> <%= sec.nombre %></div>
+                <div style="font-size:12px;color:#64748b;margin-top:4px;">
+                  Keywords SEO: <%= (sec.keywords || []).slice(0, 4).join(', ') %>
+                </div>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <a href="/madrid/<%= sec.slug %>" target="_blank" style="font-size:12px;color:#0f172a;font-weight:700;text-decoration:underline;">Ver página sector ↗</a>
+                <a href="/admin/formularios?sector=<%= sec.slug %>" style="margin-left:auto;font-size:12px;color:#1d4ed8;font-weight:700;text-decoration:none;">Editar su formulario →</a>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <%- include('partials/seo') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/home-extras.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include("partials/header") %>
+
+    <% const userProv = typeof detectedProvince !== 'undefined' && detectedProvince ? detectedProvince : { slug: 'madrid', nombre: 'Madrid' }; %>
+
+    <main id="trending-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+                <div class="listing-page-header">
+                    <span class="listing-page-label">Tendencias PidePrecio.es</span>
+                    <h1 class="listing-page-title">En tendencia en <%= userProv.nombre %></h1>
+                    <p class="listing-page-description">
+                        Las páginas de precios y servicios más consultadas ahora mismo en <a href="/<%= userProv.slug %>" style="text-decoration:underline;font-weight:600;"><%= userProv.nombre %></a> y España.
+                    </p>
+                </div>
+
+                <div class="content-sidebar-layout">
+                    <div class="main-content">
+                        <% if (posts && posts.length > 0) { %>
+                        <div class="listing-posts-grid">
+                            <% posts.forEach(post => { %>
+                            <article class="post-card">
+                                <a href="/article/<%= post.slug %>" data-rec-slot="trending-page" data-rec-slug="<%= post.slug %>">
+                                    <img
+                                        src="<%= post.image || post.featured_image || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80' %>"
+                                        alt="<%= post.title %>"
+                                        class="post-image"
+                                    >
+                                    <div class="post-content">
+                                        <span class="post-category">
+                                            <%= post.provincia_nombre || userProv.nombre %> · <%= post.sector_nombre || post.category || 'Servicio' %>
+                                        </span>
+                                        <h2 class="post-title"><%= post.title %></h2>
+                                        <% if (post.excerpt) { %>
+                                        <p class="post-summary"><%= post.excerpt %></p>
+                                        <% } %>
+                                        <div class="post-meta">
+                                            <span class="post-date">
+                                                <%= new Date(post.published_at || Date.now()).toLocaleDateString("es-ES", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric"
+                                                }) %>
+                                            </span>
+                                            <span class="post-views"><%= Number(post.views || 0).toLocaleString("es-ES") %> lecturas</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            </article>
+                            <% }) %>
+                        </div>
+                        <% } else { %>
+                        <div class="empty-posts">
+                            <h2>No hay páginas en tendencia</h2>
+                            <p>Aún no hay artículos en tendencia.</p>
+                        </div>
+                        <% } %>
+                    </div>
+
+                    <aside class="sidebar" aria-label="Más páginas">
+                        <%- include('partials/sidebar', { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+                    </aside>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

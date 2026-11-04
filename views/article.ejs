@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <%
+      const articleProv = (typeof currentProvince !== "undefined" && currentProvince)
+        ? currentProvince
+        : ((typeof detectedProvince !== "undefined" && detectedProvince) ? detectedProvince : { slug: "madrid", nombre: "Madrid" });
+      const articleSec = (typeof currentSector !== "undefined" && currentSector)
+        ? currentSector
+        : ((typeof allSectors !== "undefined" && allSectors.length > 0) ? allSectors[0] : { slug: "reformas-integrales", nombre: "Reformas Integrales y Baños/Cocinas", icono: "🏗️" });
+    %>
+
+    <main id="article-page" data-track-pid="<%= post.id %>" data-track-cat="<%= post.sector_slug || articleSec.slug %>">
+
+        <!-- CABECERA DEL ARTÍCULO ESTILO SOCIALSFORCE + BREADCRUMBS SEO -->
+        <section class="article-header-section">
+            <div class="content-container">
+                <div class="article-header">
+                    <nav aria-label="Migas de pan SEO" style="font-size:12.5px;color:#666;margin-bottom:10px;">
+                        <a href="/" style="color:#666;text-decoration:underline;">Inicio</a> ›
+                        <a href="/<%= articleProv.slug %>" style="color:#666;text-decoration:underline;"><%= post.provincia_nombre || articleProv.nombre %></a> ›
+                        <a href="/<%= articleProv.slug %>/<%= articleSec.slug %>" style="color:#171717;font-weight:700;text-decoration:underline;"><%= post.sector_nombre || articleSec.nombre %></a>
+                        <% if (post.is_pinned) { %>
+                          · <span style="background:#171717;color:#fff;padding:2px 7px;border-radius:4px;font-size:11px;font-weight:700;">📌 Destacado Fijado</span>
+                        <% } %>
+                    </nav>
+
+                    <h1 class="article-title">
+                        <%= post.title %>
+                    </h1>
+
+                    <% if (post.excerpt) { %>
+                    <p class="article-excerpt">
+                        <%= post.excerpt %>
+                    </p>
+                    <% } %>
+
+                    <div class="article-meta" style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+                        <div>
+                            <time datetime="<%= new Date(post.published_at || post.created_at).toISOString() %>">
+                                <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                            </time>
+                            <span> · PidePrecio.es</span>
+                        </div>
+                        <a href="#solicitar-presupuesto" style="background:#171717;color:#fff;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:700;text-decoration:none;">
+                            Ir al formulario de <%= articleSec.nombre %> ↓
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- IMAGEN PRINCIPAL ESTILO SOCIALSFORCE -->
+        <% if (post.featured_image || post.image) { %>
+        <section class="article-image-section">
+            <div class="content-container">
+                <figure class="article-image-wrapper">
+                    <img
+                        src="<%= post.featured_image || post.image %>"
+                        alt="<%= post.image_alt || post.title %>"
+                        class="article-main-image"
+                    >
+                </figure>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- CONTENIDO DEL ARTÍCULO + FORMULARIO EXCLUSIVO DE ESTE SECTOR ABAJO + RED DE INTERCONEXIÓN SEO -->
+        <section class="article-content-section">
+            <div class="content-container">
+                <div class="article-content">
+                    <%- post.content %>
+
+                    <!-- FORMULARIO EXCLUSIVO DE ESTE SECTOR AL FINAL DEL ARTÍCULO -->
+                    <%- include("partials/quote-form", {
+                        currentProvince: articleProv,
+                        currentSector: articleSec,
+                        customForm: typeof customForm !== "undefined" ? customForm : null,
+                        post: post
+                    }) %>
+
+                    <!-- MALLA DE INTERCONEXIÓN SEO ENTRE ARTÍCULOS, SECTORES Y PROVINCIAS -->
+                    <%- include("partials/seo-interlinks", {
+                        seoInterlinks: typeof seoInterlinks !== "undefined" ? seoInterlinks : null
+                    }) %>
+                </div>
+
+                <div class="article-navigation">
+                    <a href="/<%= articleProv.slug %>/<%= articleSec.slug %>" class="article-back-link">
+                        ← Ver más artículos de <%= articleSec.nombre %> en <%= articleProv.nombre %>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- ARTÍCULOS RELACIONADOS (ALGORITMO SOCIALSFORCE) -->
+        <% if (typeof related !== "undefined" && related && related.length > 0) { %>
+        <section id="related-content-section">
+            <div class="content-container">
+                <div class="section-header">
+                    <h2 class="section-title">Artículos recomendados en <%= articleProv.nombre %></h2>
+                    <a href="/<%= articleProv.slug %>/<%= articleSec.slug %>" class="section-link">Ver todos en <%= articleSec.nombre %> →</a>
+                </div>
+
+                <div class="related-posts-grid">
+                    <% related.slice(0, 3).forEach(function(item, idx) { %>
+                    <article class="post-card" data-rec-pl="article_related" data-rec-pos="<%= idx %>" data-pid="<%= item.id %>">
+                        <a href="/article/<%= item.slug %>">
+                            <% if (item.image || item.featured_image) { %>
+                            <img
+                                src="<%= item.image || item.featured_image %>"
+                                alt="<%= item.title %>"
+                                class="post-image"
+                                loading="lazy"
+                            >
+                            <% } %>
+                            <div class="post-content">
+                                <span class="post-category">
+                                    <%= item.is_pinned ? '📌 Fijado · ' : '' %><%= item.provincia_nombre || articleProv.nombre %> · <%= item.category || item.sector_nombre %>
+                                </span>
+                                <h3 class="post-title">
+                                    <%= item.title %>
+                                </h3>
+                                <span class="post-date">
+                                    <%= new Date(item.published_at || item.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                                </span>
+                            </div>
+                        </a>
+                    </article>
+                    <% }) %>
+                </div>
+            </div>
+        </section>
+        <% } %>
+
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

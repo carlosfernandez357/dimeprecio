@@ -1,0 +1,58 @@
+<%
+const footerProv = (typeof detectedProvince !== "undefined" && detectedProvince)
+    ? detectedProvince
+    : { slug: "madrid", nombre: "Madrid" };
+%>
+<footer id="site-footer">
+    <div class="footer-container">
+        <div class="footer-brand-section">
+            <a href="/" id="footer-logo">PidePrecio.es</a>
+            <p id="footer-description">
+                Artículos especializados, guías por sectores y conexión directa en tu provincia.
+            </p>
+        </div>
+
+        <div class="footer-column">
+            <span class="footer-column-title">Zonas Principales</span>
+            <a href="/madrid" class="footer-link">Madrid</a>
+            <a href="/barcelona" class="footer-link">Barcelona</a>
+            <a href="/valencia" class="footer-link">Valencia</a>
+            <a href="/sevilla" class="footer-link">Sevilla</a>
+            <a href="/zaragoza" class="footer-link">Zaragoza</a>
+            <a href="/malaga" class="footer-link">Málaga</a>
+            <a href="/provincias" class="footer-link">Todas las zonas →</a>
+        </div>
+
+        <div class="footer-column">
+            <span class="footer-column-title">En <%= footerProv.nombre %></span>
+            <a href="/<%= footerProv.slug %>/reformas-integrales" class="footer-link">Reformas y Baños/Cocinas</a>
+            <a href="/<%= footerProv.slug %>/fontaneria-desatascos" class="footer-link">Fontanería y Desatascos</a>
+            <a href="/<%= footerProv.slug %>/placas-solares-aerotermia" class="footer-link">Placas Solares y Aerotermia</a>
+            <a href="/<%= footerProv.slug %>/tejados-cubiertas" class="footer-link">Tejados y Cubiertas</a>
+            <a href="/<%= footerProv.slug %>/abogados-especialistas" class="footer-link">Abogados y Legal</a>
+            <a href="/categories" class="footer-link">Todas las secciones →</a>
+        </div>
+
+        <div class="footer-column">
+            <span class="footer-column-title">Explorar y Legal</span>
+            <a href="/for-you" class="footer-link">Para Ti</a>
+            <a href="/trending" class="footer-link">Tendencias</a>
+            <a href="/recent" class="footer-link">Recientes</a>
+            <a href="/privacy" class="footer-link">Privacidad</a>
+            <a href="/cookies" class="footer-link">Cookies</a>
+            <a href="/legal" class="footer-link">Aviso Legal</a>
+            <button type="button" class="footer-link footer-link-button" data-open-consent>
+                Configurar cookies
+            </button>
+        </div>
+    </div>
+
+    <div class="footer-bottom">
+        © <%= new Date().getFullYear() %> PidePrecio.es · Todos los derechos reservados.
+    </div>
+</footer>
+<%- include("consent") %>
+<script src="/js/consent.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="/js/tracker.js"></script>
+<script src="/js/geo-detector.js"></script>

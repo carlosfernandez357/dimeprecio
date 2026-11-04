@@ -1,0 +1,26 @@
+{
+    "name": "multiservices-rank-rent",
+    "version": "2.0.0",
+    "description": "Megaportal Nacional Rank & Rent + Red Social de Especialistas + Captador de Presupuestos con IA (basado en SocialsForce)",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "node --watch server.js",
+        "db:setup": "node scripts/setup-db.js"
+    },
+    "dependencies": {
+        "@google-analytics/data": "^5.2.0",
+        "axios": "^1.12.2",
+        "cheerio": "^1.1.2",
+        "compression": "^1.8.2",
+        "cookie-parser": "^1.4.7",
+        "dotenv": "^17.2.2",
+        "ejs": "^3.1.10",
+        "express": "^5.1.0",
+        "express-rate-limit": "^8.7.1",
+        "helmet": "^8.3.0",
+        "jsonwebtoken": "^9.0.2",
+        "mysql2": "^3.14.3",
+        "socket.io": "^4.8.1"
+    }
+}

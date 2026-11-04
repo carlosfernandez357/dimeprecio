@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include('partials/seo') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/home-extras.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+</head>
+<body>
+<%- include("partials/header") %>
+
+<% const activeProv = typeof currentProvince !== 'undefined' && currentProvince ? currentProvince : (typeof detectedProvince !== 'undefined' ? detectedProvince : { slug: 'madrid', nombre: 'Madrid' }); %>
+<% const queryStr = typeof q !== 'undefined' ? q : ''; %>
+<% const results = typeof posts !== 'undefined' && posts ? posts : []; %>
+
+<main class="search-page">
+    <div class="content-container content-sidebar-layout">
+        <div class="main-content">
+            <span class="listing-page-label">
+                Zona activa: <a href="/<%= activeProv.slug %>" style="color:inherit;text-decoration:underline;"><%= activeProv.nombre %></a> · <a href="/provincias" style="color:inherit;text-decoration:underline;">Cambiar provincia</a>
+            </span>
+            <h1 style="margin-top:6px;">
+                <%= queryStr ? 'Resultados para "' + queryStr + '" en ' + activeProv.nombre : 'Buscar servicio o precio en ' + activeProv.nombre %>
+            </h1>
+
+            <form action="/search" method="GET" style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 22px;">
+                <input
+                    type="text"
+                    name="q"
+                    value="<%= queryStr %>"
+                    placeholder="Ej: reformas pequeñas casa, cambiar bañera por ducha, fontanero..."
+                    style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #d4d4d8;border-radius:8px;font-size:15px;"
+                >
+                <input type="hidden" name="provincia" value="<%= activeProv.slug %>">
+                <button type="submit" style="padding:11px 18px;border:none;border-radius:8px;background:#111;color:#fff;font-weight:700;cursor:pointer;">
+                    Buscar en <%= activeProv.nombre %>
+                </button>
+            </form>
+
+            <% if (typeof matchedSectors !== 'undefined' && matchedSectors && matchedSectors.length > 0) { %>
+            <section style="margin-bottom:26px;">
+                <div class="section-header" style="margin-bottom:12px;">
+                    <h2 class="section-title" style="font-size:18px;">1. Secciones recomendadas en <%= activeProv.nombre %></h2>
+                    <span style="font-size:12.5px;color:#71717a;">Entra en la sección para elegir el servicio y pedir presupuesto</span>
+                </div>
+                <div class="category-Mosaic-grid">
+                    <% matchedSectors.slice(0, 6).forEach(sec => { %>
+                    <a class="category-Mosaic-tile" href="/<%= activeProv.slug %>/<%= sec.slug %>">
+                        <span class="category-Mosaic-name"><%= sec.icono %> <%= sec.nombre %></span>
+                        <span class="category-Mosaic-count">Zona <%= activeProv.nombre %> →</span>
+                    </a>
+                    <% }) %>
+                </div>
+            </section>
+            <% } %>
+
+            <div class="section-header" style="margin-bottom:14px;">
+                <h2 class="section-title" style="font-size:18px;">2. Páginas más relevantes encontradas</h2>
+            </div>
+
+            <% if (results.length === 0) { %>
+                <p>No se encontraron páginas para esa búsqueda. Prueba a entrar directamente en <a href="/<%= activeProv.slug %>" style="text-decoration:underline;font-weight:600;"><%= activeProv.nombre %></a>.</p>
+            <% } %>
+
+            <div class="latest-posts-list">
+                <% results.forEach(post => { %>
+                <article class="horizontal-post-card">
+                    <a href="/article/<%= post.slug %>" class="horizontal-post-link" data-rec-slot="search" data-rec-slug="<%= post.slug %>">
+                        <img
+                            src="<%= post.image || post.featured_image || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80' %>"
+                            alt="<%= post.title %>"
+                            class="horizontal-post-image"
+                        >
+                        <div class="horizontal-post-content">
+                            <span class="post-category">
+                                <%= post.provincia_nombre || activeProv.nombre %> · <%= post.sector_nombre || post.category || 'Guía Oficial' %>
+                            </span>
+                            <h2 class="post-title"><%= post.title %></h2>
+                            <p class="post-summary"><%= post.excerpt %></p>
+                        </div>
+                    </a>
+                </article>
+                <% }) %>
+            </div>
+        </div>
+
+        <aside class="sidebar" aria-label="Más secciones y páginas">
+            <%- include('partials/sidebar', { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+        </aside>
+    </div>
+</main>
+
+<%- include("partials/footer") %>
+<script src="/js/main.js"></script>
+</body>
+</html>

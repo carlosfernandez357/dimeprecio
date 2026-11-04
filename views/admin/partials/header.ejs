@@ -1,0 +1,60 @@
+<header class="admin-header">
+
+    <div class="admin-header-left">
+
+        <button class="admin-menu-button" id="admin-menu-button">
+            ☰
+        </button>
+
+        <a href="/admin" class="admin-logo">
+            <span class="admin-logo-icon" style="background:#1d4ed8;">PP</span>
+            <span>PidePrecio.es · <strong>PANEL CENTRAL AGENTE</strong></span>
+        </a>
+
+    </div>
+
+    <div class="admin-header-right">
+
+        <a href="/admin/presupuestos" class="admin-view-site" style="background:#eff6ff;color:#1d4ed8;padding:6px 12px;border-radius:999px;font-weight:700;font-size:12.5px;border:1px solid #bfdbfe;">
+            📥 Bandeja de Presupuestos del Agente <span id="admin-live-quote-badge"></span>
+        </a>
+
+        <a href="/admin/anuncios" class="admin-view-site" style="background:#fef3c7;color:#b45309;padding:6px 12px;border-radius:999px;font-weight:700;font-size:12.5px;border:1px solid #fde68a;">
+            📢 Gestión de Anuncios y Algoritmo
+        </a>
+
+        <a href="/" target="_blank" class="admin-view-site">
+            ↗ Ver PidePrecio.es
+        </a>
+
+        <a href="/admin/logout" class="admin-logout">
+            Cerrar sesión
+        </a>
+
+    </div>
+
+</header>
+
+<div id="admin-quote-toast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:9999;background:#0f172a;color:#fff;padding:16px 20px;border-radius:12px;border-left:5px solid #38bdf8;box-shadow:0 20px 35px rgba(0,0,0,0.3);max-width:400px;">
+    <strong style="display:block;color:#38bdf8;font-size:14px;margin-bottom:4px;">🔔 ¡NUEVO FORMULARIO DE PRESUPUESTO EN BANDEJA!</strong>
+    <div id="admin-quote-toast-body" style="font-size:13px;color:#e2e8f0;margin-bottom:8px;"></div>
+    <a href="/admin/presupuestos" style="display:inline-block;background:#2563eb;color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:700;text-decoration:none;">Abrir en Bandeja del Agente →</a>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+(function(){
+    if (typeof io === "undefined") return;
+    try {
+        var socket = io({ auth: { role: "admin" } });
+        socket.on("quote:new", function(data) {
+            var toast = document.getElementById("admin-quote-toast");
+            var body = document.getElementById("admin-quote-toast-body");
+            if (toast && body && data && data.quote) {
+                body.textContent = data.quote.codigo + " · " + data.quote.sector_nombre + " en " + data.quote.municipio + " (" + data.quote.provincia_nombre + ")";
+                toast.style.display = "block";
+            }
+        });
+    } catch (e) {}
+})();
+</script>

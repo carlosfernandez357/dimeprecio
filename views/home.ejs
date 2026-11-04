@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/home-feed.css">
+    <link rel="stylesheet" href="/css/home-extras.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <%
+      const userProv = (typeof detectedProvince !== "undefined" && detectedProvince)
+        ? detectedProvince
+        : { slug: "madrid", nombre: "Madrid", comunidad_autonoma: "Comunidad de Madrid", municipios: ["Madrid Centro", "Chamberí", "Salamanca", "Chamartín", "Pozuelo de Alarcón", "Alcobendas"] };
+      const mainFeatured = (forYouPosts && forYouPosts[0]) || (featured && featured[0]) || (latest && latest[0]) || null;
+      const trendingSlice = (forYouPosts && forYouPosts.length > 1) ? forYouPosts.slice(1, 7) : (trending || []).slice(0, 6);
+      const latestSlice = (latest || []).slice(0, 8);
+      const quickSectors = (allSectors || []).slice(0, 8);
+      const activePrefSector = (typeof preferredSector !== "undefined" && preferredSector) ? preferredSector : null;
+      const activePrefAd = (typeof preferredSectorAd !== "undefined" && preferredSectorAd) ? preferredSectorAd : ((recommendedAds && recommendedAds[0]) || null);
+      const activePrefPosts = (typeof preferredSectorPosts !== "undefined" && Array.isArray(preferredSectorPosts)) ? preferredSectorPosts : [];
+      const zoneMunicipios = (userProv.municipios && Array.isArray(userProv.municipios)) ? userProv.municipios : [userProv.nombre];
+    %>
+
+    <!-- TICKER EN VIVO ESTILO SOCIALSFORCE -->
+    <% if (typeof homeExtras !== "undefined" && homeExtras) { %>
+        <%- include("partials/home-extras", { x: homeExtras, part: "top" }) %>
+    <% } %>
+
+    <main id="home-page">
+
+        <!-- BARRA NAVEGABLE DE ZONA ELEGIDA, SUBZONAS/MUNICIPIOS Y BUSCADOR DE SOLUCIONES -->
+        <section style="border-bottom:1px solid #eeeeee;background:#fafafa;padding:16px 0;">
+            <div class="content-container" style="display:flex;flex-direction:column;gap:12px;">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;">
+                        <span style="font-weight:700;color:#171717;">
+                            📍 Tu zona activa: <a href="/<%= userProv.slug %>" data-pp-prov-link style="text-decoration:underline;"><span data-pp-prov-label><%= userProv.nombre %></span></a>
+                        </span>
+                        <span style="color:#999;">·</span>
+                        <span style="color:#555;">Zonas en <%= userProv.nombre %>:</span>
+                        <% zoneMunicipios.slice(0, 5).forEach(function(mun) { %>
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= userProv.slug %>&zona=<%= encodeURIComponent(mun) %><%= activePrefSector ? ('&sector=' + activePrefSector.slug) : '' %>"
+                                style="font-size:12px;color:#171717;background:#fff;border:1px solid #e4e4e7;padding:3px 9px;border-radius:999px;text-decoration:none;font-weight:600;"
+                            >
+                                <%= mun %>
+                            </a>
+                        <% }); %>
+                    </div>
+                    <form action="/search" method="GET" style="display:flex;gap:6px;flex:1;max-width:460px;min-width:260px;">
+                        <input type="hidden" name="provincia" value="<%= userProv.slug %>">
+                        <input
+                            type="text"
+                            name="q"
+                            placeholder="Ej: aire acondicionado en <%= userProv.nombre %>, arreglar mi baño..."
+                            style="flex:1;padding:8px 12px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;background:#fff;"
+                        >
+                        <button type="submit" style="background:#171717;color:#fff;border:0;padding:8px 14px;border-radius:6px;font-size:12.5px;font-weight:700;cursor:pointer;">
+                            Buscar →
+                        </button>
+                    </form>
+                </div>
+                <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <% quickSectors.slice(0, 7).forEach(function(sec) { %>
+                        <a
+                            href="/<%= userProv.slug %>/<%= sec.slug %>"
+                            class="sidebar-pill"
+                            style="font-size:12.5px;<%= (activePrefSector && activePrefSector.slug === sec.slug) ? 'background:#171717;color:#fff;font-weight:700;' : '' %>"
+                        >
+                            <%= sec.icono || '' %> <%= sec.nombre %>
+                        </a>
+                    <% }) %>
+                    <a href="/pedir-presupuesto?provincia=<%= userProv.slug %>" class="sidebar-pill" style="background:#171717;color:#fff;font-size:12.5px;font-weight:700;">
+                        📋 Pedir Presupuesto en <%= userProv.nombre %> →
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- BLOQUE HIPER-PERSONALIZADO SEGÚN LA ZONA ELEGIDA Y LO QUE EL CLIENTE YA HA VISTO (EJ. AIRE ACONDICIONADO EN MADRID) -->
+        <% if (activePrefSector) { %>
+        <section id="personalized-seen-sector-section" style="padding:26px 0 8px;">
+            <div class="content-container">
+                <div style="border:2px solid #171717;border-radius:12px;padding:22px;background:#ffffff;overflow:hidden;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eeeeee;">
+                        <div style="min-width:0;">
+                            <span style="display:inline-block;font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:0.05em;color:#171717;background:#f4f4f5;padding:4px 10px;border-radius:999px;">
+                                🎯 Personalizado según tu actividad en <%= userProv.nombre %>
+                            </span>
+                            <h2 style="font-size:22px;margin:8px 0 0;color:#171717;letter-spacing:-0.4px;word-break:break-word;">
+                                <%= activePrefSector.icono %> Recomendado para ti en <%= userProv.nombre %>: <%= activePrefSector.nombre %>
+                            </h2>
+                        </div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= userProv.slug %>&sector=<%= activePrefSector.slug %>#solicitar-presupuesto"
+                                style="background:#171717;color:#ffffff;padding:9px 15px;border-radius:6px;font-size:13px;font-weight:700;text-decoration:none;"
+                            >
+                                <%= activePrefSector.slug === 'climatizacion-aire-acondicionado' ? '❄️ Abrir Calculador de Frigorías y Formulario' : ('📋 Abrir Formulario de ' + activePrefSector.nombre) %> →
+                            </a>
+                            <a
+                                href="/<%= userProv.slug %>/<%= activePrefSector.slug %>"
+                                style="background:#f4f4f5;color:#171717;padding:9px 14px;border-radius:6px;font-size:13px;font-weight:600;text-decoration:none;"
+                            >
+                                Ver todo en <%= userProv.nombre %> →
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- ANUNCIO RECOMENDADO DEL SECTOR VISTO EN LA ZONA ELEGIDA -->
+                    <% if (activePrefAd) { %>
+                    <div
+                        data-ad-sector="<%= activePrefAd.sector_slug %>"
+                        data-ad-province="<%= activePrefAd.provincia_slug %>"
+                        style="background:#fafafa;border:1px solid #e4e4e7;border-left:4px solid #171717;border-radius:8px;padding:16px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;"
+                    >
+                        <div style="flex:1;min-width:240px;">
+                            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+                                <span style="font-size:11px;font-weight:800;text-transform:uppercase;background:#171717;color:#fff;padding:2px 8px;border-radius:4px;">
+                                    <%= activePrefAd.sello || ('⭐ Anuncio Recomendado en ' + userProv.nombre) %>
+                                </span>
+                                <span style="font-size:12px;color:#555;font-weight:600;">
+                                    📍 <%= activePrefAd.provincia_nombre || userProv.nombre %> · <%= activePrefAd.sector_nombre || activePrefSector.nombre %>
+                                </span>
+                            </div>
+                            <h3 style="margin:4px 0;font-size:17px;font-weight:800;color:#171717;word-break:break-word;">
+                                <a href="/<%= userProv.slug %>/<%= activePrefSector.slug %>#solicitar-presupuesto" style="color:inherit;text-decoration:none;">
+                                    <%= activePrefAd.titulo %>
+                                </a>
+                            </h3>
+                            <p style="margin:0;font-size:13.5px;color:#555;line-height:1.45;word-break:break-word;">
+                                <%= activePrefAd.subtitulo %>
+                            </p>
+                        </div>
+                        <a
+                            href="/<%= userProv.slug %>/<%= activePrefSector.slug %>#solicitar-presupuesto"
+                            style="background:#171717;color:#ffffff;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:700;text-decoration:none;white-space:nowrap;"
+                        >
+                            <%= activePrefAd.cta_texto || 'Solicitar en mi Zona' %> →
+                        </a>
+                    </div>
+                    <% } %>
+
+                    <!-- ARTÍCULOS RECOMENDADOS DEL SECTOR VISTO EN LA ZONA -->
+                    <% if (activePrefPosts.length > 0) { %>
+                    <div class="trending-posts-grid" style="margin-top:8px;">
+                        <% activePrefPosts.slice(0, 3).forEach(function(post, idx) { %>
+                        <article class="post-card" data-rec-pl="home_seen_sector" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">
+                            <a href="/article/<%= post.slug %>">
+                                <img
+                                    src="<%= post.image || post.featured_image || '/images/noimage.jpg' %>"
+                                    alt="<%= post.title %>"
+                                    class="post-image"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='/images/noimage.jpg';"
+                                >
+                                <div class="post-content">
+                                    <span class="post-category">
+                                        <%= post.provincia_nombre || userProv.nombre %> · <%= post.sector_nombre || activePrefSector.nombre %>
+                                    </span>
+                                    <h3 class="post-title">
+                                        <%= post.title %>
+                                    </h3>
+                                    <span class="post-date">
+                                        <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                                    </span>
+                                </div>
+                            </a>
+                        </article>
+                        <% }); %>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- ARTÍCULO PRINCIPAL DESTACADO + INTRO DE ZONA (ESTILO SOCIALSFORCE) -->
+        <% if (mainFeatured) { %>
+        <section id="featured-article-section">
+            <div class="content-container <%= (typeof homeExtras !== 'undefined' && homeExtras) ? 'hx-hero-grid' : '' %>">
+                <article class="featured-article-card" data-rec-pl="home_featured" data-rec-pos="0" data-pid="<%= mainFeatured.id %>">
+                    <a href="/article/<%= mainFeatured.slug %>" class="featured-article-link">
+                        <img
+                            src="<%= mainFeatured.image || mainFeatured.featured_image || '/images/noimage.jpg' %>"
+                            alt="<%= mainFeatured.title %>"
+                            class="featured-article-image"
+                            onerror="this.onerror=null;this.src='/images/noimage.jpg';"
+                        >
+                        <div class="featured-article-content">
+                            <span class="article-category">
+                                <%= mainFeatured.provincia_nombre ? (mainFeatured.provincia_nombre + ' · ') : '' %><%= mainFeatured.category || mainFeatured.sector_nombre %>
+                            </span>
+                            <h1 class="featured-article-title">
+                                <%= mainFeatured.title %>
+                            </h1>
+                            <% if (mainFeatured.excerpt) { %>
+                            <p class="featured-article-summary">
+                                <%= mainFeatured.excerpt %>
+                            </p>
+                            <% } %>
+                            <div class="article-meta">
+                                <%= new Date(mainFeatured.published_at || mainFeatured.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                            </div>
+                        </div>
+                    </a>
+                </article>
+
+                <% if (typeof homeExtras !== "undefined" && homeExtras) { %>
+                    <%- include("partials/home-extras", { x: homeExtras, part: "intro" }) %>
+                <% } %>
+            </div>
+        </section>
+        <% } %>
+
+        <!-- SECCIÓN DE PÁGINAS MÁS RELEVANTES EN LA ZONA ELEGIDA (ALGORITMO DE RECOMENDACIÓN SOCIALSFORCE) -->
+        <section id="trending-posts-section">
+            <div class="content-container">
+                <div class="section-header">
+                    <h2 class="section-title">Relevantes para ti en <span data-pp-prov-label><%= userProv.nombre %></span></h2>
+                    <a href="/for-you" class="section-link">Ver más recomendaciones →</a>
+                </div>
+
+                <!-- ANUNCIOS RECOMENDADOS EN LA ZONA ACTIVA -->
+                <% if (typeof recommendedAds !== "undefined" && recommendedAds && recommendedAds.length > 0) { %>
+                <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:22px;">
+                    <% recommendedAds.slice(0, 2).forEach(function(ad) { %>
+                    <div style="border:1px solid #e4e4e7;border-radius:10px;padding:16px;background:#fafafa;display:flex;flex-direction:column;justify-content:space-between;gap:10px;overflow:hidden;">
+                        <div>
+                            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;flex-wrap:wrap;">
+                                <span style="font-size:11px;font-weight:700;background:#171717;color:#fff;padding:2px 8px;border-radius:4px;">
+                                    <%= ad.sello || ('Destacado en ' + userProv.nombre) %>
+                                </span>
+                                <span style="font-size:12px;color:#666;font-weight:600;"><%= ad.sector_icono || '🛠️' %> <%= ad.sector_nombre %></span>
+                            </div>
+                            <h3 style="margin:0 0 6px;font-size:16px;font-weight:800;color:#171717;word-break:break-word;">
+                                <a href="/<%= ad.provincia_slug || userProv.slug %>/<%= ad.sector_slug %>#solicitar-presupuesto" style="color:inherit;text-decoration:none;">
+                                    <%= ad.titulo %>
+                                </a>
+                            </h3>
+                            <p style="margin:0;font-size:13px;color:#555;line-height:1.45;word-break:break-word;"><%= ad.subtitulo %></p>
+                        </div>
+                        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:8px;border-top:1px solid #eee;flex-wrap:wrap;">
+                            <span style="font-size:11.5px;color:#666;">📍 <%= (ad.municipios_cubiertos || []).slice(0, 3).join(', ') || userProv.nombre %></span>
+                            <a href="/<%= ad.provincia_slug || userProv.slug %>/<%= ad.sector_slug %>#solicitar-presupuesto" style="font-size:12.5px;font-weight:700;color:#171717;text-decoration:underline;">
+                                <%= ad.cta_texto || 'Ir al formulario' %> →
+                            </a>
+                        </div>
+                    </div>
+                    <% }); %>
+                </div>
+                <% } %>
+
+                <div class="trending-posts-grid">
+                    <% trendingSlice.forEach(function(post, idx) { %>
+                    <article class="post-card" data-rec-pl="home_foryou" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">
+                        <a href="/article/<%= post.slug %>">
+                            <img
+                                src="<%= post.image || post.featured_image || '/images/noimage.jpg' %>"
+                                alt="<%= post.title %>"
+                                class="post-image"
+                                loading="lazy"
+                                onerror="this.onerror=null;this.src='/images/noimage.jpg';"
+                            >
+                            <div class="post-content">
+                                <span class="post-category">
+                                    <%= post.provincia_nombre ? (post.provincia_nombre + ' · ') : '' %><%= post.category || post.sector_nombre %>
+                                </span>
+                                <h3 class="post-title">
+                                    <%= post.title %>
+                                </h3>
+                                <span class="post-date">
+                                    <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                                </span>
+                            </div>
+                        </a>
+                    </article>
+                    <% }) %>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARRUSEL SOCIALSFORCE -->
+        <% if (typeof homeExtras !== "undefined" && homeExtras) { %>
+            <%- include("partials/home-extras", { x: homeExtras, part: "carousel" }) %>
+        <% } %>
+
+        <!-- ÚLTIMAS PÁGINAS + SIDEBAR SOCIALSFORCE -->
+        <section id="latest-posts-section">
+            <div class="content-container hs-layout">
+                <div class="hs-main">
+                    <div class="section-header">
+                        <h2 class="section-title">Últimas guías y artículos en <%= userProv.nombre %></h2>
+                        <a href="/recent" class="section-link">Ver todas</a>
+                    </div>
+
+                    <div class="latest-posts-list">
+                        <% latestSlice.forEach(function(post, idx) { %>
+                        <article class="horizontal-post-card" data-rec-pl="home_latest" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">
+                            <a href="/article/<%= post.slug %>" class="horizontal-post-link">
+                                <img
+                                    src="<%= post.image || post.featured_image || '/images/noimage.jpg' %>"
+                                    alt="<%= post.title %>"
+                                    class="horizontal-post-image"
+                                    loading="lazy"
+                                    onerror="this.onerror=null;this.src='/images/noimage.jpg';"
+                                >
+                                <div class="horizontal-post-content">
+                                    <span class="post-category">
+                                        <%= post.provincia_nombre ? (post.provincia_nombre + ' · ') : '' %><%= post.category || post.sector_nombre %>
+                                    </span>
+                                    <h3 class="post-title">
+                                        <%= post.title %>
+                                    </h3>
+                                    <% if (post.excerpt) { %>
+                                    <p class="post-summary">
+                                        <%= post.excerpt %>
+                                    </p>
+                                    <% } %>
+                                    <span class="post-date">
+                                        <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                                    </span>
+                                </div>
+                            </a>
+                        </article>
+                        <% }) %>
+                    </div>
+
+                    <% if (typeof homeExtras !== "undefined" && homeExtras) { %>
+                        <%- include("partials/home-extras", { x: homeExtras, part: "latest" }) %>
+                    <% } %>
+                </div>
+
+                <%- include("partials/home-sidebar", { recentPosts: latestSlice.slice(0, 5), mostRead: trendingSlice.slice(0, 5) }) %>
+            </div>
+        </section>
+
+        <!-- BLOQUES EDITORIALES POR SECCIÓN (ESTILO SOCIALSFORCE) -->
+        <% if (typeof homeExtras !== "undefined" && homeExtras) { %>
+            <%- include("partials/home-extras", { x: homeExtras, part: "bottom" }) %>
+        <% } %>
+
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+    <script src="/js/home-extras.js" defer></script>
+</body>
+</html>

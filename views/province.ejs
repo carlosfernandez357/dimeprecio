@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <main id="category-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+
+                <div class="listing-page-header">
+                    <span class="listing-page-label">
+                        📍 Zona · <%= province.comunidad_autonoma %>
+                    </span>
+
+                    <h1 class="listing-page-title">
+                        <%= province.nombre %>
+                    </h1>
+
+                    <p class="listing-page-description">
+                        Artículos, guías y sectores interconectados en <strong><%= province.nombre %></strong> (<%= (province.municipios || [province.nombre]).slice(0, 6).join(", ") %>). Entra en tu sector o artículo para rellenar el formulario específico de ese sector.
+                    </p>
+
+                    <form action="/search" method="GET" style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;max-width:620px;">
+                        <input type="hidden" name="provincia" value="<%= province.slug %>">
+                        <input
+                            type="text"
+                            name="q"
+                            placeholder="¿Qué necesitas en <%= province.nombre %>? Ej: arreglar mi baño, cambiar plato de ducha, fontanero..."
+                            style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #d4d4d8;border-radius:6px;font-size:14px;"
+                        >
+                        <button type="submit" style="background:#171717;color:#fff;border:0;padding:11px 18px;border-radius:6px;font-size:13.5px;font-weight:700;cursor:pointer;">
+                            Buscar en <%= province.nombre %> →
+                        </button>
+                    </form>
+                </div>
+
+                <div class="content-sidebar-layout">
+
+                    <div class="main-content">
+
+                        <!-- SECCIONES RELEVANTES DENTRO DE ESTA PROVINCIA -->
+                        <div style="margin-bottom:42px;">
+                            <div class="section-header" style="margin-bottom:16px;">
+                                <h2 class="section-title" style="font-size:21px;">1. Elige una sección en <%= province.nombre %></h2>
+                                <a href="/categories" class="section-link">Ver todas las secciones →</a>
+                            </div>
+
+                            <div class="listing-posts-grid" style="gap:14px;">
+                                <% (typeof relevantSectors !== 'undefined' && relevantSectors ? relevantSectors : (allSectors || []).slice(0, 12)).forEach(function(sec) { %>
+                                    <a
+                                        href="/<%= province.slug %>/<%= sec.slug %>"
+                                        style="display:block;padding:18px;border:1px solid #e8e8e8;border-radius:8px;background:#fafafa;transition:border-color 0.2s,transform 0.2s;"
+                                    >
+                                        <span class="post-category" style="display:block;margin-bottom:6px;"><%= sec.icono || '•' %> Sección en <%= province.nombre %></span>
+                                        <strong style="font-size:16.5px;color:#171717;display:block;line-height:1.3;"><%= sec.nombre %></strong>
+                                        <span style="display:block;margin-top:8px;font-size:12.5px;color:#666;">
+                                            Entrar en sección y ver guías →
+                                        </span>
+                                    </a>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                        <!-- PÁGINAS MÁS RELEVANTES EN ESTA PROVINCIA (ALGORITMO SOCIALSFORCE) -->
+                        <div class="section-header" style="margin-bottom:20px;">
+                            <h2 class="section-title" style="font-size:21px;">2. Páginas más relevantes en <%= province.nombre %></h2>
+                        </div>
+
+                        <% if (provincePages && provincePages.length > 0) { %>
+                        <div class="listing-posts-grid">
+                            <% provincePages.forEach(function(post, idx) { %>
+                            <article class="post-card" data-rec-pl="province_listing" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">
+                                <a href="/article/<%= post.slug %>">
+                                    <% if (post.image || post.featured_image) { %>
+                                    <img
+                                        src="<%= post.image || post.featured_image %>"
+                                        alt="<%= post.title %>"
+                                        class="post-image"
+                                        loading="lazy"
+                                    >
+                                    <% } %>
+                                    <div class="post-content">
+                                        <span class="post-category">
+                                            <%= post.category || post.sector_nombre %>
+                                        </span>
+                                        <h2 class="post-title">
+                                            <%= post.title %>
+                                        </h2>
+                                        <% if (post.excerpt) { %>
+                                        <p class="post-summary">
+                                            <%= post.excerpt %>
+                                        </p>
+                                        <% } %>
+                                        <span class="post-date">
+                                            <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", {
+                                                year: "numeric",
+                                                month: "long",
+                                                day: "numeric"
+                                            }) %>
+                                        </span>
+                                    </div>
+                                </a>
+                            </article>
+                            <% }) %>
+                        </div>
+                        <% } %>
+
+                    </div>
+
+                    <aside class="sidebar" aria-label="Más artículos">
+                        <%- include("partials/sidebar", { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+                    </aside>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<%
+const userProv = (typeof detectedProvince !== "undefined" && detectedProvince)
+    ? detectedProvince
+    : { slug: "madrid", nombre: "Madrid" };
+%>
+<aside class="home-sidebar" aria-label="Barra lateral de inicio">
+    <a href="/<%= userProv.slug %>" data-pp-prov-link class="hs-feed-cta">
+        <span class="hs-feed-icon">📍</span>
+        <span><strong>Ir a <span data-pp-prov-label><%= userProv.nombre %></span></strong><small>Elige tu sección y consulta precios en tu zona</small></span>
+    </a>
+
+    <% if (typeof recentPosts !== "undefined" && recentPosts && recentPosts.length) { %>
+    <section class="hs-box">
+        <h3 class="hs-title"><span class="hs-live"></span>Últimas actualizaciones</h3>
+        <ol class="hs-timeline">
+            <% recentPosts.forEach(p => { const m = Math.max(1, Math.round((Date.now() - new Date(p.published_at)) / 60000)); %>
+            <li>
+                <time><%= m < 60 ? m + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d" %></time>
+                <a href="/article/<%= p.slug %>"><%= p.title %></a>
+                <% if (p.category) { %><span class="hs-cat"><%= p.category %></span><% } %>
+            </li>
+            <% }) %>
+        </ol>
+        <a href="/recent" class="hs-more">Todas las recientes →</a>
+    </section>
+    <% } %>
+
+    <% if (typeof mostRead !== "undefined" && mostRead && mostRead.length) { %>
+    <section class="hs-box">
+        <h3 class="hs-title">Más leídas en <%= userProv.nombre %></h3>
+        <ol class="hs-ranking">
+            <% mostRead.forEach((p, i) => { %>
+            <li><span class="hs-num"><%= i + 1 %></span><a href="/article/<%= p.slug %>"><%= p.title %></a></li>
+            <% }) %>
+        </ol>
+    </section>
+    <% } %>
+
+    <section class="hs-box hs-foryou">
+        <h3 class="hs-title">Seleccionado para ti</h3>
+        <p>Recomendaciones del algoritmo según tu zona y las secciones que consultas.</p>
+        <a href="/for-you" class="hs-btn">Abrir Para Ti</a>
+    </section>
+</aside>

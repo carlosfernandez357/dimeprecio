@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formularios y Calculadoras de Base de Datos por Servicio — PidePrecio.es</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
+
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main" style="padding:28px;">
+      <div style="margin-bottom:22px;">
+        <h1 style="margin:0 0 6px;font-size:25px;">📋 Formularios y Calculadoras en Base de Datos por Servicio</h1>
+        <p style="margin:0;color:#475569;font-size:14px;">
+          Cada servicio cuenta con su propio formulario y calculadora interactiva estipulados en la base de datos (<code>pp_sector_forms</code>) y renderizados directamente en las vistas EJS (por ejemplo, el <strong>Calculador de Frigorías</strong> en Climatización y Aire Acondicionado).
+        </p>
+      </div>
+
+      <!-- SELECTOR DE SECTOR PARA EDITAR SU FORMULARIO EN BD -->
+      <form method="GET" action="/admin/formularios" style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <label style="font-weight:700;font-size:13.5px;">Seleccionar Servicio / Sector en Base de Datos:</label>
+        <select name="sector" onchange="this.form.submit()" style="padding:9px 14px;border:1px solid #cbd5e1;border-radius:8px;min-width:300px;font-weight:700;">
+          <% allSectors.forEach(function(sec) { %>
+            <option value="<%= sec.slug %>" <%= selectedSector.slug === sec.slug ? 'selected' : '' %>><%= sec.icono %> <%= sec.nombre %></option>
+          <% }); %>
+        </select>
+        <a href="/pedir-presupuesto?provincia=madrid&sector=<%= selectedSector.slug %>#solicitar-presupuesto" target="_blank" style="color:#1d4ed8;font-weight:700;text-decoration:none;font-size:13px;">
+          ↗ Probar formulario y calculadora EJS de este servicio
+        </a>
+      </form>
+
+      <%
+        const calc = (currentForm && currentForm.calculadora_json) ? currentForm.calculadora_json : {};
+      %>
+
+      <!-- EDITOR DEL FORMULARIO Y CALCULADORA INTERACTIVA EN BASE DE DATOS -->
+      <div style="background:#fff;border:2px solid #0f172a;border-radius:14px;padding:24px;">
+        <h2 style="margin:0 0 16px;font-size:19px;color:#0f172a;">
+          <%= selectedSector.icono %> Configuración en Base de Datos para: <%= selectedSector.nombre %> (<code><%= selectedSector.slug %></code>)
+        </h2>
+
+        <form action="/admin/formularios/guardar" method="POST">
+          <input type="hidden" name="sector_slug" value="<%= selectedSector.slug %>">
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px;">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Ámbito Provincial en Base de Datos</label>
+              <select name="provincia_slug" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;">
+                <option value="todas">🇪🇸 Aplicar por defecto a las 52 provincias</option>
+                <% allLocations.forEach(function(loc) { %>
+                  <option value="<%= loc.slug %>">📍 Personalizar solo para <%= loc.nombre %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Título del Formulario EJS</label>
+              <input type="text" name="titulo_formulario" value="<%= currentForm.titulo_formulario %>" required style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;">
+            </div>
+          </div>
+
+          <!-- CONFIGURACIÓN DE LA CALCULADORA INTERACTIVA DEL SERVICIO -->
+          <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:16px;margin-bottom:18px;">
+            <div style="font-weight:800;font-size:14px;color:#0f172a;margin-bottom:10px;">
+              🧮 Calculadora Interactiva Asociada al Servicio en EJS (<code>calculadora_json</code>)
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Estado de la Calculadora</label>
+                <select name="calculadora_activa" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                  <option value="1" <%= calc.activa !== false ? 'selected' : '' %>>✅ Activa en el formulario EJS</option>
+                  <option value="0" <%= calc.activa === false ? 'selected' : '' %>>⏸️ Oculta</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Algoritmo de Cálculo por Defecto</label>
+                <select name="calculadora_tipo" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+                  <option value="frigorias" <%= calc.tipo === 'frigorias' ? 'selected' : '' %>>❄️ Calculador de Frigorías y Potencia (kW) — Aire Acondicionado</option>
+                  <option value="reforma_m2" <%= calc.tipo === 'reforma_m2' ? 'selected' : '' %>>🏗️ Calculador de Superficie (m²) y Partidas — Reformas</option>
+                  <option value="solar_kwp" <%= calc.tipo === 'solar_kwp' ? 'selected' : '' %>>☀️ Calculador de Paneles Solares y kWp — Energía Solar</option>
+                  <option value="pintura_m2" <%= calc.tipo === 'pintura_m2' ? 'selected' : '' %>>🎨 Calculador de Paramento m² y Alisado — Pintores</option>
+                  <option value="ventanas_unidades" <%= calc.tipo === 'ventanas_unidades' ? 'selected' : '' %>>🪟 Calculador de Ventanas PVC/Aluminio y Aislamiento</option>
+                  <option value="suelos_m2" <%= calc.tipo === 'suelos_m2' ? 'selected' : '' %>>🪵 Calculador de Suelo m² (+10% Merma) y Rodapié</option>
+                  <option value="mudanza_volumen" <%= calc.tipo === 'mudanza_volumen' ? 'selected' : '' %>>📦 Calculador de Volumen en m³ — Mudanzas</option>
+                  <option value="alcance_general" <%= (!calc.tipo || calc.tipo === 'alcance_general') ? 'selected' : '' %>>📋 Configurador Técnico de Alcance del Sector</option>
+                </select>
+              </div>
+              <div>
+                <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Título de la Calculadora</label>
+                <input type="text" name="calculadora_titulo" value="<%= calc.titulo || '' %>" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+              </div>
+            </div>
+            <div style="margin-top:10px;">
+              <label style="display:block;font-size:12px;font-weight:700;margin-bottom:4px;">Descripción / Instrucciones de la Calculadora</label>
+              <input type="text" name="calculadora_descripcion" value="<%= calc.descripcion || '' %>" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;">
+            </div>
+          </div>
+
+          <div style="margin-bottom:16px;">
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Instrucciones del Formulario para el Cliente</label>
+            <textarea name="instrucciones_cliente" rows="2" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;"><%= currentForm.instrucciones_cliente %></textarea>
+          </div>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:16px;">
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Etiqueta del campo de Explicación</label>
+              <input type="text" name="explicacion_label" value="<%= currentForm.explicacion_label %>" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;">
+            </div>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">Texto de ayuda (Placeholder) en la explicación</label>
+              <input type="text" name="explicacion_placeholder" value="<%= currentForm.explicacion_placeholder %>" style="width:100%;padding:9px;border:1px solid #cbd5e1;border-radius:8px;">
+            </div>
+          </div>
+
+          <%
+            const linesText = (currentForm.campos || []).map(function(c) {
+              const opts = Array.isArray(c.options || c.opciones) && (c.options || c.opciones).length > 0 ? (c.options || c.opciones).join(', ') : (c.placeholder || '');
+              return c.label + ' | ' + (c.type || c.tipo || 'text') + (opts ? ' | ' + opts : '');
+            }).join('\n');
+          %>
+          <div style="margin-bottom:18px;">
+            <label style="display:block;font-size:12.5px;font-weight:700;margin-bottom:4px;">
+              Preguntas del Formulario en Base de Datos (1 pregunta por línea: <code>Etiqueta de la pregunta | select o text | Opción 1, Opción 2...</code>)
+            </label>
+            <textarea name="campos_lineas" rows="5" style="width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:8px;font-family:monospace;font-size:13px;"><%= linesText %></textarea>
+          </div>
+
+          <button type="submit" style="background:#0f172a;color:#fff;border:none;padding:12px 24px;border-radius:8px;font-weight:800;font-size:14.5px;cursor:pointer;">
+            💾 Guardar Formulario y Calculadora en Base de Datos
+          </button>
+        </form>
+      </div>
+    </main>
+  </div>
+  <script src="/js/main.js"></script>
+</body>
+</html>

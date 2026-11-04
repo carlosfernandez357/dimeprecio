@@ -1,0 +1,39 @@
+<%
+const _cs = (typeof consent !== "undefined" && consent) ? consent : {};
+%>
+<link rel="stylesheet" href="/css/consent.css">
+<div id="sf-consent" class="sf-consent" role="dialog" aria-modal="false" aria-labelledby="sf-consent-title" <%= _cs.set ? "hidden style=\"display:none;\"" : "" %>>
+    <div class="sf-consent-box">
+        <h2 id="sf-consent-title" class="sf-consent-title">Valoramos tu privacidad</h2>
+        <p class="sf-consent-text">
+            Utilizamos cookies estrictamente necesarias para el funcionamiento del sitio y para recordar tu provincia. Con tu permiso, también usamos cookies para medir el tráfico y personalizar la recomendación de artículos según lo que lees. Puedes aceptar, rechazar o configurar tus preferencias en cualquier momento desde “Configurar cookies” en el pie de página. Más información en nuestra
+            <a href="/cookies">Política de Cookies</a> y <a href="/privacy">Política de Privacidad</a>.
+        </p>
+
+        <form class="sf-consent-prefs" hidden>
+            <label class="sf-consent-row">
+                <span><strong>Estrictamente necesarias</strong><small>Seguridad, provincia seleccionada y recordar tu preferencia de cookies.</small></span>
+                <input type="checkbox" checked disabled>
+            </label>
+            <label class="sf-consent-row">
+                <span><strong>Analítica</strong><small>Estadísticas anónimas de tráfico y páginas vistas.</small></span>
+                <input type="checkbox" name="a" <%= _cs.analytics ? "checked" : "" %>>
+            </label>
+            <label class="sf-consent-row">
+                <span><strong>Personalización</strong><small>Recordar los sectores y artículos que lees para recomendarte contenidos (“Para Ti”).</small></span>
+                <input type="checkbox" name="p" <%= _cs.personalization ? "checked" : "" %>>
+            </label>
+            <label class="sf-consent-row">
+                <span><strong>Publicidad</strong><small>Destacados personalizados y medición de anuncios internos.</small></span>
+                <input type="checkbox" name="m" <%= _cs.marketing ? "checked" : "" %>>
+            </label>
+        </form>
+
+        <div class="sf-consent-actions">
+            <button type="button" class="sf-btn sf-btn-ghost" data-consent="config">Configurar</button>
+            <button type="button" class="sf-btn sf-btn-ghost" data-consent="save" hidden>Guardar selección</button>
+            <button type="button" class="sf-btn sf-btn-secondary" data-consent="reject">Rechazar todo</button>
+            <button type="button" class="sf-btn sf-btn-primary" data-consent="accept">Aceptar todo</button>
+        </div>
+    </div>
+</div>

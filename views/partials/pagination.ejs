@@ -1,0 +1,44 @@
+<%
+/*
+ * Partial de paginación.
+ * Variables: pagination = { page, totalPages?|hasMore?, basePath, q? }
+ * Se muestra solo si hay página anterior o siguiente.
+ */
+const pg = (typeof pagination !== "undefined" && pagination) ? pagination : null;
+let prevUrl = null;
+let nextUrl = null;
+
+if (pg) {
+    const sep = pg.basePath.includes("?") ? "&" : "?";
+    const qPart = pg.q ? `q=${encodeURIComponent(pg.q)}&` : "";
+
+    if (pg.page > 1) prevUrl = `${pg.basePath}?${qPart}page=${pg.page - 1}`;
+    if (pg.totalPages ? pg.page < pg.totalPages : pg.hasMore) nextUrl = `${pg.basePath}?${qPart}page=${pg.page + 1}`;
+}
+%>
+
+<% if (prevUrl || nextUrl) { %>
+<nav class="pagination-nav" aria-label="Pagination" style="display:flex; justify-content:center; align-items:center; gap:16px; margin:32px 0;">
+    <% if (prevUrl) { %>
+    <a href="<%= prevUrl %>" rel="prev" class="pagination-link" style="padding:10px 18px; border-radius:8px; border:1px solid #333; color:#f5f5f5; text-decoration:none;">
+        ← Previous
+    </a>
+    <% } else { %>
+    <span></span>
+    <% } %>
+
+    <% if (pg && pg.page) { %>
+    <span style="color:#888; font-size:14px;">
+        Page <%= pg.page %><%= (pg.totalPages ? " of " + pg.totalPages : "") %>
+    </span>
+    <% } %>
+
+    <% if (nextUrl) { %>
+    <a href="<%= nextUrl %>" rel="next" class="pagination-link" style="padding:10px 18px; border-radius:8px; border:1px solid #333; color:#f5f5f5; text-decoration:none;">
+        Next →
+    </a>
+    <% } else { %>
+    <span></span>
+    <% } %>
+</nav>
+<% } %>

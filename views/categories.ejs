@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include('partials/seo') %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/home-extras.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <%- include("partials/header") %>
+
+    <% const userProv = typeof detectedProvince !== 'undefined' && detectedProvince ? detectedProvince : { slug: 'madrid', nombre: 'Madrid', modificador_precio_regional: 1 }; %>
+    <% const sectorsList = typeof sectorsWithPosts !== 'undefined' && sectorsWithPosts ? sectorsWithPosts : []; %>
+
+    <main id="categories-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+                <div class="listing-page-header">
+                    <span class="listing-page-label">
+                        <a href="/" style="color:inherit;text-decoration:none;">Inicio</a> · <a href="/<%= userProv.slug %>" style="color:inherit;text-decoration:none;">Zona <%= userProv.nombre %></a>
+                    </span>
+                    <h1 class="listing-page-title">Secciones y Servicios en <%= userProv.nombre %></h1>
+                    <p class="listing-page-description">
+                        Elige primero la sección de servicio en <strong><%= userProv.nombre %></strong> (<a href="/provincias" style="text-decoration:underline;">cambiar provincia</a>) para ver sus subservicios específicos y solicitar presupuesto.
+                    </p>
+                </div>
+
+                <div class="content-sidebar-layout">
+                    <div class="main-content">
+                        <% sectorsList.forEach(sec => { %>
+                        <section class="category-slider-section">
+                            <div class="section-header">
+                                <h2 class="section-title">
+                                    <a href="/<%= userProv.slug %>/<%= sec.slug %>" style="color:inherit;text-decoration:none;">
+                                        <%= sec.icono %> <%= sec.nombre %> en <%= userProv.nombre %>
+                                    </a>
+                                </h2>
+                                <a href="/<%= userProv.slug %>/<%= sec.slug %>" class="section-link">
+                                    Entrar a la sección →
+                                </a>
+                            </div>
+
+                            <% if (sec.posts && sec.posts.length > 0) { %>
+                            <div class="category-slider">
+                                <% sec.posts.forEach(post => { %>
+                                <article class="post-card category-slider-card">
+                                    <a href="/article/<%= post.slug %>">
+                                        <img
+                                            src="<%= post.image || post.featured_image || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&q=80' %>"
+                                            alt="<%= post.title %>"
+                                            class="post-image"
+                                        >
+                                        <div class="post-content">
+                                            <span class="post-category"><%= userProv.nombre %> · <%= sec.nombre %></span>
+                                            <h3 class="post-title"><%= post.title %></h3>
+                                            <span class="post-date">
+                                                <%= new Date(post.published_at || Date.now()).toLocaleDateString("es-ES", {
+                                                    year: "numeric",
+                                                    month: "short",
+                                                    day: "numeric"
+                                                }) %>
+                                            </span>
+                                        </div>
+                                    </a>
+                                </article>
+                                <% }) %>
+                            </div>
+                            <% } else { %>
+                            <p class="category-empty">
+                                <a href="/<%= userProv.slug %>/<%= sec.slug %>" style="font-weight:600;text-decoration:underline;">Ver servicios y tarifas de <%= sec.nombre %> en <%= userProv.nombre %> →</a>
+                            </p>
+                            <% } %>
+                        </section>
+                        <% }) %>
+                    </div>
+
+                    <aside class="sidebar" aria-label="Más secciones">
+                        <%- include('partials/sidebar', { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+                    </aside>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

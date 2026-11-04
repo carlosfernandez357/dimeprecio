@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel Central — Artículos IA, Interconexión SEO, Algoritmo y Clientes Captados</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
+
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main" style="padding:28px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:24px;">
+        <div>
+          <h1 style="margin:0 0 6px;font-size:26px;color:#0f172a;">Panel de Control SEO, Artículos IA y Captación</h1>
+          <p style="margin:0;color:#475569;font-size:14.5px;">
+            Crea artículos con IA interconectados por sector y provincia, fija o recomienda las páginas que quieras con el algoritmo y recibe a los clientes que rellenan el formulario al final de cada sector.
+          </p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="/admin/create-article" style="background:#0f172a;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13.5px;">🤖 Crear Artículo con IA</a>
+          <a href="/admin/anuncios" style="background:#1d4ed8;color:#fff;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13.5px;">🎯 Controlar Algoritmo y Fijados</a>
+          <a href="/admin/articles" style="background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:700;font-size:13.5px;">▤ Gestionar Artículos</a>
+        </div>
+      </div>
+
+      <!-- KPIs PRINCIPALES: SEO, INTERCONEXIÓN, ALGORITMO Y CLIENTES -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:28px;">
+        <div style="background:#fff;border:1px solid #dbeafe;border-left:5px solid #2563eb;border-radius:12px;padding:18px;">
+          <div style="font-size:12px;font-weight:800;color:#1d4ed8;text-transform:uppercase;">1. Artículos IA e Indexación SEO</div>
+          <div style="font-size:26px;font-weight:800;color:#0f172a;margin:8px 0;"><%= overview.totalPages %> Artículos</div>
+          <div style="font-size:12.5px;color:#475569;">
+            Interconectados con formulario del sector abajo · <a href="/sitemap.xml" target="_blank" style="color:#1d4ed8;font-weight:700;">Ver Sitemap XML ↗</a>
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #fef3c7;border-left:5px solid #f59e0b;border-radius:12px;padding:18px;">
+          <div style="font-size:12px;font-weight:800;color:#b45309;text-transform:uppercase;">2. Páginas y Anuncios Fijados / Recomendados</div>
+          <div style="font-size:26px;font-weight:800;color:#0f172a;margin:8px 0;">
+            📌 <%= overview.pinnedPages || 0 %> fijados · ⭐ <%= overview.selectedPages %> rec.
+          </div>
+          <div style="font-size:12.5px;color:#475569;">
+            + <strong><%= overview.selectedAds %> anuncios</strong> destacados por el algoritmo
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #ede9fe;border-left:5px solid #7c3aed;border-radius:12px;padding:18px;">
+          <div style="font-size:12px;font-weight:800;color:#6d28d9;text-transform:uppercase;">3. Red de Sectores × Provincias</div>
+          <div style="font-size:26px;font-weight:800;color:#0f172a;margin:8px 0;"><%= overview.totalSectors %> Sectores × <%= overview.totalProvinces %> Prov.</div>
+          <div style="font-size:12.5px;color:#475569;">
+            <strong><%= overview.totalCombinations.toLocaleString('es-ES') %></strong> páginas de sector interconectadas
+          </div>
+        </div>
+
+        <div style="background:#fff;border:1px solid #d1fae5;border-left:5px solid #10b981;border-radius:12px;padding:18px;">
+          <div style="font-size:12px;font-weight:800;color:#047857;text-transform:uppercase;">4. Clientes Captados (Formularios)</div>
+          <div style="font-size:26px;font-weight:800;color:#0f172a;margin:8px 0;"><%= overview.totalQuotes %> Clientes</div>
+          <div style="font-size:12.5px;color:#475569;">
+            <strong><%= overview.newQuotesInInbox %> nuevos</strong> pendientes de revisar en bandeja
+          </div>
+        </div>
+      </div>
+
+      <!-- ÚLTIMOS CLIENTES QUE HAN RELLENADO EL FORMULARIO DE UN ARTÍCULO / SECTOR -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;margin-bottom:28px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <h2 style="margin:0;font-size:19px;">📥 Últimos Clientes Captados desde los Formularios de Sector</h2>
+          <a href="/admin/presupuestos" style="color:#1d4ed8;font-weight:700;text-decoration:none;font-size:13.5px;">Ver todos los clientes →</a>
+        </div>
+        <div style="overflow-x:auto;">
+          <table style="width:100%;border-collapse:collapse;font-size:13.5px;">
+            <thead>
+              <tr style="border-bottom:2px solid #e2e8f0;text-align:left;color:#475569;">
+                <th style="padding:10px;">Cliente / Contacto</th>
+                <th style="padding:10px;">Provincia / Municipio</th>
+                <th style="padding:10px;">Sector y Artículo de Origen</th>
+                <th style="padding:10px;">Explicación de lo que necesita</th>
+                <th style="padding:10px;">Acción</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% (recentQuotes || []).slice(0, 6).forEach(function(q) { %>
+                <tr style="border-bottom:1px solid #f1f5f9;">
+                  <td style="padding:10px;">
+                    <strong><%= q.nombre_cliente %></strong><br>
+                    <a href="tel:<%= q.telefono_whatsapp %>" style="color:#15803d;font-weight:800;text-decoration:none;">📞 <%= q.telefono_whatsapp %></a>
+                  </td>
+                  <td style="padding:10px;"><strong><%= q.provincia_nombre %></strong><br><small style="color:#64748b;"><%= q.municipio %></small></td>
+                  <td style="padding:10px;">
+                    <strong><%= q.sector_nombre %></strong><br>
+                    <small style="color:#64748b;"><%= q.origen_titulo || '' %></small>
+                  </td>
+                  <td style="padding:10px;max-width:360px;"><%= String(q.explicacion_cliente || '').substring(0, 120) %></td>
+                  <td style="padding:10px;">
+                    <a href="/admin/presupuestos#quote-<%= q.id %>" style="color:#1d4ed8;font-weight:700;text-decoration:none;">Ver ficha completa →</a>
+                  </td>
+                </tr>
+              <% }); %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CONTROL RÁPIDO DE ARTÍCULOS CREADOS POR IA (FIJAR / RECOMENDAR) -->
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:14px;padding:22px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h2 style="margin:0;font-size:19px;">🤖 Artículos Recientes (Interconectados con Formulario del Sector)</h2>
+          <a href="/admin/articles" style="color:#1d4ed8;font-weight:700;text-decoration:none;font-size:13.5px;">Gestionar todos los artículos (<%= overview.totalPages %>) →</a>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;">
+          <% (recentPosts || []).slice(0, 6).forEach(function(p) { %>
+            <div style="border:1px solid #e2e8f0;border-radius:10px;padding:14px;background:#f8fafc;display:flex;flex-direction:column;justify-content:space-between;gap:10px;">
+              <div>
+                <div style="font-size:11px;font-weight:800;color:#1d4ed8;margin-bottom:4px;">
+                  <%= p.is_pinned ? '📌 FIJADO · ' : '' %><%= p.is_selected ? '⭐ RECOMENDADO · ' : '' %><%= p.provincia_nombre || 'España' %> · <%= p.sector_nombre || p.category_name %>
+                </div>
+                <a href="/article/<%= p.slug %>" target="_blank" style="color:#0f172a;font-weight:700;text-decoration:none;font-size:14px;line-height:1.35;display:block;">
+                  <%= p.title %>
+                </a>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+                <form method="POST" action="/admin/articles/<%= p.id %>/toggle" style="display:inline;">
+                  <input type="hidden" name="field" value="is_pinned">
+                  <button type="submit" style="border:1px solid #cbd5e1;background:<%= p.is_pinned ? '#0f172a' : '#fff' %>;color:<%= p.is_pinned ? '#fff' : '#0f172a' %>;padding:4px 8px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+                    📌 <%= p.is_pinned ? 'Fijado' : 'Fijar' %>
+                  </button>
+                </form>
+                <form method="POST" action="/admin/articles/<%= p.id %>/toggle" style="display:inline;">
+                  <input type="hidden" name="field" value="is_selected">
+                  <button type="submit" style="border:1px solid #cbd5e1;background:<%= p.is_selected ? '#dbeafe' : '#fff' %>;color:<%= p.is_selected ? '#1e40af' : '#0f172a' %>;padding:4px 8px;border-radius:6px;font-size:11.5px;font-weight:700;cursor:pointer;">
+                    ⭐ <%= p.is_selected ? 'Recomendado' : 'Recomendar' %>
+                  </button>
+                </form>
+                <a href="/article/<%= p.slug %>" target="_blank" style="margin-left:auto;font-size:12px;color:#1d4ed8;font-weight:700;text-decoration:none;">Ver página ↗</a>
+              </div>
+            </div>
+          <% }); %>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

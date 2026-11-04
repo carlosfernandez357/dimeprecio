@@ -1,0 +1,196 @@
+<%
+const userProv = (typeof detectedProvince !== "undefined" && detectedProvince)
+    ? detectedProvince
+    : { slug: "madrid", nombre: "Madrid" };
+const secUrl = c => {
+    const slug = String(c || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return "/" + userProv.slug + "/" + slug;
+};
+const ago = d => { const m = Math.max(1, Math.round((Date.now() - new Date(d)) / 60000)); return m < 60 ? m + " min" : m < 1440 ? Math.round(m / 60) + " h" : Math.round(m / 1440) + " d"; };
+%>
+<% if (x && part === 'top') { %>
+
+    <% if (x.ticker && x.ticker.length) { %>
+    <div class="hx-ticker" aria-label="Últimas guías y tarifas">
+        <span class="hx-ticker-label"><span class="hx-dot"></span><%= userProv.nombre %></span>
+        <div class="hx-ticker-track">
+            <div class="hx-ticker-move">
+                <% [0, 1].forEach(k => { x.ticker.forEach(p => { %>
+                <a href="/article/<%= p.slug %>" <%= k ? 'aria-hidden=true tabindex=-1' : '' %>><%= p.title %></a>
+                <% }) }) %>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+<% } %>
+
+<% if (x && part === 'intro') { %>
+<aside class="hx-intro" aria-label="Tu zona en PidePrecio.es">
+    <div class="hx-intro-glow"></div>
+    <span class="hx-intro-kicker">Zona detectada: 📍 <span data-pp-prov-label><%= userProv.nombre %></span></span>
+    <h2 class="hx-intro-title hx-grad">PidePrecio.es</h2>
+    <p>Entra primero en tu zona y sección para consultar las páginas más relevantes antes de solicitar tu presupuesto personalizado.</p>
+    <div class="hx-stats">
+        <div><strong data-hx-count="<%= x.totals.posts %>"><%= x.totals.posts %></strong><small>guías activas</small></div>
+        <div><strong data-hx-count="<%= x.totals.cats %>"><%= x.totals.cats %></strong><small>secciones</small></div>
+    </div>
+    <div class="hx-intro-links">
+        <a href="/<%= userProv.slug %>" data-pp-prov-link class="hs-btn">Entrar en <span data-pp-prov-label><%= userProv.nombre %></span> →</a>
+        <a href="/provincias" class="hx-ghost">Cambiar zona</a>
+    </div>
+</aside>
+<% } %>
+
+<% if (x && part === 'carousel') { %>
+    <% if (x.carousel && x.carousel.length >= 4) { %>
+    <section class="hx-section hx-reveal" aria-labelledby="hx-carousel-title">
+        <div class="content-container">
+            <div class="section-header">
+                <h2 class="section-title hx-grad" id="hx-carousel-title">Más consultados en <span data-pp-prov-label><%= userProv.nombre %></span></h2>
+                <a href="/<%= userProv.slug %>" data-pp-prov-link class="section-link">Ver zona →</a>
+            </div>
+        </div>
+        <div class="hx-marquee">
+            <div class="hx-marquee-move">
+                <% [0, 1].forEach(k => { x.carousel.forEach(p => { %>
+                <a class="hx-mcard" href="/article/<%= p.slug %>" <%= k ? 'aria-hidden=true tabindex=-1' : '' %>>
+                    <img src="<%= p.image || '/images/noimage.jpg' %>" alt="<%= k ? '' : p.title %>" loading="lazy" onerror="this.onerror=null;this.src='/images/noimage.jpg';">
+                    <span class="hx-mcard-body">
+                        <% if (p.category) { %><span class="hx-chip"><%= p.category %></span><% } %>
+                        <strong><%= p.title %></strong>
+                    </span>
+                </a>
+                <% }) }) %>
+            </div>
+        </div>
+    </section>
+    <% } %>
+
+<% } %>
+
+<% if (x && part === 'latest') { %>
+    <% if (x.recommended && x.recommended.posts && x.recommended.posts.length) { %>
+    <div class="hx-rec hx-reveal">
+        <div class="section-header">
+            <h3 class="section-title"><span class="hx-star">★</span> Recomendado en <%= userProv.nombre %>: <%= x.recommended.name %></h3>
+            <a href="/<%= userProv.slug %>/<%= x.recommended.slug || '' %>" class="section-link">Entrar en sección →</a>
+        </div>
+        <div class="hx-rec-grid">
+            <% x.recommended.posts.forEach(p => { %>
+            <a class="hx-rec-card" href="/article/<%= p.slug %>" data-rec-pl="home_rec" data-pid="<%= p.id %>">
+                <img src="<%= p.image || '/images/noimage.jpg' %>" alt="<%= p.title %>" loading="lazy" onerror="this.onerror=null;this.src='/images/noimage.jpg';">
+                <strong><%= p.title %></strong>
+                <small>hace <%= ago(p.published_at) %></small>
+            </a>
+            <% }) %>
+        </div>
+    </div>
+    <% } %>
+
+    <% if (x.catStats && x.catStats.length) { const maxC = Math.max(...x.catStats.map(c => Number(c.total))); %>
+    <div class="hx-cats hx-reveal">
+        <h3 class="hs-title">Secciones principales en <span data-pp-prov-label><%= userProv.nombre %></span></h3>
+        <div class="hx-cats-grid">
+            <% x.catStats.forEach((c, i) => { %>
+            <a class="hx-cat" href="/<%= userProv.slug %>/<%= c.slug || '' %>" style="--h:<%= (i * 47) % 360 %>;--w:<%= Math.round(Number(c.total) / maxC * 100) %>%">
+                <span class="hx-cat-name"><%= c.name %></span>
+                <span class="hx-cat-num"><%= c.total %></span>
+                <span class="hx-cat-bar"></span>
+            </a>
+            <% }) %>
+        </div>
+    </div>
+    <% } %>
+<% } %>
+
+<% if (x && part === 'bottom') { %>
+
+    <% (x.duoPairs || []).forEach((pair, pi) => { %>
+    <section class="hx-section hx-reveal">
+        <div class="content-container hx-duo">
+            <% pair.forEach((c, side) => { %>
+            <div class="hx-duo-col hx-duo-<%= side ? 'right' : 'left' %>">
+                <div class="section-header">
+                    <h2 class="section-title"><span class="hx-bar"></span><%= c.name %></h2>
+                    <a href="/<%= userProv.slug %>/<%= c.slug || '' %>" class="section-link">Ver sección →</a>
+                </div>
+                <% const lead = c.posts[0]; if (lead) { %>
+                <a class="hx-duo-lead" href="/article/<%= lead.slug %>" data-rec-pl="home_duo" data-pid="<%= lead.id %>">
+                    <img src="<%= lead.image || '/images/noimage.jpg' %>" alt="<%= lead.title %>" loading="lazy" onerror="this.onerror=null;this.src='/images/noimage.jpg';">
+                    <span class="hx-duo-lead-body"><strong><%= lead.title %></strong><small>hace <%= ago(lead.published_at) %></small></span>
+                </a>
+                <ul class="hx-duo-list">
+                    <% c.posts.slice(1).forEach(p => { %>
+                    <li><a href="/article/<%= p.slug %>"><%= p.title %></a><small><%= ago(p.published_at) %></small></li>
+                    <% }) %>
+                </ul>
+                <% } %>
+            </div>
+            <% }) %>
+        </div>
+    </section>
+
+    <% if (pi === 0 && x.spotlight && x.spotlight.posts && x.spotlight.posts.length) { %>
+    <section class="hx-section hx-reveal" aria-label="<%= x.spotlight.name %> destacado">
+        <div class="content-container hx-split">
+            <div>
+                <div class="section-header">
+                    <h2 class="section-title hx-grad"><%= x.spotlight.name %> en <%= userProv.nombre %></h2>
+                    <a href="/<%= userProv.slug %>/<%= x.spotlight.slug || '' %>" class="section-link">Ver todo</a>
+                </div>
+                <div class="hx-spot-grid">
+                    <% x.spotlight.posts.slice(0, 4).forEach((p, i) => { %>
+                    <a class="hx-spot hx-spot-<%= i %>" href="/article/<%= p.slug %>" data-rec-pl="home_spot" data-pid="<%= p.id %>">
+                        <img src="<%= p.image || '/images/noimage.jpg' %>" alt="<%= p.title %>" loading="lazy" onerror="this.onerror=null;this.src='/images/noimage.jpg';">
+                        <span><strong><%= p.title %></strong><% if (i === 0 && p.excerpt) { %><em><%= p.excerpt %></em><% } %></span>
+                    </a>
+                    <% }) %>
+                </div>
+            </div>
+            <aside class="hx-side">
+                <h3 class="hs-title">Más relevantes ahora</h3>
+                <ol class="hx-pop">
+                    <% (x.popular || []).forEach((p, i) => { %>
+                    <li style="--d:<%= i * 80 %>ms"><span><%= String(i + 1).padStart(2, "0") %></span><a href="/article/<%= p.slug %>"><%= p.title %></a></li>
+                    <% }) %>
+                </ol>
+            </aside>
+        </div>
+    </section>
+    <% } %>
+    <% }) %>
+
+    <% if (x.discover && x.discover.length >= 5) { %>
+    <section class="hx-section hx-reveal" aria-labelledby="hx-discover-title">
+        <div class="content-container <%= (x.recentMore && x.recentMore.length) ? 'hx-left-split' : '' %>">
+            <% if (x.recentMore && x.recentMore.length) { %>
+            <aside class="hx-side hx-recent">
+                <h3 class="hs-title">Recientes</h3>
+                <ul>
+                    <% x.recentMore.forEach(p => { %>
+                    <li><small><%= ago(p.published_at) %></small><a href="/article/<%= p.slug %>"><%= p.title %></a></li>
+                    <% }) %>
+                </ul>
+                <a href="/recent" class="hs-more">Todas las recientes →</a>
+            </aside>
+            <% } %>
+            <div>
+            <div class="section-header">
+                <h2 class="section-title hx-grad" id="hx-discover-title">Descubrir en <%= userProv.nombre %></h2>
+                <a href="/for-you" class="section-link">Para Ti →</a>
+            </div>
+            <div class="hx-mosaic" data-hx-mosaic>
+                <% x.discover.forEach((p, i) => { %>
+                <a class="hx-tile hx-tile-<%= i %>" href="/article/<%= p.slug %>" data-rec-pl="home_discover" data-pid="<%= p.id %>">
+                    <img src="<%= p.image || '/images/noimage.jpg' %>" alt="<%= p.title %>" loading="lazy" onerror="this.onerror=null;this.src='/images/noimage.jpg';">
+                    <span><% if (p.category) { %><span class="hx-chip"><%= p.category %></span><% } %><strong><%= p.title %></strong></span>
+                </a>
+                <% }) %>
+            </div>
+            </div>
+        </div>
+    </section>
+    <% } %>
+
+<% } %>

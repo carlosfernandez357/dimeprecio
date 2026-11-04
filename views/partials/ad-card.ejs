@@ -1,0 +1,29 @@
+<% if (typeof ad !== 'undefined' && ad) { %>
+  <article class="pp-ad-card <%= ad.modelo_negocio === 'espacio_destacado' ? 'pp-ad-featured' : '' %> <%= ad.seleccionado ? 'pp-ad-selected' : '' %>" data-ad-id="<%= ad.id %>">
+    <div class="pp-ad-top">
+      <span class="pp-ad-badge"><%= ad.badge || 'Anuncio Oficial PidePrecio.es' %></span>
+      <span class="pp-ad-seal"><%= ad.sello || ('Verificado · ' + (ad.provincia_nombre || 'España')) %></span>
+    </div>
+    <h3 class="pp-ad-title">
+      <a href="#solicitar-presupuesto" onclick="if(window.openPidePrecioForm){window.openPidePrecioForm({anuncioId:'<%= ad.id %>',provinciaSlug:'<%= ad.provincia_slug %>',sectorSlug:'<%= ad.sector_slug %>'});return false;}">
+        <%= ad.sector_icono || '📋' %> <%= ad.titulo %>
+      </a>
+    </h3>
+    <p class="pp-ad-sub"><%= ad.subtitulo %></p>
+    <% if (Array.isArray(ad.municipios_cubiertos) && ad.municipios_cubiertos.length > 0) { %>
+      <div class="pp-ad-zones">
+        📍 Cobertura directa: <strong><%= ad.municipios_cubiertos.slice(0, 4).join(', ') %></strong>
+      </div>
+    <% } %>
+    <div class="pp-ad-footer">
+      <span class="pp-ad-brand">🛡️ <%= ad.marca_visible || 'PidePrecio.es — Anuncio Oficial' %></span>
+      <button
+        type="button"
+        class="pp-ad-cta"
+        onclick="if(window.openPidePrecioForm){window.openPidePrecioForm({anuncioId:'<%= ad.id %>',provinciaSlug:'<%= ad.provincia_slug %>',sectorSlug:'<%= ad.sector_slug %>'});}else{window.location.href='/provincia/<%= ad.provincia_slug %>/<%= ad.sector_slug %>#solicitar-presupuesto';}"
+      >
+        <%= ad.cta_texto || 'Solicitar Presupuesto Ahora' %> →
+      </button>
+    </div>
+  </article>
+<% } %>

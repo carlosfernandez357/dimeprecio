@@ -1,0 +1,54 @@
+<%- include('partials/page-start', { seo: {
+    title: (typeof pageTitle !== 'undefined' && pageTitle ? pageTitle + ' - SocialsForce' : 'Page not found - SocialsForce'),
+    description: 'The page you are looking for does not exist on SocialsForce.',
+    canonical: 'https://socialsforce.com/404',
+    robots: 'noindex, follow'
+} }) %>
+
+    <main id="notfound-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+                <div class="listing-page-header">
+                    <span class="listing-page-label">
+                        <%= (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : '404' %>
+                    </span>
+                    <h1 class="listing-page-title">
+                        <%= (typeof message !== 'undefined' && message) ? message : 'Page not found' %>
+                    </h1>
+                    <p class="listing-page-description">
+                        The page you are looking for does not exist or has been moved.
+                    </p>
+                </div>
+
+                <div class="content-sidebar-layout">
+                    <div class="main-content">
+
+                        <form action="/search" method="GET" style="margin-bottom: 24px;">
+                            <input
+                                type="text"
+                                name="q"
+                                placeholder="Search news..."
+                                style="padding: 10px 14px; border-radius: 8px; border: 1px solid #333; background: #1a1a1a; color: #f5f5f5; width: 70%; max-width: 420px;"
+                            >
+                            <button type="submit" style="padding: 10px 18px; border-radius: 8px; border: none; background: #3b82f6; color: #fff; cursor: pointer;">
+                                Search
+                            </button>
+                        </form>
+
+                        <p>
+                            You can go back to
+                            <a href="/">the homepage</a>,
+                            check the <a href="/trending">trending articles</a>
+                            or browse the <a href="/categories">categories</a>.
+                        </p>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

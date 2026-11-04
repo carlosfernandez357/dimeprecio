@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <main id="category-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+
+                <div class="listing-page-header" style="margin-bottom:10px;">
+                    <span class="listing-page-label">
+                        <a href="/<%= province.slug %>" style="text-decoration:underline;">📍 <%= province.nombre %></a> ›
+                        <a href="/<%= province.slug %>/<%= sector.slug %>" style="text-decoration:underline;"><%= sector.nombre %></a> ›
+                        Presupuesto
+                    </span>
+
+                    <% const svcSel = typeof servicioSeleccionado !== 'undefined' ? servicioSeleccionado : (typeof servicioPreseleccionado !== 'undefined' ? servicioPreseleccionado : ''); %>
+                    <% const adSel = typeof activeAdId !== 'undefined' ? activeAdId : ''; %>
+                    <h1 class="listing-page-title">
+                        <%= svcSel ? (svcSel + ' en ' + province.nombre) : (sector.nombre + ' en ' + province.nombre) %>
+                    </h1>
+                </div>
+
+                <div class="content-sidebar-layout">
+                    <div class="main-content">
+                        <%- include("partials/quote-form", {
+                            currentProvince: province,
+                            currentSector: sector,
+                            customForm: customForm,
+                            servicioSeleccionado: svcSel,
+                            activeAdId: adSel
+                        }) %>
+                    </div>
+
+                    <aside class="sidebar" aria-label="Más artículos">
+                        <%- include("partials/sidebar", { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+                    </aside>
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

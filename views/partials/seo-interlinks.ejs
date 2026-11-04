@@ -1,0 +1,83 @@
+<%
+  const mesh = (typeof seoInterlinks !== 'undefined' && seoInterlinks) ? seoInterlinks : null;
+  if (mesh) {
+    const prov = mesh.province || { slug: 'madrid', nombre: 'Madrid' };
+    const sec = mesh.sector || { slug: 'reformas-integrales', nombre: 'Reformas Integrales y Baños/Cocinas', icono: '🏗️' };
+    const sameSectorPosts = Array.isArray(mesh.sameSectorProvincePosts) ? mesh.sameSectorProvincePosts : [];
+    const sameProvOtherPosts = Array.isArray(mesh.sameProvinceOtherSectorPosts) ? mesh.sameProvinceOtherSectorPosts : [];
+    const relSectors = Array.isArray(mesh.relatedSectorsInProvince) ? mesh.relatedSectorsInProvince : [];
+    const otherProvs = Array.isArray(mesh.sameSectorOtherProvinces) ? mesh.sameSectorOtherProvinces : [];
+%>
+<nav aria-label="Red de artículos y sectores interconectados para SEO" style="margin-top:38px;padding-top:26px;border-top:1px solid #e5e5e5;">
+  <div style="margin-bottom:22px;">
+    <span style="display:inline-block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#666;margin-bottom:6px;">
+      🔗 Red de Contenidos Conectados · <%= sec.nombre %> y <%= prov.nombre %>
+    </span>
+    <h3 style="font-size:18px;font-weight:800;color:#171717;margin:0 0 12px;">
+      Más artículos y soluciones conectadas en <a href="/<%= prov.slug %>" style="text-decoration:underline;"><%= prov.nombre %></a>
+    </h3>
+
+    <% if (sameSectorPosts.length > 0) { %>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px;margin-bottom:20px;">
+      <% sameSectorPosts.slice(0, 4).forEach(function(item) { %>
+        <a href="/article/<%= item.slug %>" style="display:block;padding:14px;border:1px solid #eaeaea;border-radius:8px;background:#fafafa;text-decoration:none;color:#171717;">
+          <span style="font-size:11px;font-weight:700;color:#555;display:block;margin-bottom:4px;">
+            <%= item.is_pinned ? '📌 Fijado · ' : (item.is_selected ? '⭐ Recomendado · ' : '') %><%= item.provincia_nombre || prov.nombre %> · <%= item.sector_nombre || sec.nombre %>
+          </span>
+          <strong style="font-size:14px;line-height:1.35;display:block;"><%= item.title %></strong>
+        </a>
+      <% }) %>
+    </div>
+    <% } %>
+
+    <% if (sameProvOtherPosts.length > 0) { %>
+    <div style="margin-bottom:18px;">
+      <div style="font-size:12.5px;font-weight:700;color:#444;margin-bottom:8px;">
+        Otros artículos recomendados en <%= prov.nombre %>:
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px;">
+        <% sameProvOtherPosts.slice(0, 4).forEach(function(item) { %>
+          <a href="/article/<%= item.slug %>" style="display:block;padding:11px 13px;border:1px solid #efefef;border-radius:6px;background:#fff;text-decoration:none;color:#171717;font-size:13.5px;">
+            <span style="color:#666;font-size:11.5px;display:block;"><%= item.sector_nombre || item.category %></span>
+            <strong><%= item.title %></strong>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (relSectors.length > 0) { %>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:12.5px;font-weight:700;color:#444;margin-bottom:8px;">
+        Sectores relacionados en <%= prov.nombre %>:
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">
+        <a href="/<%= prov.slug %>/<%= sec.slug %>" class="sidebar-pill" style="font-weight:700;background:#171717;color:#fff;">
+          <%= sec.icono || '•' %> <%= sec.nombre %> en <%= prov.nombre %>
+        </a>
+        <% relSectors.forEach(function(rs) { %>
+          <a href="<%= rs.url %>" class="sidebar-pill">
+            <%= rs.icono || '•' %> <%= rs.anchorText %>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+
+    <% if (otherProvs.length > 0) { %>
+    <div>
+      <div style="font-size:12px;font-weight:700;color:#666;margin-bottom:6px;">
+        <%= sec.nombre %> en otras provincias:
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;">
+        <% otherProvs.forEach(function(op) { %>
+          <a href="<%= op.url %>" style="font-size:12px;color:#555;padding:4px 9px;border:1px solid #e5e5e5;border-radius:4px;text-decoration:none;">
+            <%= op.anchorText %>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</nav>
+<% } %>

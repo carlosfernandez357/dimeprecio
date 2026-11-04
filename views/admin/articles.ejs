@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Artículos, Interconexión SEO y Páginas Fijadas | PidePrecio.es</title>
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+
+<body>
+
+    <%- include("partials/header") %>
+
+    <div class="admin-layout">
+
+        <%- include("partials/sidebar") %>
+
+        <main class="admin-main" style="padding:28px;">
+
+            <div class="admin-page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:22px;">
+                <div>
+                    <h1 style="margin:0 0 6px;">Artículos IA, Interconexión SEO y Páginas Fijadas</h1>
+                    <p style="margin:0;color:#475569;">
+                        Cada artículo está conectado con su Provincia y Sector, incluye al final el formulario exclusivo de ese sector y enlaza automáticamente con otros artículos relacionados. Desde aquí puedes <strong>📌 Fijar</strong> o <strong>⭐ Recomendar</strong> cualquier página con el algoritmo.
+                    </p>
+                </div>
+
+                <div style="display:flex;gap:10px;">
+                    <a href="/admin/anuncios" class="admin-secondary-button" style="padding:10px 16px;border:1px solid #cbd5e1;border-radius:8px;text-decoration:none;color:#0f172a;font-weight:700;">
+                        🎯 Configurar Algoritmo
+                    </a>
+                    <a href="/admin/create-article" class="admin-primary-button">
+                        ＋ Crear Artículo con IA
+                    </a>
+                </div>
+            </div>
+
+            <section class="admin-section">
+
+                <div class="table-container">
+
+                    <table class="admin-table articles-table">
+
+                        <thead>
+                            <tr>
+                                <th>Artículo y Enlace SEO</th>
+                                <th>Provincia · Sector (Formulario inferior)</th>
+                                <th>Algoritmo (Fijar / Recomendar / Peso)</th>
+                                <th>Visitas</th>
+                                <th>Indexación SEO</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+
+                            <% articles.forEach(post => { %>
+
+                                <tr style="<%= post.is_pinned ? 'background:#fefce8;' : '' %>">
+
+                                    <td>
+                                        <div class="admin-article-info">
+                                            <div class="admin-article-image">
+                                                <% if (post.image || post.featured_image) { %>
+                                                    <img
+                                                        src="<%= post.image || post.featured_image %>"
+                                                        alt="<%= post.title %>"
+                                                    >
+                                                <% } else { %>
+                                                    <div class="admin-article-no-image">Sin imagen</div>
+                                                <% } %>
+                                            </div>
+
+                                            <div class="article-table-title">
+                                                <strong>
+                                                    <% if (post.is_pinned) { %><span style="color:#b45309;">📌 [FIJADO]</span> <% } %>
+                                                    <%= post.title %>
+                                                </strong>
+                                                <span>
+                                                    <a href="/article/<%= post.slug %>" target="_blank" style="color:#2563eb;text-decoration:underline;">/article/<%= post.slug %> ↗</a>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <form method="POST" action="/admin/articles/<%= post.id %>/algorithm" style="display:flex;flex-direction:column;gap:6px;">
+                                            <div style="display:flex;gap:6px;">
+                                                <select name="provincia_slug" onchange="this.form.submit()" style="padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;">
+                                                    <% (allLocations || []).forEach(function(loc) { %>
+                                                        <option value="<%= loc.slug %>" <%= post.provincia_slug === loc.slug ? 'selected' : '' %>><%= loc.nombre %></option>
+                                                    <% }) %>
+                                                </select>
+                                                <select name="sector_slug" onchange="this.form.submit()" style="padding:5px 7px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;max-width:190px;">
+                                                    <% (allSectors || []).forEach(function(sec) { %>
+                                                        <option value="<%= sec.slug %>" <%= post.sector_slug === sec.slug ? 'selected' : '' %>><%= sec.nombre %></option>
+                                                    <% }) %>
+                                                </select>
+                                            </div>
+                                            <small style="font-size:11px;color:#64748b;">
+                                                Cluster: <a href="/<%= post.provincia_slug || 'madrid' %>/<%= post.sector_slug || 'reformas-integrales' %>" target="_blank" style="color:#2563eb;">/<%= post.provincia_slug || 'madrid' %>/<%= post.sector_slug || 'reformas-integrales' %></a>
+                                            </small>
+                                        </form>
+                                    </td>
+
+                                    <td>
+                                        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                                            <form method="POST" action="/admin/articles/<%= post.id %>/toggle" style="display:inline;">
+                                                <input type="hidden" name="field" value="is_pinned">
+                                                <button type="submit" style="padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;font-weight:700;cursor:pointer;background:<%= post.is_pinned ? '#0f172a' : '#fff' %>;color:<%= post.is_pinned ? '#fff' : '#0f172a' %>;">
+                                                    📌 <%= post.is_pinned ? 'Fijado' : 'Fijar' %>
+                                                </button>
+                                            </form>
+
+                                            <form method="POST" action="/admin/articles/<%= post.id %>/toggle" style="display:inline;">
+                                                <input type="hidden" name="field" value="is_selected">
+                                                <button type="submit" style="padding:5px 10px;border-radius:6px;border:1px solid #cbd5e1;font-size:12px;font-weight:700;cursor:pointer;background:<%= post.is_selected ? '#dbeafe' : '#fff' %>;color:<%= post.is_selected ? '#1e40af' : '#334155' %>;">
+                                                    ⭐ <%= post.is_selected ? 'Recomendado' : 'Recomendar' %>
+                                                </button>
+                                            </form>
+
+                                            <form method="POST" action="/admin/articles/<%= post.id %>/algorithm" style="display:inline-flex;align-items:center;gap:4px;">
+                                                <label style="font-size:11px;color:#64748b;">Peso:</label>
+                                                <input
+                                                    type="number"
+                                                    name="priority_weight"
+                                                    min="1"
+                                                    max="10"
+                                                    value="<%= post.priority_weight || 7 %>"
+                                                    onchange="this.form.submit()"
+                                                    style="width:48px;padding:4px 6px;border:1px solid #cbd5e1;border-radius:6px;font-size:12px;font-weight:700;"
+                                                >
+                                            </form>
+                                        </div>
+                                    </td>
+
+                                    <td>
+                                        <%= Number(post.views || 0).toLocaleString('es-ES') %>
+                                    </td>
+
+                                    <td>
+                                        <span class="index-status index-status-indexed">
+                                            <span></span>
+                                            Indexado + Schema
+                                        </span>
+                                    </td>
+
+                                    <td>
+                                        <div class="table-actions">
+                                            <a
+                                                href="/article/<%= post.slug %>"
+                                                target="_blank"
+                                                class="table-button view-button"
+                                            >
+                                                Ver
+                                            </a>
+
+                                            <a
+                                                href="/admin/edit-article/<%= post.id %>"
+                                                class="table-button edit-button"
+                                            >
+                                                Editar
+                                            </a>
+
+                                            <form
+                                                action="/admin/articles/<%= post.id %>/delete"
+                                                method="POST"
+                                                onsubmit="return confirm('¿Eliminar este artículo?')"
+                                            >
+                                                <button
+                                                    type="submit"
+                                                    class="table-button delete-button"
+                                                >
+                                                    Borrar
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+
+                                </tr>
+
+                            <% }) %>
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+</body>
+</html>

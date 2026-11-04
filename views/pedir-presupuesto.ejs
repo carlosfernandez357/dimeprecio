@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <%
+      const provs = (typeof allLocations !== 'undefined' && Array.isArray(allLocations)) ? allLocations : [];
+      const secs = (typeof allSectors !== 'undefined' && Array.isArray(allSectors)) ? allSectors : [];
+      const activeProv = (typeof currentProvince !== 'undefined' && currentProvince)
+        ? currentProvince
+        : (typeof detectedProvince !== 'undefined' && detectedProvince ? detectedProvince : provs[0]);
+      const activeSec = (typeof currentSector !== 'undefined' && currentSector)
+        ? currentSector
+        : secs[0];
+      const activeZone = (typeof selectedZone !== 'undefined' && selectedZone)
+        ? selectedZone
+        : ((activeProv && activeProv.municipios && activeProv.municipios[0]) || activeProv.nombre);
+      const topProvsSlugs = ['madrid', 'barcelona', 'valencia', 'sevilla', 'zaragoza', 'malaga', 'murcia', 'alicante', 'vizcaya', 'a-coruna', 'las-palmas', 'baleares'];
+      const topProvsList = topProvsSlugs.map(s => provs.find(p => p.slug === s)).filter(Boolean);
+    %>
+
+    <main id="pedir-presupuesto-page" style="padding:28px 0 60px;">
+        <div class="content-container">
+
+            <!-- CABECERA EDITORIAL NAVEGABLE -->
+            <div style="border-bottom:1px solid #eaeaea;padding-bottom:20px;margin-bottom:26px;">
+                <span class="post-category" style="display:block;margin-bottom:6px;">
+                    📋 CENTRAL DE SOLICITUDES POR ZONA Y SERVICIO · PIDEPRECIO.ES
+                </span>
+                <h1 style="font-size:32px;letter-spacing:-0.6px;margin:0 0 10px;color:#171717;">
+                    Pedir Presupuesto: Elige tu Provincia, Zona y Servicio
+                </h1>
+                <p style="color:#555;font-size:15.5px;margin:0;max-width:820px;line-height:1.55;">
+                    Navega de forma interactiva por las <strong>52 provincias</strong>, selecciona el <strong>barrio o municipio de tu provincia</strong> y elige el <strong>servicio</strong> para abrir su formulario específico de base de datos y su calculadora técnica (por ejemplo, el <em>Calculador de Frigorías</em> en Aire Acondicionado o el <em>Calculador de m²</em> en Reformas).
+                </p>
+            </div>
+
+            <!-- NAVEGADOR INTERACTIVO EN 3 PASOS (PROVINCIA -> ZONAS DE LA PROVINCIA -> SERVICIOS DE LA ZONA) -->
+            <div style="display:grid;grid-template-columns:1fr;gap:22px;margin-bottom:28px;">
+
+                <!-- PASO 1: SELECCIONAR PROVINCIA (52 PROVINCIAS) -->
+                <section style="background:#ffffff;border:1px solid #e5e5e5;border-radius:12px;padding:22px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                        <div>
+                            <span style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#666;letter-spacing:0.05em;">Paso 1 de 3</span>
+                            <h2 style="font-size:20px;margin:2px 0 0;color:#171717;">
+                                1. Selecciona tu Provincia (Activa: <span id="ppStep1ProvLabel"><%= activeProv.nombre %></span>)
+                            </h2>
+                        </div>
+                        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                            <input
+                                type="search"
+                                id="ppProvinceFilterInput"
+                                placeholder="Filtrar entre las 52 provincias..."
+                                style="padding:8px 12px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;min-width:230px;"
+                            >
+                            <button
+                                type="button"
+                                id="ppToggleAllProvsBtn"
+                                style="background:#f4f4f5;border:1px solid #d4d4d8;border-radius:6px;padding:8px 12px;font-size:12.5px;font-weight:700;cursor:pointer;"
+                            >
+                                Ver las 52 provincias ⌄
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Provincias principales de acceso rápido -->
+                    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+                        <% topProvsList.forEach(function(loc) {
+                             const isCurrent = loc.slug === activeProv.slug;
+                        %>
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= loc.slug %>&sector=<%= activeSec.slug %>"
+                                data-prov-select="<%= loc.slug %>"
+                                class="pp-prov-btn"
+                                style="text-decoration:none;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;border:1px solid <%= isCurrent ? '#171717' : '#d4d4d8' %>;background:<%= isCurrent ? '#171717' : '#ffffff' %>;color:<%= isCurrent ? '#ffffff' : '#171717' %>;"
+                            >
+                                📍 <%= loc.nombre %>
+                            </a>
+                        <% }); %>
+                    </div>
+
+                    <!-- Desplegable / Grid completo de las 52 provincias de España -->
+                    <div id="ppAllProvincesGrid" style="display:none;margin-top:14px;padding-top:14px;border-top:1px solid #eeeeee;grid-template-columns:repeat(auto-fill,minmax(165px,1fr));gap:8px;">
+                        <% provs.forEach(function(loc) {
+                             const isCurrent = loc.slug === activeProv.slug;
+                        %>
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= loc.slug %>&sector=<%= activeSec.slug %>"
+                                data-prov-select="<%= loc.slug %>"
+                                data-prov-name="<%= loc.nombre.toLowerCase() %>"
+                                class="pp-prov-grid-item"
+                                style="text-decoration:none;padding:8px 11px;border-radius:8px;font-size:13px;font-weight:600;border:1px solid <%= isCurrent ? '#171717' : '#e5e5e5' %>;background:<%= isCurrent ? '#171717' : '#fafafa' %>;color:<%= isCurrent ? '#ffffff' : '#171717' %>;display:flex;align-items:center;justify-content:space-between;"
+                            >
+                                <span><%= loc.nombre %></span>
+                                <span style="font-size:11px;opacity:0.75;"><%= (loc.municipios || []).length %> zonas</span>
+                            </a>
+                        <% }); %>
+                    </div>
+                </section>
+
+                <!-- PASO 2: ZONAS Y MUNICIPIOS DE LA PROVINCIA ELEGIDA -->
+                <section style="background:#ffffff;border:1px solid #e5e5e5;border-radius:12px;padding:22px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+                        <div>
+                            <span style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#666;letter-spacing:0.05em;">Paso 2 de 3</span>
+                            <h2 style="font-size:20px;margin:2px 0 0;color:#171717;">
+                                2. Zonas, Distritos y Municipios en <span id="ppStep2ProvLabel"><%= activeProv.nombre %></span>
+                            </h2>
+                        </div>
+                        <a href="/<%= activeProv.slug %>" style="font-size:13px;font-weight:600;color:#171717;text-decoration:underline;">
+                            Ver portada y artículos de <%= activeProv.nombre %> →
+                        </a>
+                    </div>
+                    <p style="margin:0 0 12px;font-size:13.5px;color:#555;">
+                        Haz clic en tu zona dentro de <strong><%= activeProv.nombre %></strong> para seleccionarla en el formulario:
+                    </p>
+                    <div id="ppStep2ZonesContainer" style="display:flex;gap:8px;flex-wrap:wrap;">
+                        <% (activeProv.municipios || [activeProv.nombre]).forEach(function(mun) {
+                             const isSel = mun === activeZone;
+                        %>
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= activeProv.slug %>&zona=<%= encodeURIComponent(mun) %>&sector=<%= activeSec.slug %>#solicitar-presupuesto"
+                                data-step2-zone="<%= mun %>"
+                                class="pp-step2-zone-btn"
+                                style="text-decoration:none;padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600;border:1px solid <%= isSel ? '#171717' : '#d4d4d8' %>;background:<%= isSel ? '#171717' : '#f8fafc' %>;color:<%= isSel ? '#ffffff' : '#171717' %>;"
+                            >
+                                📍 <%= mun %>
+                            </a>
+                        <% }); %>
+                    </div>
+                </section>
+
+                <!-- PASO 3: SERVICIOS / SECTORES DISPONIBLES EN LA ZONA CON SU FORMULARIO Y CALCULADORA DE BD -->
+                <section style="background:#ffffff;border:1px solid #e5e5e5;border-radius:12px;padding:22px;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px;">
+                        <div>
+                            <span style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#666;letter-spacing:0.05em;">Paso 3 de 3</span>
+                            <h2 style="font-size:20px;margin:2px 0 0;color:#171717;">
+                                3. Elige el Servicio en <%= activeProv.nombre %> para cargar su Formulario y Calculadora
+                            </h2>
+                        </div>
+                        <input
+                            type="search"
+                            id="ppServiceFilterInput"
+                            placeholder="Buscar servicio (ej. aire acondicionado, reformas, placas solares)..."
+                            style="padding:8px 12px;border:1px solid #d4d4d8;border-radius:6px;font-size:13px;min-width:270px;"
+                        >
+                    </div>
+
+                    <div id="ppServicesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:10px;">
+                        <% secs.forEach(function(sec) {
+                             const isCurrentSec = sec.slug === activeSec.slug;
+                             const hasCalc = sec.formulario_presupuesto && sec.formulario_presupuesto.calculadora_json;
+                        %>
+                            <a
+                                href="/pedir-presupuesto?provincia=<%= activeProv.slug %>&zona=<%= encodeURIComponent(activeZone) %>&sector=<%= sec.slug %>#solicitar-presupuesto"
+                                data-service-card="<%= sec.slug %>"
+                                data-service-search="<%= (sec.nombre + ' ' + (sec.keywords || []).join(' ')).toLowerCase() %>"
+                                style="text-decoration:none;padding:12px 14px;border-radius:10px;border:<%= isCurrentSec ? '2px solid #171717' : '1px solid #e5e5e5' %>;background:<%= isCurrentSec ? '#171717' : '#fafafa' %>;color:<%= isCurrentSec ? '#ffffff' : '#171717' %>;display:flex;flex-direction:column;gap:4px;transition:all 0.15s;"
+                            >
+                                <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+                                    <span style="font-size:14px;font-weight:700;"><%= sec.icono %> <%= sec.nombre %></span>
+                                </div>
+                                <span style="font-size:11.5px;opacity:0.8;">
+                                    <%= sec.slug === 'climatizacion-aire-acondicionado'
+                                        ? '❄️ Incluye Calculador de Frigorías y kW'
+                                        : (hasCalc && hasCalc.titulo ? hasCalc.titulo : 'Formulario específico de BD') %>
+                                </span>
+                            </a>
+                        <% }); %>
+                    </div>
+                </section>
+            </div>
+
+            <!-- LAYOUT PRINCIPAL: FORMULARIO DE BASE DE DATOS DEL SERVICIO ELEGIDO + ARTÍCULOS Y ANUNCIO DE LA ZONA -->
+            <div class="hs-layout">
+                <div class="hs-main">
+                    <%- include("partials/quote-form", {
+                        currentProvince: activeProv,
+                        currentSector: activeSec,
+                        customForm: customForm,
+                        zonaSeleccionada: activeZone,
+                        servicioSeleccionado: servicioPreseleccionado
+                    }) %>
+
+                    <!-- ARTÍCULOS RECOMENDADOS DE ESTE SERVICIO EN ESTA ZONA -->
+                    <% if (typeof sectorPages !== 'undefined' && sectorPages && sectorPages.length > 0) { %>
+                        <section style="margin-top:32px;padding-top:24px;border-top:1px solid #eaeaea;">
+                            <div class="section-header">
+                                <h2 class="section-title" style="font-size:20px;">
+                                    Guías sobre <%= activeSec.nombre %> en <%= activeProv.nombre %>
+                                </h2>
+                                <a href="/<%= activeProv.slug %>/<%= activeSec.slug %>" class="section-link">
+                                    Ir a la sección de <%= activeSec.nombre %> en <%= activeProv.nombre %> →
+                                </a>
+                            </div>
+                            <div class="trending-posts-grid">
+                                <% sectorPages.slice(0, 3).forEach(function(post) { %>
+                                    <article class="post-card">
+                                        <a href="/article/<%= post.slug %>">
+                                            <% if (post.image || post.featured_image) { %>
+                                                <img src="<%= post.image || post.featured_image %>" alt="<%= post.title %>" class="post-image" loading="lazy">
+                                            <% } %>
+                                            <div class="post-content">
+                                                <span class="post-category"><%= post.provincia_nombre %> · <%= post.sector_nombre %></span>
+                                                <h3 class="post-title"><%= post.title %></h3>
+                                            </div>
+                                        </a>
+                                    </article>
+                                <% }); %>
+                            </div>
+                        </section>
+                    <% } %>
+                </div>
+
+                <%- include("partials/sidebar", sidebarData || {}) %>
+            </div>
+
+        </div>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+    <script>
+    (function() {
+        var toggleBtn = document.getElementById('ppToggleAllProvsBtn');
+        var allProvsGrid = document.getElementById('ppAllProvincesGrid');
+        var provFilter = document.getElementById('ppProvinceFilterInput');
+        var serviceFilter = document.getElementById('ppServiceFilterInput');
+
+        if (toggleBtn && allProvsGrid) {
+            toggleBtn.addEventListener('click', function() {
+                var open = allProvsGrid.style.display === 'grid';
+                allProvsGrid.style.display = open ? 'none' : 'grid';
+                toggleBtn.textContent = open ? 'Ver las 52 provincias ⌄' : 'Ocultar lista completa ⌃';
+            });
+        }
+
+        if (provFilter && allProvsGrid) {
+            provFilter.addEventListener('input', function() {
+                var q = provFilter.value.trim().toLowerCase();
+                allProvsGrid.style.display = 'grid';
+                var items = allProvsGrid.querySelectorAll('.pp-prov-grid-item');
+                items.forEach(function(item) {
+                    var name = item.getAttribute('data-prov-name') || '';
+                    item.style.display = (!q || name.indexOf(q) !== -1) ? 'flex' : 'none';
+                });
+            });
+        }
+
+        if (serviceFilter) {
+            serviceFilter.addEventListener('input', function() {
+                var q = serviceFilter.value.trim().toLowerCase();
+                var cards = document.querySelectorAll('[data-service-card]');
+                cards.forEach(function(card) {
+                    var hay = card.getAttribute('data-service-search') || '';
+                    card.style.display = (!q || hay.indexOf(q) !== -1) ? 'flex' : 'none';
+                });
+            });
+        }
+
+        // Selección instantánea de zona en el paso 2 sin recargar si ya estamos en la misma provincia
+        var step2Btns = document.querySelectorAll('.pp-step2-zone-btn');
+        var munInput = document.getElementById('ppMunicipioInput');
+        step2Btns.forEach(function(btn) {
+            btn.addEventListener('click', function(ev) {
+                var zVal = btn.getAttribute('data-step2-zone');
+                if (munInput && zVal) {
+                    ev.preventDefault();
+                    munInput.value = zVal;
+                    step2Btns.forEach(function(b) {
+                        b.style.background = '#f8fafc';
+                        b.style.color = '#171717';
+                        b.style.borderColor = '#d4d4d8';
+                    });
+                    btn.style.background = '#171717';
+                    btn.style.color = '#ffffff';
+                    btn.style.borderColor = '#171717';
+                    // Sincronizar también los chips del propio formulario
+                    document.querySelectorAll('.pp-zone-chip').forEach(function(chip) {
+                        var match = chip.getAttribute('data-zone-value') === zVal;
+                        chip.style.background = match ? '#171717' : '#f8fafc';
+                        chip.style.color = match ? '#ffffff' : '#171717';
+                        chip.style.borderColor = match ? '#171717' : '#d4d4d8';
+                    });
+                    var formSec = document.getElementById('solicitar-presupuesto');
+                    if (formSec) formSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            });
+        });
+    })();
+    </script>
+</body>
+</html>

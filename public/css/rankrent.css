@@ -1,0 +1,759 @@
+/* ============================================================================
+   PidePrecio.es — Estilos de Plataforma Nacional, Anuncios Oficiales Anónimos,
+   Detector de Provincia, Buscador Personalizado y Formulario de Presupuesto
+   ============================================================================ */
+
+.rr-topbar {
+  background: #0f172a;
+  color: #f8fafc;
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid #1e293b;
+}
+
+.rr-topbar-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rr-topbar-badges {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rr-topbar-badge {
+  color: #cbd5e1;
+}
+
+.rr-topbar-links {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.rr-topbar-links a {
+  color: #e2e8f0;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.rr-topbar-links a:hover {
+  color: #38bdf8;
+}
+
+.pp-top-prov-select {
+  background: #1e293b;
+  color: #fff;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.pp-gps-btn {
+  background: #1d4ed8;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.pp-gps-btn:hover {
+  background: #2563eb;
+}
+
+.rr-brand-wrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.rr-brand-sub {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  margin-top: 2px;
+}
+
+.rr-header-cta {
+  background: linear-gradient(135deg, #1d4ed8, #0f4c81);
+  color: #fff !important;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(29, 78, 216, 0.25);
+}
+
+.rr-header-cta:hover {
+  background: linear-gradient(135deg, #2563eb, #1e3a8a);
+}
+
+.rr-mega-menu {
+  max-height: 420px;
+  overflow-y: auto;
+  min-width: 280px;
+}
+
+/* Autocompletado de búsqueda personalizada */
+.pp-search-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 12px;
+  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.18);
+  z-index: 9999;
+  max-height: 440px;
+  overflow-y: auto;
+  padding: 8px;
+}
+
+.pp-sug-group {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  font-weight: 800;
+  padding: 8px 10px 4px;
+}
+
+.pp-sug-item {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: #0f172a;
+  text-decoration: none;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.pp-sug-item:hover {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.pp-sug-item small {
+  color: #64748b;
+  font-weight: 500;
+  margin-left: 6px;
+}
+
+/* Hero y Contenedores PidePrecio.es */
+.pp-container {
+  max-width: 1260px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+.pp-hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  color: #ffffff;
+  border-radius: 18px;
+  padding: 36px 32px;
+  margin-bottom: 28px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+}
+
+.pp-hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.pp-pill {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #e0f2fe;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.pp-hero h1 {
+  font-size: clamp(24px, 3.2vw, 38px);
+  line-height: 1.2;
+  margin: 0 0 12px;
+  color: #ffffff;
+}
+
+.pp-hero p {
+  color: #cbd5e1;
+  font-size: 16px;
+  max-width: 860px;
+  margin: 0 0 22px;
+  line-height: 1.55;
+}
+
+.pp-hero-search {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.pp-hero-search input,
+.pp-hero-search select {
+  flex: 1;
+  min-width: 200px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  font-size: 14.5px;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.pp-hero-search button {
+  background: #38bdf8;
+  color: #0f172a;
+  font-weight: 800;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 22px;
+  font-size: 14.5px;
+  cursor: pointer;
+}
+
+/* Tarjetas de Anuncios Oficiales Anónimos de PidePrecio.es */
+.pp-ads-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 18px;
+  margin-bottom: 30px;
+}
+
+.pp-ad-card {
+  background: #ffffff;
+  border: 1px solid #dbeafe;
+  border-left: 5px solid #2563eb;
+  border-radius: 14px;
+  padding: 20px;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.pp-ad-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.12);
+}
+
+.pp-ad-featured {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border-color: #fde68a;
+  border-left: 5px solid #f59e0b;
+}
+
+.pp-ad-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.pp-ad-badge {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pp-ad-featured .pp-ad-badge {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.pp-ad-seal {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #059669;
+}
+
+.pp-ad-title {
+  font-size: 17.5px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+.pp-ad-title a {
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.pp-ad-title a:hover {
+  color: #1d4ed8;
+}
+
+.pp-ad-sub {
+  font-size: 13.8px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 12px;
+}
+
+.pp-ad-zones {
+  font-size: 12.5px;
+  color: #334155;
+  background: #f8fafc;
+  padding: 7px 10px;
+  border-radius: 8px;
+  margin-bottom: 14px;
+}
+
+.pp-ad-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.pp-ad-brand {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.pp-ad-cta {
+  background: #1d4ed8;
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 9px 15px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.pp-ad-cta:hover {
+  background: #1e40af;
+}
+
+/* Formulario Oficial Personalizable de Presupuesto con Subida de Archivos */
+.pp-quote-box {
+  background: #ffffff;
+  border: 2px solid #2563eb;
+  border-radius: 18px;
+  padding: 28px;
+  margin: 30px 0;
+  box-shadow: 0 14px 36px rgba(29, 78, 216, 0.1);
+}
+
+.pp-quote-header {
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 18px;
+  margin-bottom: 22px;
+}
+
+.pp-quote-badge-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+.pp-official-pill {
+  background: #1d4ed8;
+  color: #ffffff;
+  font-size: 11.5px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.pp-zone-pill {
+  background: #f1f5f9;
+  color: #0f172a;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.pp-quote-header h2 {
+  font-size: 23px;
+  color: #0f172a;
+  margin: 0 0 8px;
+}
+
+.pp-quote-subtitle {
+  color: #475569;
+  font-size: 14.5px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.pp-template-download {
+  margin-top: 14px;
+  padding: 12px 16px;
+  background: #eff6ff;
+  border: 1px dashed #3b82f6;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #1e3a8a;
+}
+
+.pp-btn-template {
+  background: #1d4ed8;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-weight: 700;
+}
+
+.pp-section-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1e3a8a;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 14px;
+}
+
+.pp-form-grid-3 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.pp-form-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.pp-dynamic-fields-box,
+.pp-explanation-box,
+.pp-contact-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+
+.pp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pp-field label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1e293b;
+}
+
+.pp-field input,
+.pp-field select,
+.pp-field textarea {
+  padding: 11px 13px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #ffffff;
+  color: #0f172a;
+  font-family: inherit;
+}
+
+.pp-field input:focus,
+.pp-field select:focus,
+.pp-field textarea:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.pp-upload-zone {
+  margin-top: 16px;
+  border: 2px dashed #93c5fd;
+  background: #eff6ff;
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.pp-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.pp-upload-icon {
+  font-size: 26px;
+}
+
+.pp-upload-label strong {
+  display: block;
+  color: #1e3a8a;
+  font-size: 14px;
+}
+
+.pp-upload-label small {
+  color: #475569;
+  font-size: 12.5px;
+}
+
+.pp-files-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.pp-file-chip {
+  background: #dbeafe;
+  color: #1e3a8a;
+  font-size: 12.5px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.pp-submit-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin-top: 16px;
+}
+
+.pp-privacy-note {
+  font-size: 13px;
+  color: #475569;
+  max-width: 620px;
+}
+
+.pp-btn-submit {
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: #ffffff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 26px;
+  font-size: 15.5px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.28);
+}
+
+.pp-btn-submit:hover {
+  background: linear-gradient(135deg, #15803d, #166534);
+}
+
+.pp-form-feedback {
+  margin-top: 18px;
+  padding: 16px 20px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  line-height: 1.5;
+}
+
+.pp-feedback-ok {
+  background: #dcfce7;
+  border: 1px solid #86efac;
+  color: #14532d;
+}
+
+.pp-feedback-err {
+  background: #fee2e2;
+  border: 1px solid #fca5a5;
+  color: #7f1d1d;
+}
+
+/* Grids de Páginas IA, Sectores y Provincias */
+.pp-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 32px 0 16px;
+}
+
+.pp-section-title h2 {
+  font-size: 22px;
+  color: #0f172a;
+  margin: 0;
+}
+
+.pp-pages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(310px, 1fr));
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.pp-page-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+.pp-page-card img {
+  width: 100%;
+  height: 185px;
+  object-fit: cover;
+}
+
+.pp-page-body {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.pp-page-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11.5px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.pp-tag-prov {
+  background: #eff6ff;
+  color: #1d4ed8;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pp-tag-sec {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pp-tag-selected {
+  background: #fef3c7;
+  color: #b45309;
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.pp-page-card h3 {
+  font-size: 17px;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+
+.pp-page-card h3 a {
+  color: #0f172a;
+  text-decoration: none;
+}
+
+.pp-page-card h3 a:hover {
+  color: #1d4ed8;
+}
+
+.pp-page-card p {
+  font-size: 13.5px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 14px;
+  flex: 1;
+}
+
+.pp-page-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12.5px;
+}
+
+.pp-matrix-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.pp-matrix-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 13px 15px;
+  text-decoration: none;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: 13.8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.pp-matrix-item:hover {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.rr-mobile-sticky-bar {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .rr-mobile-sticky-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #0f172a;
+    color: #fff;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 999;
+    border-top: 1px solid #1e293b;
+  }
+}

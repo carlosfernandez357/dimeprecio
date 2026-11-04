@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/images/logo.png" type="image/png">
+    <%- include("partials/seo") %>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/sidebar.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<%- include("partials/analytics") %>
+<body>
+
+    <%- include("partials/header") %>
+
+    <%
+      const workOptions = (customForm && Array.isArray(customForm.campos) && customForm.campos[0] && Array.isArray(customForm.campos[0].options))
+        ? customForm.campos[0].options
+        : [];
+    %>
+
+    <main id="category-page">
+        <section class="listing-page-section">
+            <div class="content-container">
+
+                <div class="listing-page-header">
+                    <span class="listing-page-label">
+                        <a href="/" style="text-decoration:underline;">Inicio</a> ›
+                        <a href="/<%= province.slug %>" style="text-decoration:underline;">📍 <%= province.nombre %></a> ›
+                        Sector
+                    </span>
+
+                    <h1 class="listing-page-title">
+                        <%= sector.nombre %> en <%= province.nombre %>
+                    </h1>
+
+                    <p class="listing-page-description">
+                        Artículos especializados, soluciones paso a paso en <strong><%= (province.municipios || [province.nombre]).slice(0, 5).join(", ") %></strong> y formulario directo del sector <strong><%= sector.nombre.toLowerCase() %></strong> al final de la página.
+                    </p>
+
+                    <!-- BUSCADOR RÁPIDO DENTRO DEL SECTOR PARA LLEVAR AL CLIENTE A SU SOLUCIÓN Y AL FORMULARIO -->
+                    <form action="/search" method="GET" style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;max-width:680px;">
+                        <input type="hidden" name="provincia" value="<%= province.slug %>">
+                        <input type="hidden" name="sector" value="<%= sector.slug %>">
+                        <input
+                            type="text"
+                            name="q"
+                            placeholder="Buscar dentro de <%= sector.nombre %> en <%= province.nombre %> (ej. arreglar baño, reforma pequeña...)"
+                            style="flex:1;min-width:240px;padding:11px 14px;border:1px solid #d4d4d8;border-radius:6px;font-size:14px;"
+                        >
+                        <button type="submit" style="background:#171717;color:#fff;border:0;padding:11px 18px;border-radius:6px;font-size:13.5px;font-weight:700;cursor:pointer;">
+                            Buscar →
+                        </button>
+                        <a
+                            href="#solicitar-presupuesto"
+                            style="display:inline-flex;align-items:center;gap:6px;background:#f4f4f5;color:#171717;border:1px solid #d4d4d8;padding:11px 16px;border-radius:6px;font-size:13.5px;font-weight:700;text-decoration:none;"
+                        >
+                            📋 Ir al formulario de <%= sector.nombre %> ↓
+                        </a>
+                    </form>
+
+                    <% if (workOptions.length > 0) { %>
+                    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+                        <span style="font-size:12px;color:#666;font-weight:600;">Consultas habituales:</span>
+                        <% workOptions.slice(0, 5).forEach(function(opt) { %>
+                            <a
+                                href="#solicitar-presupuesto"
+                                onclick="var sel=document.querySelector('#ppQuoteForm select'); if(sel){sel.value='<%= opt.replace(/'/g, "\\'") %>';}"
+                                class="sidebar-pill"
+                                style="font-size:12px;"
+                            >
+                                <%= opt %> ↓
+                            </a>
+                        <% }) %>
+                    </div>
+                    <% } %>
+                </div>
+
+                <div class="content-sidebar-layout">
+
+                    <div class="main-content">
+
+                        <!-- ANUNCIOS O DESTACADOS FIJADOS / RECOMENDADOS POR EL ALGORITMO EN ESTE SECTOR -->
+                        <% if (sectorAds && sectorAds.length > 0) { %>
+                        <div style="margin-bottom:32px;">
+                            <div style="display:grid;gap:12px;">
+                                <% sectorAds.slice(0, 2).forEach(function(ad) { %>
+                                    <div style="border:1px solid #e5e5e5;border-left:4px solid #171717;border-radius:8px;padding:18px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;">
+                                        <div style="flex:1;min-width:240px;">
+                                            <span class="post-category" style="display:block;margin-bottom:4px;">
+                                                <%= ad.fijado ? '📌 Fijado · ' : '' %><%= ad.sello || ad.badge %>
+                                            </span>
+                                            <strong style="font-size:16.5px;display:block;margin-bottom:4px;"><%= ad.titulo %></strong>
+                                            <p style="font-size:13.5px;color:#666;margin:0;"><%= ad.subtitulo %></p>
+                                        </div>
+                                        <a
+                                            href="#solicitar-presupuesto"
+                                            style="background:#171717;color:#fff;padding:10px 16px;border-radius:6px;font-size:13px;font-weight:600;white-space:nowrap;text-decoration:none;"
+                                        >
+                                            <%= ad.cta_texto || 'Rellenar Formulario' %> ↓
+                                        </a>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                        <% } %>
+
+                        <!-- ARTÍCULOS CONECTADOS DE ESTE SECTOR Y PROVINCIA (ESTILO SOCIALSFORCE) -->
+                        <div class="section-header" style="margin-bottom:18px;">
+                            <h2 class="section-title" style="font-size:21px;">Artículos y guías de <%= sector.nombre %> en <%= province.nombre %></h2>
+                        </div>
+
+                        <% if (sectorPages && sectorPages.length > 0) { %>
+                        <div class="listing-posts-grid">
+                            <% sectorPages.forEach(function(post, idx) { %>
+                            <article class="post-card" data-rec-pl="sector_listing" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">
+                                <a href="/article/<%= post.slug %>">
+                                    <% if (post.image || post.featured_image) { %>
+                                    <img
+                                        src="<%= post.image || post.featured_image %>"
+                                        alt="<%= post.title %>"
+                                        class="post-image"
+                                        loading="lazy"
+                                    >
+                                    <% } %>
+                                    <div class="post-content">
+                                        <span class="post-category">
+                                            <%= post.is_pinned ? '📌 Fijado · ' : (post.is_selected ? '⭐ Recomendado · ' : '') %><%= post.provincia_nombre || province.nombre %> · <%= post.category || sector.nombre %>
+                                        </span>
+                                        <h2 class="post-title">
+                                            <%= post.title %>
+                                        </h2>
+                                        <% if (post.excerpt) { %>
+                                        <p class="post-summary">
+                                            <%= post.excerpt %>
+                                        </p>
+                                        <% } %>
+                                        <span class="post-date">
+                                            <%= new Date(post.published_at || post.created_at).toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" }) %>
+                                        </span>
+                                    </div>
+                                </a>
+                            </article>
+                            <% }) %>
+                        </div>
+                        <% } %>
+
+                        <!-- FORMULARIO EXCLUSIVO DE ESTE SECTOR ABAJO DE LA PÁGINA DEL SECTOR -->
+                        <div style="margin-top:42px;">
+                            <%- include("partials/quote-form", {
+                                currentProvince: province,
+                                currentSector: sector,
+                                customForm: customForm
+                            }) %>
+                        </div>
+
+                        <!-- RED DE INTERCONEXIÓN SEO ENTRE ARTÍCULOS, SECTORES Y PROVINCIAS -->
+                        <%- include("partials/seo-interlinks", {
+                            seoInterlinks: typeof seoInterlinks !== "undefined" ? seoInterlinks : null
+                        }) %>
+
+                    </div>
+
+                    <aside class="sidebar" aria-label="Más artículos">
+                        <%- include("partials/sidebar", { sidebarData: typeof sidebarData !== "undefined" ? sidebarData : null }) %>
+                    </aside>
+
+                </div>
+
+            </div>
+        </section>
+    </main>
+
+    <%- include("partials/footer") %>
+    <script src="/js/main.js"></script>
+</body>
+</html>

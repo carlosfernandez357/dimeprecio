@@ -1,0 +1,138 @@
+<%
+const sd = (typeof sidebarData !== "undefined" && sidebarData) ? sidebarData : {};
+const sbCategory = sd.sidebarCategory || null;
+const sbTrending = sd.sidebarTrending || [];
+const sbCategories = sd.sidebarCategories || [];
+const userProv = (typeof detectedProvince !== "undefined" && detectedProvince)
+    ? detectedProvince
+    : { slug: "madrid", nombre: "Madrid" };
+const secUrl = (name) => {
+    const slug = String(name || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return "/" + userProv.slug + "/" + slug;
+};
+const fmtDate = (d) => d ? new Date(d).toLocaleDateString("es-ES", { month: "short", day: "numeric", year: "numeric" }) : "";
+%>
+<div class="sidebar-inner">
+
+    <!-- BÚSQUEDA RÁPIDA EN ZONA -->
+    <section class="sidebar-block sidebar-search" aria-label="Buscar">
+        <form action="/search" method="get" role="search" class="sidebar-search-form">
+            <label for="sidebar-search-input" class="sidebar-visually-hidden">Buscar en <%= userProv.nombre %></label>
+            <input
+                id="sidebar-search-input"
+                type="search"
+                name="q"
+                placeholder="Buscar en <%= userProv.nombre %>..."
+                autocomplete="off"
+            >
+            <button type="submit" aria-label="Buscar">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
+            </button>
+        </form>
+    </section>
+
+    <!-- MÁS EN ESTA SECCIÓN -->
+    <% if (sbCategory && sbCategory.posts && sbCategory.posts.length > 0) { %>
+    <section class="sidebar-block" aria-labelledby="sidebar-more-title">
+        <div class="sidebar-block-header">
+            <h2 id="sidebar-more-title" class="sidebar-title">
+                Más en <a href="/<%= userProv.slug %>/<%= sbCategory.slug || '' %>"><%= sbCategory.name %></a>
+            </h2>
+        </div>
+
+        <ul class="sidebar-post-list">
+            <% sbCategory.posts.forEach(function (p, i) { %>
+            <li class="sidebar-post" data-rec-pl="sidebar" data-rec-pos="<%= i %>" data-pid="<%= p.id %>">
+                <a href="/article/<%= p.slug %>" class="sidebar-post-link">
+                    <img
+                        src="<%= p.image || '/images/noimage.jpg' %>"
+                        alt="<%= p.title %>"
+                        class="sidebar-post-image"
+                        loading="lazy"
+                        width="72"
+                        height="54"
+                    >
+                    <div class="sidebar-post-body">
+                        <h3 class="sidebar-post-title"><%= p.title %></h3>
+                        <% if (p.published_at) { %>
+                        <time class="sidebar-post-meta" datetime="<%= new Date(p.published_at).toISOString() %>"><%= fmtDate(p.published_at) %></time>
+                        <% } %>
+                    </div>
+                </a>
+            </li>
+            <% }) %>
+        </ul>
+
+        <a href="/<%= userProv.slug %>/<%= sbCategory.slug || '' %>" class="sidebar-more-link">
+            Ver todo en <%= sbCategory.name %> →
+        </a>
+    </section>
+    <% } %>
+
+    <!-- TENDENCIAS EN TU ZONA -->
+    <% if (sbTrending.length > 0) { %>
+    <section class="sidebar-block" aria-labelledby="sidebar-trending-title">
+        <div class="sidebar-block-header">
+            <h2 id="sidebar-trending-title" class="sidebar-title">Relevantes en <%= userProv.nombre %></h2>
+        </div>
+
+        <ol class="sidebar-trending-list">
+            <% sbTrending.forEach(function (p, i) { %>
+            <li class="sidebar-trending-item" data-rec-pl="sidebar" data-rec-pos="<%= 10 + i %>" data-pid="<%= p.id %>">
+                <a href="/article/<%= p.slug %>" class="sidebar-trending-link">
+                    <span class="sidebar-rank">#<%= i + 1 %></span>
+                    <img
+                        src="<%= p.image || '/images/noimage.jpg' %>"
+                        alt="<%= p.title %>"
+                        class="sidebar-post-image"
+                        loading="lazy"
+                        width="72"
+                        height="54"
+                    >
+                    <div class="sidebar-post-body">
+                        <h3 class="sidebar-post-title"><%= p.title %></h3>
+                        <span class="sidebar-post-meta">
+                            <% if (p.category) { %><%= p.category %> · <% } %><%= Number(p.views || 0).toLocaleString("es-ES") %> lecturas
+                        </span>
+                    </div>
+                </a>
+            </li>
+            <% }) %>
+        </ol>
+
+        <a href="/trending" class="sidebar-more-link">Ver todas las tendencias →</a>
+    </section>
+    <% } %>
+
+    <!-- EXPLORAR SECCIONES EN ESTA ZONA -->
+    <% if (sbCategories.length > 0) { %>
+    <section class="sidebar-block" aria-labelledby="sidebar-categories-title">
+        <div class="sidebar-block-header">
+            <h2 id="sidebar-categories-title" class="sidebar-title">Secciones en <%= userProv.nombre %></h2>
+        </div>
+
+        <nav class="sidebar-pills" aria-label="Secciones">
+            <% sbCategories.forEach(function (name) { %>
+            <a href="<%= secUrl(name) %>" class="sidebar-pill"><%= name %></a>
+            <% }) %>
+        </nav>
+
+        <a href="/<%= userProv.slug %>" class="sidebar-more-link">Todas las secciones de <%= userProv.nombre %> →</a>
+    </section>
+    <% } %>
+
+    <!-- NAVEGACIÓN RÁPIDA -->
+    <section class="sidebar-block" aria-labelledby="sidebar-nav-title">
+        <div class="sidebar-block-header">
+            <h2 id="sidebar-nav-title" class="sidebar-title">Navegación</h2>
+        </div>
+
+        <nav class="sidebar-quick-nav" aria-label="Navegación rápida">
+            <a href="/">Portada</a>
+            <a href="/<%= userProv.slug %>">📍 <%= userProv.nombre %></a>
+            <a href="/for-you">Para Ti</a>
+            <a href="/provincias">Cambiar Zona</a>
+        </nav>
+    </section>
+
+</div>

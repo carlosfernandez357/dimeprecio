@@ -1,0 +1,99 @@
+<aside class="admin-sidebar" id="admin-sidebar">
+
+    <nav class="admin-nav">
+
+        <div class="admin-nav-section">
+
+            <span class="admin-nav-title">
+                SEO, IA & Captación
+            </span>
+
+            <a href="/admin" class="admin-nav-link">
+                <span>⌂</span>
+                Panel General
+            </a>
+
+            <a href="/admin/create-article" class="admin-nav-link">
+                <span>＋</span>
+                Crear Artículo con IA
+            </a>
+
+            <a href="/admin/articles" class="admin-nav-link">
+                <span>▤</span>
+                Artículos, SEO & Fijados
+            </a>
+
+            <a href="/admin/anuncios" class="admin-nav-link">
+                <span>🎯</span>
+                Algoritmo & Destacados
+            </a>
+
+            <a href="/admin/presupuestos" class="admin-nav-link">
+                <span>📥</span>
+                Clientes Captados (Formularios)
+            </a>
+
+        </div>
+
+        <div class="admin-nav-section">
+
+            <span class="admin-nav-title">
+                Sectores, Formularios & Auto-IA
+            </span>
+
+            <a href="/admin/formularios" class="admin-nav-link">
+                <span>📋</span>
+                Formularios por Sector
+            </a>
+
+            <a href="/admin/sectores-provincias" class="admin-nav-link">
+                <span>🗺️</span>
+                Sectores & Provincias SEO
+            </a>
+
+            <a href="/admin/schedules" class="admin-nav-link">
+                <span>⏱</span>
+                Programación Automática IA
+            </a>
+
+            <a href="/admin/live" class="admin-nav-link">
+                <span>◉</span>
+                Visitantes en Vivo
+            </a>
+
+        </div>
+
+        <div class="admin-nav-section admin-nav-bottom">
+
+            <a href="/" class="admin-nav-link" target="_blank">
+                <span>↗</span>
+                Abrir Web Pública
+            </a>
+
+            <a href="/admin/logout" class="admin-nav-link">
+                <span>→</span>
+                Cerrar sesión
+            </a>
+
+        </div>
+
+    </nav>
+
+</aside>
+
+<script>
+    (function () {
+        var path = window.location.pathname;
+        var links = document.querySelectorAll("#admin-sidebar .admin-nav-link[href]");
+        var best = null;
+        links.forEach(function (link) {
+            link.classList.remove("active");
+            var href = link.getAttribute("href");
+            if (!href) return;
+            if (path === href || (href !== "/" && path.indexOf(href + "/") === 0)) {
+                if (!best || href.length > best.getAttribute("href").length) best = link;
+            }
+        });
+        if (best) best.classList.add("active");
+    })();
+</script>

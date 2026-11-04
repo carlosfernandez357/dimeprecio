@@ -1,0 +1,462 @@
+<%
+  const activeProv = (typeof currentProvince !== 'undefined' && currentProvince)
+    ? currentProvince
+    : (typeof detectedProvince !== 'undefined' && detectedProvince ? detectedProvince : { slug: 'madrid', nombre: 'Madrid', municipios: ['Madrid Centro', 'Chamberí', 'Salamanca', 'Chamartín', 'Pozuelo de Alarcón', 'Alcobendas', 'Las Rozas', 'Móstoles'] });
+  const activeSec = (typeof currentSector !== 'undefined' && currentSector)
+    ? currentSector
+    : ((typeof allSectors !== 'undefined' && allSectors.length > 0) ? allSectors[0] : { slug: 'reformas-integrales', nombre: 'Reformas Integrales y Baños/Cocinas', icono: '🏗️' });
+  const formCfg = (typeof customForm !== 'undefined' && customForm)
+    ? customForm
+    : (activeSec.formulario_presupuesto || {});
+  const camposList = Array.isArray(formCfg.campos) ? formCfg.campos : [];
+  const calcCfg = (formCfg.calculadora_json && typeof formCfg.calculadora_json === 'object')
+    ? formCfg.calculadora_json
+    : (activeSec.formulario_presupuesto && activeSec.formulario_presupuesto.calculadora_json ? activeSec.formulario_presupuesto.calculadora_json : null);
+  const preselectedService = (typeof servicioSeleccionado !== 'undefined' && servicioSeleccionado) ? servicioSeleccionado : '';
+  const preselectedZone = (typeof zonaSeleccionada !== 'undefined' && zonaSeleccionada) ? zonaSeleccionada : '';
+  const provZones = (activeProv.municipios && Array.isArray(activeProv.municipios) && activeProv.municipios.length)
+    ? activeProv.municipios
+    : [activeProv.nombre + ' Centro'];
+%>
+<section id="solicitar-presupuesto" style="border:1px solid #e5e5e5;border-radius:12px;padding:28px;background:#fafafa;margin:32px 0;">
+  <div style="margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid #eaeaea;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;">
+      <span class="post-category" style="display:inline-block;">
+        📍 <%= activeProv.nombre %> · <%= activeSec.icono || '🛠️' %> <%= activeSec.nombre %>
+      </span>
+      <span style="font-size:12px;color:#666;background:#ffffff;border:1px solid #e5e5e5;padding:3px 9px;border-radius:999px;">
+        Formulario específico de Base de Datos (<%= activeSec.slug %>)
+      </span>
+    </div>
+    <h2 style="font-size:24px;letter-spacing:-0.4px;margin:0 0 8px;color:#171717;">
+      <%= preselectedService ? (preselectedService + ' en ' + activeProv.nombre) : (formCfg.titulo_formulario || ('Solicitar presupuesto de ' + activeSec.nombre + ' en ' + activeProv.nombre)) %>
+    </h2>
+    <p style="color:#555;font-size:14.5px;margin:0;line-height:1.55;">
+      <%= formCfg.instrucciones_cliente || ('Configura los datos específicos de ' + activeSec.nombre.toLowerCase() + ' en ' + activeProv.nombre + '. Tu solicitud y el cálculo técnico se envían directamente a nuestro agente en el panel de administración.') %>
+    </p>
+  </div>
+
+  <form id="ppQuoteForm" action="/api/presupuestos" method="POST" enctype="multipart/form-data">
+    <input type="hidden" name="provincia_slug" id="ppFormProvinciaSlug" value="<%= activeProv.slug %>">
+    <input type="hidden" name="sector_slug" id="ppFormSectorSlug" value="<%= activeSec.slug %>">
+    <input type="hidden" name="anuncio_id" value="<%= typeof activeAdId !== 'undefined' ? activeAdId : '' %>">
+    <input type="hidden" name="contenido_origen_id" value="<%= typeof post !== 'undefined' && post ? post.id : '' %>">
+    <input type="hidden" name="origen_titulo" value="<%= typeof post !== 'undefined' && post ? post.title : (activeSec.nombre + ' en ' + activeProv.nombre) %>">
+    <input type="hidden" name="campo_calculo_tecnico" id="ppCalculoTecnicoInput" value="">
+
+    <!-- 1. SELECCIÓN INTERACTIVA DE ZONA / MUNICIPIO DENTRO DE LA PROVINCIA -->
+    <div style="margin-bottom:22px;background:#ffffff;border:1px solid #e5e5e5;border-radius:10px;padding:16px;">
+      <label style="display:block;font-size:13.5px;font-weight:700;color:#171717;margin-bottom:8px;">
+        1. Selecciona tu zona o municipio en <span data-pp-form-prov-name><%= activeProv.nombre %></span> *
+      </label>
+      <div id="ppZonePillsContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+        <% provZones.forEach(function(zName, zIdx) { %>
+          <button
+            type="button"
+            class="pp-zone-chip"
+            data-zone-value="<%= zName %>"
+            style="border:1px solid <%= (preselectedZone === zName || (!preselectedZone && zIdx === 0)) ? '#171717' : '#d4d4d8' %>;background:<%= (preselectedZone === zName || (!preselectedZone && zIdx === 0)) ? '#171717' : '#f8fafc' %>;color:<%= (preselectedZone === zName || (!preselectedZone && zIdx === 0)) ? '#ffffff' : '#171717' %>;border-radius:999px;padding:6px 12px;font-size:12.5px;font-weight:600;cursor:pointer;"
+          >
+            📍 <%= zName %>
+          </button>
+        <% }); %>
+      </div>
+      <input
+        type="text"
+        name="municipio"
+        id="ppMunicipioInput"
+        required
+        value="<%= preselectedZone || provZones[0] || activeProv.nombre %>"
+        placeholder="Escribe o selecciona tu barrio, distrito o municipio en <%= activeProv.nombre %>..."
+        style="width:100%;padding:10px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;"
+      >
+    </div>
+
+    <!-- 2. CALCULADOR INTERACTIVO ESPECÍFICO DEL SERVICIO (LEÍDO DE BASE DE DATOS Y RENDERIZADO EN EJS) -->
+    <% if (calcCfg && calcCfg.activa !== false && Array.isArray(calcCfg.campos_calculadora) && calcCfg.campos_calculadora.length > 0) { %>
+      <div
+        id="ppSectorCalculatorBox"
+        data-calc-type="<%= calcCfg.tipo || 'alcance_general' %>"
+        style="margin-bottom:22px;background:#ffffff;border:2px solid #171717;border-radius:10px;padding:20px;"
+      >
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:8px;">
+          <h3 style="margin:0;font-size:17px;font-weight:800;color:#171717;">
+            <%= calcCfg.titulo || ('Calculador Técnico de ' + activeSec.nombre) %>
+          </h3>
+          <span style="font-size:11.5px;font-weight:700;background:#f4f4f5;color:#171717;padding:4px 10px;border-radius:999px;">
+            Cálculo interactivo en vivo
+          </span>
+        </div>
+        <% if (calcCfg.descripcion) { %>
+          <p style="margin:0 0 14px;font-size:13.5px;color:#555;line-height:1.5;">
+            <%= calcCfg.descripcion %>
+          </p>
+        <% } %>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:16px;">
+          <% calcCfg.campos_calculadora.forEach(function(cField) { %>
+            <div>
+              <label style="display:block;font-size:12.5px;font-weight:700;color:#171717;margin-bottom:5px;">
+                <%= cField.label %>
+              </label>
+              <% if (cField.type === 'select' && Array.isArray(cField.options)) { %>
+                <select
+                  name="campo_calc_<%= cField.name %>"
+                  data-calc-input="<%= cField.name %>"
+                  class="pp-calc-control"
+                  style="width:100%;padding:10px 11px;border:1px solid #d4d4d8;border-radius:6px;font-size:13.5px;background:#fff;"
+                >
+                  <% cField.options.forEach(function(opt) { %>
+                    <option value="<%= opt %>"><%= opt %></option>
+                  <% }); %>
+                </select>
+              <% } else { %>
+                <input
+                  type="number"
+                  name="campo_calc_<%= cField.name %>"
+                  data-calc-input="<%= cField.name %>"
+                  class="pp-calc-control"
+                  value="<%= cField.defaultValue !== undefined ? cField.defaultValue : 25 %>"
+                  min="<%= cField.min !== undefined ? cField.min : 1 %>"
+                  max="<%= cField.max !== undefined ? cField.max : 2000 %>"
+                  style="width:100%;padding:10px 11px;border:1px solid #d4d4d8;border-radius:6px;font-size:13.5px;background:#fff;"
+                >
+              <% } %>
+            </div>
+          <% }); %>
+        </div>
+
+        <!-- RESULTADO TÉCNICO DEL CALCULADOR (FRIGORÍAS, M2, PANELES SOLARES, ETC.) -->
+        <div
+          id="ppCalcOutputBanner"
+          style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;"
+        >
+          <div>
+            <div style="font-size:11.5px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.04em;">
+              Resultado técnico estimado para tu solicitud
+            </div>
+            <div id="ppCalcResultText" style="font-size:15px;font-weight:800;color:#171717;margin-top:3px;">
+              Calculando parámetros técnicos...
+            </div>
+            <div id="ppCalcSubText" style="font-size:12.5px;color:#555;margin-top:2px;"></div>
+          </div>
+          <button
+            type="button"
+            id="ppApplyCalcToExplanation"
+            style="background:#171717;color:#fff;border:0;border-radius:6px;padding:8px 12px;font-size:12px;font-weight:700;cursor:pointer;"
+          >
+            ✓ Añadir cálculo a mi explicación
+          </button>
+        </div>
+      </div>
+    <% } %>
+
+    <!-- 3. PREGUNTAS ESPECÍFICAS DEL SERVICIO (DESDE BASE DE DATOS `pp_sector_forms`) -->
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:13.5px;font-weight:700;color:#171717;margin-bottom:10px;">
+        2. Detalles específicos del servicio de <%= activeSec.nombre %>
+      </label>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;">
+        <% camposList.forEach(function(campo, idx) { %>
+          <div>
+            <label style="display:block;font-size:13px;font-weight:600;color:#171717;margin-bottom:6px;">
+              <%= campo.label %> <%= campo.required ? '*' : '' %>
+            </label>
+            <% if ((campo.type === 'select' || campo.tipo === 'select') && Array.isArray(campo.options || campo.opciones)) {
+                 const opts = campo.options || campo.opciones;
+            %>
+              <select
+                name="campo_<%= campo.name || campo.id %>"
+                <%= campo.required ? 'required' : '' %>
+                style="width:100%;padding:11px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;"
+              >
+                <% if (idx === 0 && preselectedService && !opts.includes(preselectedService)) { %>
+                  <option value="<%= preselectedService %>" selected><%= preselectedService %></option>
+                <% } %>
+                <% opts.forEach(function(opt) { %>
+                  <option value="<%= opt %>" <%= (idx === 0 && preselectedService === opt) ? 'selected' : '' %>><%= opt %></option>
+                <% }); %>
+              </select>
+            <% } else { %>
+              <input
+                type="<%= (campo.type === 'number' || campo.tipo === 'number') ? 'number' : 'text' %>"
+                name="campo_<%= campo.name || campo.id %>"
+                placeholder="<%= campo.placeholder || '' %>"
+                <%= campo.required ? 'required' : '' %>
+                style="width:100%;padding:11px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;"
+              >
+            <% } %>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+
+    <!-- 4. EXPLICACIÓN DETALLADA Y SUBIDA OPCIONAL DE FOTOS/CROQUIS -->
+    <div style="margin-bottom:18px;">
+      <label style="display:block;font-size:13px;font-weight:700;color:#171717;margin-bottom:6px;">
+        3. <%= formCfg.explicacion_label || ('Explicación de lo que necesitas en ' + activeProv.nombre) %> *
+      </label>
+      <textarea
+        name="explicacion_cliente"
+        id="ppExplicacionTextarea"
+        rows="4"
+        required
+        placeholder="<%= formCfg.explicacion_placeholder || 'Describe con tus palabras qué necesitas hacer exactamente y cualquier detalle importante...' %>"
+        style="width:100%;padding:12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;font-family:inherit;"
+      ></textarea>
+    </div>
+
+    <% if (formCfg.permitir_adjuntos !== false) { %>
+      <div style="margin-bottom:20px;padding:14px;border:1px dashed #bdbdbd;border-radius:6px;background:#fff;">
+        <label style="display:block;font-size:13px;font-weight:600;color:#171717;margin-bottom:4px;cursor:pointer;">
+          📎 Adjuntar fotografías o croquis del estado actual (Opcional)
+        </label>
+        <input
+          type="file"
+          name="archivos_presupuesto"
+          id="ppInputArchivos"
+          multiple
+          accept="<%= formCfg.formatos_admitidos || '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx' %>"
+          style="font-size:13px;"
+        >
+        <div id="ppFilesPreview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;"></div>
+      </div>
+    <% } %>
+
+    <!-- 5. DATOS DE CONTACTO -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin-bottom:20px;">
+      <div>
+        <label style="display:block;font-size:13px;font-weight:600;color:#171717;margin-bottom:6px;">Tu nombre *</label>
+        <input type="text" name="nombre_cliente" required placeholder="Nombre y apellidos" style="width:100%;padding:11px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;">
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;font-weight:600;color:#171717;margin-bottom:6px;">Teléfono / WhatsApp *</label>
+        <input type="tel" name="telefono_whatsapp" required placeholder="Ej: 654 88 99 00" style="width:100%;padding:11px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;">
+      </div>
+      <div>
+        <label style="display:block;font-size:13px;font-weight:600;color:#171717;margin-bottom:6px;">Email (opcional)</label>
+        <input type="email" name="email_opcional" placeholder="tu@email.es" style="width:100%;padding:11px 12px;border:1px solid #dcdcdc;border-radius:6px;font-size:14px;background:#fff;">
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;">
+      <small style="color:#666;font-size:12.5px;">
+        Solicitud gestionada directamente por nuestro agente de zona en <strong><%= activeProv.nombre %></strong>.
+      </small>
+      <button
+        type="submit"
+        id="ppSubmitBtn"
+        style="background:#171717;color:#ffffff;border:0;border-radius:6px;padding:13px 24px;font-size:14px;font-weight:700;cursor:pointer;"
+      >
+        Enviar solicitud de <%= activeSec.nombre %> →
+      </button>
+    </div>
+
+    <div id="ppFormFeedback" style="display:none;margin-top:16px;padding:14px 16px;border-radius:6px;font-size:14px;"></div>
+  </form>
+</section>
+
+<script>
+(function() {
+  var fileInput = document.getElementById('ppInputArchivos');
+  var filesPreview = document.getElementById('ppFilesPreview');
+  var form = document.getElementById('ppQuoteForm');
+  var feedback = document.getElementById('ppFormFeedback');
+  var submitBtn = document.getElementById('ppSubmitBtn');
+  var munInput = document.getElementById('ppMunicipioInput');
+  var zoneChips = document.querySelectorAll('.pp-zone-chip');
+
+  // Selección rápida de zona/municipio por botones
+  zoneChips.forEach(function(chip) {
+    chip.addEventListener('click', function() {
+      var val = chip.getAttribute('data-zone-value');
+      if (munInput && val) munInput.value = val;
+      zoneChips.forEach(function(c) {
+        c.style.background = '#f8fafc';
+        c.style.color = '#171717';
+        c.style.borderColor = '#d4d4d8';
+      });
+      chip.style.background = '#171717';
+      chip.style.color = '#ffffff';
+      chip.style.borderColor = '#171717';
+    });
+  });
+
+  // Motor interactivo del Calculador por Sector (Frigorías, Reforma m², Solar kWp, Pintura, Ventanas, Suelos, Mudanzas)
+  var calcBox = document.getElementById('ppSectorCalculatorBox');
+  var calcResultText = document.getElementById('ppCalcResultText');
+  var calcSubText = document.getElementById('ppCalcSubText');
+  var calcHiddenInput = document.getElementById('ppCalculoTecnicoInput');
+  var applyBtn = document.getElementById('ppApplyCalcToExplanation');
+  var expTextarea = document.getElementById('ppExplicacionTextarea');
+
+  function getCalcVal(name) {
+    if (!calcBox) return '';
+    var el = calcBox.querySelector('[data-calc-input="' + name + '"]');
+    return el ? el.value : '';
+  }
+
+  function runSectorCalculator() {
+    if (!calcBox || !calcResultText) return;
+    var type = calcBox.getAttribute('data-calc-type') || 'alcance_general';
+    var mainLine = '';
+    var subLine = '';
+
+    if (type === 'frigorias') {
+      var m2 = Math.max(5, Number(getCalcVal('m2_estancia')) || 25);
+      var altura = getCalcVal('altura_techo') || '';
+      var sol = getCalcVal('orientacion_sol') || '';
+      var estancias = getCalcVal('num_estancias') || '1 estancia (Split 1x1)';
+
+      var factorBase = 105; // frigorías por m² estándar en España
+      if (sol.indexOf('Muy soleado') !== -1) factorBase += 25;
+      else if (sol.indexOf('Buen aislamiento') !== -1) factorBase -= 10;
+
+      if (altura.indexOf('Techos altos') !== -1) factorBase *= 1.14;
+      else if (altura.indexOf('Doble altura') !== -1) factorBase *= 1.28;
+
+      var frigorias = Math.round((m2 * factorBase) / 50) * 50;
+      var kw = (frigorias / 860).toFixed(1);
+      var equipoRec = 'Split Inverter 1x1 de 2.250 - 2.500 fg';
+      if (estancias.indexOf('Conductos') !== -1 || frigorias >= 6000) {
+        equipoRec = 'Equipo por Conductos Inverter (' + frigorias + ' fg / ' + kw + ' kW)';
+      } else if (estancias.indexOf('3x1') !== -1) {
+        equipoRec = 'Sistema Multisplit 3x1 Inverter (' + frigorias + ' fg totales)';
+      } else if (estancias.indexOf('2x1') !== -1) {
+        equipoRec = 'Sistema Multisplit 2x1 Inverter (' + frigorias + ' fg totales)';
+      } else if (frigorias >= 4200) {
+        equipoRec = 'Split Inverter de 4.500 fg (5,2 kW)';
+      } else if (frigorias >= 2900) {
+        equipoRec = 'Split Inverter de 3.000 - 3.500 fg (3,5 - 4,0 kW)';
+      }
+
+      mainLine = 'Potencia recomendada: ' + frigorias.toLocaleString('es-ES') + ' frigorías/h (' + kw + ' kW térmicos)';
+      subLine = 'Equipo recomendado para ' + m2 + ' m²: ' + equipoRec + ' · ' + estancias;
+    } else if (type === 'reforma_m2') {
+      var m2Ref = Math.max(2, Number(getCalcVal('m2_reforma')) || 65);
+      var estancia = getCalcVal('tipo_estancia_calc') || 'Reforma';
+      var calidad = getCalcVal('calidad_acabados') || 'Calidad Media';
+      var partidas = getCalcVal('partidas_incluidas') || '';
+      mainLine = estancia + ' de ' + m2Ref + ' m² (' + calidad + ')';
+      subLine = 'Alcance técnico configurado: ' + partidas;
+    } else if (type === 'solar_kwp') {
+      var factura = Math.max(20, Number(getCalcVal('factura_mensual_eur')) || 110);
+      var orient = getCalcVal('orientacion_tejado') || 'Sur';
+      var sist = getCalcVal('sistema_deseado') || 'Autoconsumo';
+      var numPaneles = Math.max(4, Math.min(28, Math.round(factura / 14)));
+      var kwp = (numPaneles * 0.455).toFixed(2);
+      var m2Tejado = Math.round(numPaneles * 2.2);
+      mainLine = 'Instalación recomendada: ' + numPaneles + ' paneles solares (' + kwp + ' kWp)';
+      subLine = 'Superficie necesaria en cubierta: ~' + m2Tejado + ' m² · Orientación: ' + orient + ' · ' + sist;
+    } else if (type === 'pintura_m2') {
+      var m2Viv = Math.max(10, Number(getCalcVal('m2_vivienda')) || 80);
+      var estadoPar = getCalcVal('estado_paredes') || 'Paredes lisas';
+      var techos = getCalcVal('incluir_techos') || 'Sí';
+      var m2Paramento = Math.round(m2Viv * (techos.indexOf('Solo paredes') !== -1 ? 2.4 : 3.2));
+      mainLine = 'Superficie total de paramento a pintar/alisar: ~' + m2Paramento + ' m² (para ' + m2Viv + ' m² en planta)';
+      subLine = 'Trabajo configurado: ' + estadoPar + ' · ' + techos;
+    } else if (type === 'ventanas_unidades') {
+      var nVent = Math.max(1, Number(getCalcVal('num_ventanas')) || 4);
+      var mat = getCalcVal('material_perfil') || 'PVC';
+      var vid = getCalcVal('acristalamiento_persianas') || 'Doble acristalamiento';
+      mainLine = 'Renovación de ' + nVent + ' ventana(s) / cerramiento(s) en ' + mat;
+      subLine = 'Configuración térmica y acústica: ' + vid;
+    } else if (type === 'suelos_m2') {
+      var m2Suelo = Math.max(5, Number(getCalcVal('m2_suelo')) || 70);
+      var m2ConMerma = Math.ceil(m2Suelo * 1.1);
+      var mlRodapie = Math.ceil(m2Suelo * 0.95);
+      var pav = getCalcVal('tipo_pavimento') || 'Tarima AC5';
+      mainLine = 'Material necesario (+10% merma): ' + m2ConMerma + ' m² de ' + pav + ' + ' + mlRodapie + ' m lineales de rodapié';
+      subLine = 'Superficie útil de vivienda: ' + m2Suelo + ' m²';
+    } else if (type === 'mudanza_volumen') {
+      var habs = Math.max(1, Number(getCalcVal('num_habitaciones')) || 3);
+      var m3 = habs * 8 + 4;
+      var emb = getCalcVal('desmontaje_embalaje') || 'Completo';
+      var acc = getCalcVal('acceso_viviendas') || '';
+      mainLine = 'Volumen estimado de mudanza: ~' + m3 + ' m³ (' + habs + ' habitaciones)';
+      subLine = 'Modalidad: ' + emb + ' · ' + acc;
+    } else {
+      var servEsp = getCalcVal('servicio_especifico') || '';
+      var dimEst = getCalcVal('dimension_estimada') || '';
+      var modAt = getCalcVal('modalidad_atencion') || '';
+      mainLine = servEsp + (dimEst ? ' · ' + dimEst : '');
+      subLine = 'Tipo de cliente/inmueble: ' + modAt;
+    }
+
+    calcResultText.textContent = mainLine;
+    if (calcSubText) calcSubText.textContent = subLine;
+    if (calcHiddenInput) calcHiddenInput.value = mainLine + (subLine ? ' (' + subLine + ')' : '');
+  }
+
+  if (calcBox) {
+    var controls = calcBox.querySelectorAll('.pp-calc-control');
+    controls.forEach(function(ctrl) {
+      ctrl.addEventListener('input', runSectorCalculator);
+      ctrl.addEventListener('change', runSectorCalculator);
+    });
+    runSectorCalculator();
+
+    if (applyBtn && expTextarea) {
+      applyBtn.addEventListener('click', function() {
+        runSectorCalculator();
+        var summary = calcHiddenInput ? calcHiddenInput.value : '';
+        if (!summary) return;
+        var prefix = '[Cálculo técnico: ' + summary + '] ';
+        if (expTextarea.value.indexOf('[Cálculo técnico:') === 0) {
+          expTextarea.value = expTextarea.value.replace(/^\[Cálculo técnico:[^\]]+\]\s*/, prefix);
+        } else {
+          expTextarea.value = prefix + expTextarea.value;
+        }
+        expTextarea.focus();
+      });
+    }
+  }
+
+  if (fileInput && filesPreview) {
+    fileInput.addEventListener('change', function() {
+      var files = Array.from(fileInput.files || []);
+      filesPreview.innerHTML = files.map(function(f) {
+        return '<span style="background:#f0f0f0;padding:4px 8px;border-radius:4px;font-size:12px;">📄 ' + f.name + '</span>';
+      }).join('');
+    });
+  }
+
+  if (form) {
+    form.addEventListener('submit', async function(ev) {
+      ev.preventDefault();
+      runSectorCalculator();
+      submitBtn.disabled = true;
+      var prevText = submitBtn.textContent;
+      submitBtn.textContent = 'Enviando...';
+      feedback.style.display = 'none';
+
+      try {
+        var fd = new FormData(form);
+        var res = await fetch('/api/presupuestos', { method: 'POST', body: fd });
+        var data = await res.json();
+        if (!res.ok || !data.ok) throw new Error(data.error || 'Error al enviar solicitud.');
+
+        feedback.style.display = 'block';
+        feedback.style.background = '#ecfdf5';
+        feedback.style.border = '1px solid #a7f3d0';
+        feedback.style.color = '#065f46';
+        feedback.innerHTML =
+          '<strong>✅ Solicitud enviada (' + data.quote.codigo + ')</strong><br>' +
+          'Nuestro agente de <strong>' + data.quote.provincia_nombre + ' (' + data.quote.municipio + ')</strong> ha recibido tu solicitud y cálculo para <strong>' + data.quote.sector_nombre + '</strong> y te contactará en el <strong>' + data.quote.telefono_whatsapp + '</strong>.';
+        form.reset();
+        runSectorCalculator();
+        if (filesPreview) filesPreview.innerHTML = '';
+      } catch (err) {
+        feedback.style.display = 'block';
+        feedback.style.background = '#fef2f2';
+        feedback.style.border = '1px solid #fecaca';
+        feedback.style.color = '#991b1b';
+        feedback.innerHTML = '<strong>Error:</strong> ' + err.message;
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = prevText;
+      }
+    });
+  }
+})();
+</script>
