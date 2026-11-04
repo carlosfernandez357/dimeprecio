@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -39,7 +39,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const SITE_URL = process.env.SITE_URL || 'https://pideprecio.es';
+const SITE_URL = process.env.SITE_URL || 'https://DimePrecio.es';
 
 // Asegurar carpetas de subidas (imágenes de artículos y formularios/presupuestos de clientes)
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
@@ -142,7 +142,7 @@ const uploadFormFiles = createMultipartHandler(FORMS_UPLOAD_DIR, FORM_ALLOWED_EX
 // Crear archivo demo de plantilla si no existe
 const demoPdfPath = path.join(FORMS_UPLOAD_DIR, 'demo-croquis-bano.pdf');
 if (!fs.existsSync(demoPdfPath)) {
-  fs.writeFileSync(demoPdfPath, 'PidePrecio.es - Documento adjunto de solicitud de presupuesto.\n', 'utf8');
+  fs.writeFileSync(demoPdfPath, 'DimePrecio.es - Documento adjunto de solicitud de presupuesto.\n', 'utf8');
 }
 
 // ============================================================================
@@ -223,7 +223,7 @@ app.use(async (req, res, next) => {
     res.locals.admin = req.session.admin || null;
     res.locals.currentPath = req.path;
     res.locals.siteUrl = SITE_URL;
-    res.locals.siteName = 'PidePrecio.es';
+    res.locals.siteName = 'DimePrecio.es';
   } catch (e) {
     res.locals.categories = [];
     res.locals.allLocations = rr.getLocations(false);
@@ -231,7 +231,7 @@ app.use(async (req, res, next) => {
     res.locals.admin = null;
     res.locals.currentPath = req.path;
     res.locals.siteUrl = SITE_URL;
-    res.locals.siteName = 'PidePrecio.es';
+    res.locals.siteName = 'DimePrecio.es';
   }
   next();
 });
@@ -256,7 +256,7 @@ io.on('connection', socket => {
     ip: socket.handshake.headers['x-forwarded-for']?.split(',')[0] || socket.handshake.address,
     userAgent: socket.handshake.headers['user-agent'] || '',
     currentPage: '/',
-    pageTitle: 'PidePrecio.es',
+    pageTitle: 'DimePrecio.es',
     connectedAt: new Date().toISOString(),
     device: detectDevice(socket.handshake.headers['user-agent'] || ''),
     browser: detectBrowser(socket.handshake.headers['user-agent'] || ''),
@@ -311,7 +311,7 @@ function detectOS(ua) {
 }
 
 // ============================================================================
-// RUTAS PÚBLICAS DE PIDEPRECIO.ES (BASADAS EN SOCIALSFORCE + ALGORITMOS)
+// RUTAS PÚBLICAS DE DimePrecio.ES (BASADAS EN SOCIALSFORCE + ALGORITMOS)
 // ============================================================================
 
 // PORTADA NACIONAL HIPER-PERSONALIZADA SEGÚN LA ZONA ELEGIDA Y LO YA VISTO POR EL CLIENTE
@@ -397,9 +397,9 @@ app.get('/', async (req, res) => {
 
     res.render('home', {
       title: preferredSector
-        ? `PidePrecio.es ${userProv.nombre} — Recomendaciones de ${preferredSector.nombre} y Guías en tu Zona`
-        : `PidePrecio.es — Artículos, Guías y Soluciones en ${userProv.nombre}`,
-      description: `Explora las secciones y artículos más relevantes en ${userProv.nombre} personalizados según tu zona e intereses en PidePrecio.es.`,
+        ? `DimePrecio.es ${userProv.nombre} — Recomendaciones de ${preferredSector.nombre} y Guías en tu Zona`
+        : `DimePrecio.es — Artículos, Guías y Soluciones en ${userProv.nombre}`,
+      description: `Explora las secciones y artículos más relevantes en ${userProv.nombre} personalizados según tu zona e intereses en DimePrecio.es.`,
       canonicalUrl: `${SITE_URL}/`,
       featured,
       latest,
@@ -413,7 +413,7 @@ app.get('/', async (req, res) => {
     });
   } catch (err) {
     console.error('[Home Error]', err);
-    res.status(500).render('error', { title: 'Error', message: 'Error al cargar PidePrecio.es' });
+    res.status(500).render('error', { title: 'Error', message: 'Error al cargar DimePrecio.es' });
   }
 });
 
@@ -466,7 +466,7 @@ app.get('/pedir-presupuesto', async (req, res) => {
     });
 
     res.render('pedir-presupuesto', {
-      title: `Pedir Presupuesto en ${currentProvince.nombre} (${selectedZone}) — ${currentSector.nombre} | PidePrecio.es`,
+      title: `Pedir Presupuesto en ${currentProvince.nombre} (${selectedZone}) — ${currentSector.nombre} | DimePrecio.es`,
       description: `Selecciona tu provincia, zona en ${currentProvince.nombre} y servicio para utilizar la calculadora técnica y el formulario oficial de ${currentSector.nombre}.`,
       canonicalUrl: `${SITE_URL}/pedir-presupuesto`,
       currentProvince,
@@ -492,7 +492,7 @@ app.get('/provincias', async (req, res) => {
     cookies: req.cookies,
   });
   res.render('provinces', {
-    title: 'Seleccionar Provincia (52 Provincias de España) | PidePrecio.es',
+    title: 'Seleccionar Provincia (52 Provincias de España) | DimePrecio.es',
     description: 'Detecta tu provincia por GPS, Código Postal o selecciona tu zona entre las 52 provincias de España para ver sus secciones y páginas relevantes.',
     canonicalUrl: `${SITE_URL}/provincias`,
     sidebarData,
@@ -520,8 +520,8 @@ app.get('/categories', async (req, res) => {
     cookies: req.cookies,
   });
   res.render('categories', {
-    title: `Secciones y Servicios en ${userProv.nombre} | PidePrecio.es`,
-    description: `Explora todas las secciones de servicios profesionales en ${userProv.nombre} en PidePrecio.es.`,
+    title: `Secciones y Servicios en ${userProv.nombre} | DimePrecio.es`,
+    description: `Explora todas las secciones de servicios profesionales en ${userProv.nombre} en DimePrecio.es.`,
     canonicalUrl: `${SITE_URL}/categories`,
     sectorsWithPosts,
     sidebarData,
@@ -551,7 +551,7 @@ async function renderProvincePage(req, res, provinciaSlug) {
   });
 
   res.render('province', {
-    title: `Zona ${province.nombre}: Secciones y Páginas Relevantes (2026) | PidePrecio.es`,
+    title: `Zona ${province.nombre}: Secciones y Páginas Relevantes (2026) | DimePrecio.es`,
     description: `Entra en tu sección dentro de ${province.nombre} (${(province.municipios || []).join(', ')}) para consultar precios actualizados y pedir presupuesto.`,
     canonicalUrl: `${SITE_URL}/${province.slug}`,
     province,
@@ -600,7 +600,7 @@ async function renderProvinceSectorPage(req, res, provinciaSlug, sectorSlug) {
   });
 
   res.render('province-sector', {
-    title: `${sector.nombre} en ${province.nombre}: Artículos, Guías y Soluciones | PidePrecio.es`,
+    title: `${sector.nombre} en ${province.nombre}: Artículos, Guías y Soluciones | DimePrecio.es`,
     description: `Artículos recomendados y soluciones de ${sector.nombre.toLowerCase()} en ${province.nombre} (${(province.municipios || []).slice(0, 4).join(', ')}). Rellena el formulario del sector al final de la página.`,
     canonicalUrl: `${SITE_URL}/${province.slug}/${sector.slug}`,
     province,
@@ -635,8 +635,8 @@ app.get('/presupuesto/:provinciaSlug/:sectorSlug', async (req, res, next) => {
   });
 
   res.render('presupuesto', {
-    title: `Solicitar Presupuesto de ${servicioPreseleccionado || sector.nombre} en ${province.nombre} | PidePrecio.es`,
-    description: `Formulario oficial de presupuesto para ${servicioPreseleccionado || sector.nombre} en ${province.nombre}. Envía tu explicación y adjunta croquis o fotos al Agente de PidePrecio.es.`,
+    title: `Solicitar Presupuesto de ${servicioPreseleccionado || sector.nombre} en ${province.nombre} | DimePrecio.es`,
+    description: `Formulario oficial de presupuesto para ${servicioPreseleccionado || sector.nombre} en ${province.nombre}. Envía tu explicación y adjunta croquis o fotos al Agente de DimePrecio.es.`,
     canonicalUrl: `${SITE_URL}/presupuesto/${province.slug}/${sector.slug}`,
     province,
     sector,
@@ -667,7 +667,7 @@ async function handleArticleView(req, res) {
     );
 
     if (!rows.length) {
-      return res.status(404).render('error', { title: 'No encontrado', message: 'La página solicitada no existe en PidePrecio.es' });
+      return res.status(404).render('error', { title: 'No encontrado', message: 'La página solicitada no existe en DimePrecio.es' });
     }
 
     const post = rows[0];
@@ -704,7 +704,7 @@ async function handleArticleView(req, res) {
     });
 
     res.render('article', {
-      title: post.meta_title || `${post.title} | PidePrecio.es`,
+      title: post.meta_title || `${post.title} | DimePrecio.es`,
       description: post.meta_description || post.excerpt,
       canonicalUrl: `${SITE_URL}/article/${post.slug}`,
       ogImage: post.featured_image || post.image,
@@ -755,7 +755,7 @@ app.get('/category/:slug', async (req, res) => {
       cookies: req.cookies,
     });
     res.render('for-you', {
-      title: `${category.name} — Guías de Precios y Presupuestos | PidePrecio.es`,
+      title: `${category.name} — Guías de Precios y Presupuestos | DimePrecio.es`,
       description: category.description,
       canonicalUrl: `${SITE_URL}/category/${category.slug}`,
       headingTitle: category.name,
@@ -782,8 +782,8 @@ app.get('/for-you', async (req, res) => {
     cookies: req.cookies,
   });
   res.render('for-you', {
-    title: `Para Ti en ${userProv.nombre} | PidePrecio.es`,
-    description: `Páginas de precios seleccionadas por el algoritmo de PidePrecio.es para ${userProv.nombre}.`,
+    title: `Para Ti en ${userProv.nombre} | DimePrecio.es`,
+    description: `Páginas de precios seleccionadas por el algoritmo de DimePrecio.es para ${userProv.nombre}.`,
     canonicalUrl: `${SITE_URL}/for-you`,
     posts,
     recommendedAds,
@@ -801,7 +801,7 @@ app.get('/trending', async (req, res) => {
     cookies: req.cookies,
   });
   res.render('trending', {
-    title: `En Tendencia en ${userProv.nombre} | PidePrecio.es`,
+    title: `En Tendencia en ${userProv.nombre} | DimePrecio.es`,
     description: `Tendencias actuales de presupuestos y tarifas en ${userProv.nombre} y toda España.`,
     canonicalUrl: `${SITE_URL}/trending`,
     posts,
@@ -824,8 +824,8 @@ app.get('/recent', async (req, res) => {
     cookies: req.cookies,
   });
   res.render('recent', {
-    title: `Páginas Recientes | PidePrecio.es`,
-    description: `Nuevas páginas de precios y presupuestos creadas por PidePrecio.es.`,
+    title: `Páginas Recientes | DimePrecio.es`,
+    description: `Nuevas páginas de precios y presupuestos creadas por DimePrecio.es.`,
     canonicalUrl: `${SITE_URL}/recent`,
     posts,
     recommendedAds,
@@ -861,7 +861,7 @@ app.get('/search', async (req, res) => {
     });
 
     res.render('search', {
-      title: q ? `Buscar "${q}" en ${currentProvince.nombre} — PidePrecio.es` : `Buscador de Servicios en ${currentProvince.nombre} — PidePrecio.es`,
+      title: q ? `Buscar "${q}" en ${currentProvince.nombre} — DimePrecio.es` : `Buscador de Servicios en ${currentProvince.nombre} — DimePrecio.es`,
       description: `Resultados personalizados de secciones y páginas para ${q || 'servicios profesionales'} en ${currentProvince.nombre}.`,
       canonicalUrl: `${SITE_URL}/search`,
       robots: 'noindex, follow',
@@ -1012,7 +1012,7 @@ app.post('/api/presupuestos', uploadFormFiles.array('archivos_presupuesto', 5), 
 
     res.json({
       ok: true,
-      message: 'Tu formulario y explicación han sido enviados directamente al Agente de PidePrecio.es en tu provincia.',
+      message: 'Tu formulario y explicación han sido enviados directamente al Agente de DimePrecio.es en tu provincia.',
       quote: {
         id: createdQuote.id,
         codigo: createdQuote.codigo,
@@ -1041,12 +1041,12 @@ app.get('/pago-lead/:codigo', (req, res) => {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Desbloquear Contacto Exclusivo ${quote.codigo} — PidePrecio.es</title>
+  <title>Desbloquear Contacto Exclusivo ${quote.codigo} — DimePrecio.es</title>
   <link rel="stylesheet" href="/css/rankrent.css">
 </head>
 <body style="background:#0f172a;color:#f8fafc;font-family:system-ui,sans-serif;padding:30px 16px;">
   <div style="max-width:620px;margin:0 auto;background:#ffffff;color:#0f172a;border-radius:18px;padding:28px;box-shadow:0 20px 50px rgba(0,0,0,0.4);">
-    <span style="background:#dbeafe;color:#1d4ed8;font-weight:800;font-size:12px;padding:4px 10px;border-radius:6px;">PIDEPRECIO.ES · VENTA DIRECTA DE CONTACTO EXCLUSIVO</span>
+    <span style="background:#dbeafe;color:#1d4ed8;font-weight:800;font-size:12px;padding:4px 10px;border-radius:6px;">DimePrecio.ES · VENTA DIRECTA DE CONTACTO EXCLUSIVO</span>
     <h1 style="margin:12px 0 6px;font-size:24px;">Trabajo de ${quote.sector_nombre} en ${quote.municipio} (${quote.provincia_nombre})</h1>
     <p style="color:#475569;font-size:14.5px;line-height:1.5;">
       <strong>Explicación del vecino:</strong> "${quote.explicacion_cliente}"<br>
@@ -1097,7 +1097,7 @@ app.post('/api/article/:id/like', async (req, res) => {
 });
 
 // ============================================================================
-// SITEMAP.XML, ROBOTS.TXT Y FEED RSS PARA PIDEPRECIO.ES
+// SITEMAP.XML, ROBOTS.TXT Y FEED RSS PARA DimePrecio.ES
 // ============================================================================
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /pedir-presupuesto?\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
@@ -1131,12 +1131,12 @@ app.get('/feed.xml', async (req, res) => {
   const items = (posts || [])
     .map(p => `<item><title><![CDATA[${p.title}]]></title><link>${SITE_URL}/article/${p.slug}</link><description><![CDATA[${p.excerpt || ''}]]></description></item>`)
     .join('');
-  res.type('application/rss+xml').send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>PidePrecio.es</title><link>${SITE_URL}</link><description>Guías de precios y presupuestos por provincias en España</description>${items}</channel></rss>`);
+  res.type('application/rss+xml').send(`<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>DimePrecio.es</title><link>${SITE_URL}</link><description>Guías de precios y presupuestos por provincias en España</description>${items}</channel></rss>`);
 });
 
-app.get('/privacy', (req, res) => res.render('error', { title: 'Política de Privacidad | PidePrecio.es', message: 'PidePrecio.es trata tus datos únicamente para gestionar las solicitudes de presupuesto en tu provincia conforme al RGPD.' }));
-app.get('/cookies', (req, res) => res.render('error', { title: 'Política de Cookies | PidePrecio.es', message: 'Utilizamos cookies técnicas y de personalización para recordar tu provincia y recomendar las secciones de tu interés. Puedes configurarlas en cualquier momento desde el pie de página.' }));
-app.get('/legal', (req, res) => res.render('error', { title: 'Aviso Legal | PidePrecio.es', message: 'PidePrecio.es — Portal informativo de guías sectoriales y central de solicitudes de presupuesto por provincias en España.' }));
+app.get('/privacy', (req, res) => res.render('error', { title: 'Política de Privacidad | DimePrecio.es', message: 'DimePrecio.es trata tus datos únicamente para gestionar las solicitudes de presupuesto en tu provincia conforme al RGPD.' }));
+app.get('/cookies', (req, res) => res.render('error', { title: 'Política de Cookies | DimePrecio.es', message: 'Utilizamos cookies técnicas y de personalización para recordar tu provincia y recomendar las secciones de tu interés. Puedes configurarlas en cualquier momento desde el pie de página.' }));
+app.get('/legal', (req, res) => res.render('error', { title: 'Aviso Legal | DimePrecio.es', message: 'DimePrecio.es — Portal informativo de guías sectoriales y central de solicitudes de presupuesto por provincias en España.' }));
 app.post('/api/privacy/forget', (req, res) => {
   res.clearCookie('sf_vid');
   res.clearCookie('sf_uid');
@@ -1156,7 +1156,7 @@ function requireAdmin(req, res, next) {
     req.session.admin = {
       id: 1,
       username: 'admin',
-      displayName: 'Agente Central PidePrecio.es',
+      displayName: 'Agente Central DimePrecio.es',
       role: 'admin',
     };
   }
@@ -1177,7 +1177,7 @@ app.get('/admin/archivos/forms/:filename', requireAdmin, (req, res) => {
 
 app.get('/admin/login', (req, res) => {
   if (req.session.admin) return res.redirect('/admin');
-  res.render('admin/login', { title: 'Acceso Panel PidePrecio.es', error: null });
+  res.render('admin/login', { title: 'Acceso Panel DimePrecio.es', error: null });
 });
 
 app.post('/admin/login', async (req, res) => {
@@ -1185,10 +1185,10 @@ app.post('/admin/login', async (req, res) => {
   const adminUser = process.env.ADMIN_USER || process.env.ADMIN_USERNAME || 'admin';
   const adminPass = process.env.ADMIN_PASSWORD || 'Merchan1!';
   if (username === adminUser && password === adminPass) {
-    req.session.admin = { id: 1, username: 'admin', displayName: 'Agente PidePrecio.es', role: 'admin' };
+    req.session.admin = { id: 1, username: 'admin', displayName: 'Agente DimePrecio.es', role: 'admin' };
     return res.redirect('/admin');
   }
-  res.render('admin/login', { title: 'Acceso Panel PidePrecio.es', error: 'Credenciales incorrectas' });
+  res.render('admin/login', { title: 'Acceso Panel DimePrecio.es', error: 'Credenciales incorrectas' });
 });
 
 app.get('/admin/logout', (req, res) => {
@@ -1196,7 +1196,7 @@ app.get('/admin/logout', (req, res) => {
   res.redirect('/admin/login');
 });
 
-// 1. DASHBOARD GENERAL DE PIDEPRECIO.ES
+// 1. DASHBOARD GENERAL DE DimePrecio.ES
 app.get('/admin', requireAdmin, async (req, res) => {
   const overview = rr.getAdminOverviewStats();
   const recentQuotes = rr.getQuoteRequests().slice(0, 8);
@@ -1207,7 +1207,7 @@ app.get('/admin', requireAdmin, async (req, res) => {
   `);
 
   res.render('admin/dashboard', {
-    title: 'Panel Central PidePrecio.es',
+    title: 'Panel Central DimePrecio.es',
     overview,
     recentQuotes,
     recentPosts,
@@ -1226,7 +1226,7 @@ app.get('/admin/anuncios', requireAdmin, (req, res) => {
   const ads = rr.getAds(filters);
   const overview = rr.getAdminOverviewStats();
   res.render('admin/anuncios', {
-    title: 'Anuncios y Algoritmo — PidePrecio.es',
+    title: 'Anuncios y Algoritmo — DimePrecio.es',
     ads,
     filters,
     algorithmConfig: overview.algorithmConfig,
@@ -1257,7 +1257,7 @@ app.post('/admin/algoritmo/config', requireAdmin, (req, res) => {
 app.get('/admin/sectores-provincias', requireAdmin, (req, res) => {
   const zoneConfigs = rr.getAllZoneConfigs();
   res.render('admin/sectores-provincias', {
-    title: '52 Provincias × Sectores — PidePrecio.es',
+    title: '52 Provincias × Sectores — DimePrecio.es',
     zoneConfigs,
   });
 });
@@ -1284,7 +1284,7 @@ app.get('/admin/formularios', requireAdmin, async (req, res) => {
   const [formRows] = await pool.query('SELECT * FROM pp_sector_forms WHERE sector_slug = ?', [selectedSector.slug, req.query.provincia || null]);
   const currentForm = (formRows && formRows[0]) || rr.getCustomForm(selectedSector.slug, req.query.provincia || null);
   res.render('admin/formularios', {
-    title: 'Formularios y Calculadoras en Base de Datos — PidePrecio.es',
+    title: 'Formularios y Calculadoras en Base de Datos — DimePrecio.es',
     selectedSector,
     currentForm,
   });
@@ -1305,7 +1305,7 @@ app.get('/admin/presupuestos', requireAdmin, (req, res) => {
   };
   const quotes = rr.getQuoteRequests(filters);
   res.render('admin/presupuestos', {
-    title: 'Bandeja del Agente — PidePrecio.es',
+    title: 'Bandeja del Agente — DimePrecio.es',
     quotes,
     filters,
   });
@@ -1321,7 +1321,7 @@ app.post('/admin/presupuestos/:id/actualizar', requireAdmin, (req, res) => {
 // ============================================================================
 app.get('/admin/live', requireAdmin, (req, res) => {
   res.render('admin/live', {
-    title: 'Visitantes en Vivo — PidePrecio.es',
+    title: 'Visitantes en Vivo — DimePrecio.es',
     visitors: Array.from(activeVisitors.values()),
   });
 });
@@ -1335,14 +1335,14 @@ app.get('/admin/articles', requireAdmin, async (req, res) => {
   const articles = (posts || []).map(p => ({
     ...p,
     image: p.featured_image,
-    category: p.sector_nombre ? `${p.provincia_nombre || 'España'} · ${p.sector_nombre}` : (p.category_name || 'PidePrecio.es'),
+    category: p.sector_nombre ? `${p.provincia_nombre || 'España'} · ${p.sector_nombre}` : (p.category_name || 'DimePrecio.es'),
     indexed: true,
   }));
-  res.render('admin/articles', { title: 'Páginas creadas por PidePrecio.es', posts: articles, articles });
+  res.render('admin/articles', { title: 'Páginas creadas por DimePrecio.es', posts: articles, articles });
 });
 
 app.get('/admin/create-article', requireAdmin, (req, res) => {
-  res.render('admin/create-article', { title: 'Crear Página con IA — PidePrecio.es', post: null, error: null });
+  res.render('admin/create-article', { title: 'Crear Página con IA — DimePrecio.es', post: null, error: null });
 });
 
 // Endpoint de generación de páginas con IA compatible con socialsforce (/createArticle y /api/ai/generate)
@@ -1351,7 +1351,7 @@ async function handleAiCreateArticle(req, res) {
     const promptText = req.body.prompt || req.body.topic || '';
     if (!promptText) return res.status(400).json({ success: false, error: 'El tema o prompt es obligatorio' });
 
-    const article = await generateArticle(promptText, req.body.category || 'Presupuestos PidePrecio.es', 'profesional', 'es');
+    const article = await generateArticle(promptText, req.body.category || 'Presupuestos DimePrecio.es', 'profesional', 'es');
     const imageUrl = article.image_prompt ? await generateImage(article.image_prompt) : 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80';
 
     res.json({
@@ -1447,7 +1447,7 @@ app.post('/admin/articles/:id/delete', requireAdmin, async (req, res) => {
 app.get('/admin/edit-article/:id', requireAdmin, async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
   if (!rows.length) return res.redirect('/admin/articles');
-  res.render('admin/create-article', { title: 'Editar Página — PidePrecio.es', post: rows[0], error: null });
+  res.render('admin/create-article', { title: 'Editar Página — DimePrecio.es', post: rows[0], error: null });
 });
 
 app.post('/admin/edit-article/:id', requireAdmin, upload.single('featured_image_file'), async (req, res) => {
@@ -1469,7 +1469,7 @@ app.post('/admin/delete-article/:id', requireAdmin, async (req, res) => {
 
 app.get('/admin/schedules', requireAdmin, async (req, res) => {
   const [schedules] = await pool.query('SELECT * FROM schedules ORDER BY created_at DESC');
-  res.render('admin/schedules', { title: 'Programación Automática IA — PidePrecio.es', schedules });
+  res.render('admin/schedules', { title: 'Programación Automática IA — DimePrecio.es', schedules });
 });
 
 app.post('/admin/schedules', requireAdmin, async (req, res) => {
@@ -1504,7 +1504,7 @@ app.post('/admin/schedules/:id/toggle', requireAdmin, async (req, res) => {
 
 app.get('/admin/categories', requireAdmin, async (req, res) => {
   const [cats] = await pool.query('SELECT * FROM categories ORDER BY name');
-  res.render('admin/categories', { title: 'Categorías — PidePrecio.es', categories: cats });
+  res.render('admin/categories', { title: 'Categorías — DimePrecio.es', categories: cats });
 });
 
 // ============================================================================
@@ -1534,7 +1534,7 @@ async function setupCronJobs() {
       const intervalMs = sched.frequency === 'hourly' ? 3600000 : sched.frequency === 'every_6h' ? 21600000 : 86400000;
       const timer = setInterval(async () => {
         try {
-          const article = await generateArticle(sched.topic, 'Presupuestos PidePrecio.es');
+          const article = await generateArticle(sched.topic, 'Presupuestos DimePrecio.es');
           const imageUrl = article.image_prompt ? await generateImage(article.image_prompt) : null;
           const slug = rr.slugify(article.title) + '-' + Date.now().toString(36);
           const status = sched.auto_publish ? 'published' : 'draft';
@@ -1555,10 +1555,10 @@ async function setupCronJobs() {
 
 // 404 Handler
 app.use((req, res) => {
-  res.status(404).render('error', { title: '404 — PidePrecio.es', message: 'La página que buscas no existe en PidePrecio.es' });
+  res.status(404).render('error', { title: '404 — DimePrecio.es', message: 'La página que buscas no existe en DimePrecio.es' });
 });
 
 server.listen(PORT, () => {
-  console.log(`[PidePrecio.es] Servidor activo en http://localhost:${PORT}`);
+  console.log(`[DimePrecio.es] Servidor activo en http://localhost:${PORT}`);
   setupCronJobs();
 });

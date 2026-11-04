@@ -1,6 +1,6 @@
-<%
-const SITE_URL = process.env.SITE_URL || "https://pideprecio.es";
-const SITE_NAME = "PidePrecio.es · Artículos Especializados, Guías y Soluciones por Sectores y Provincias";
+﻿<%
+const SITE_URL = process.env.SITE_URL || "https://DimePrecio.es";
+const SITE_NAME = "DimePrecio.es · Artículos Especializados, Guías y Soluciones por Sectores y Provincias";
 
 const seoType = (typeof pageType !== "undefined" && pageType === "article") ? "article" : "website";
 const seoPost = (typeof post !== "undefined" && post) ? post : null;
@@ -9,7 +9,7 @@ const seoSec = (typeof currentSector !== "undefined" && currentSector) ? current
 
 const seoTitle = (typeof title !== "undefined" && title)
     ? title
-    : "PidePrecio.es: Guías, Artículos y Soluciones por Sectores y Provincias en España";
+    : "DimePrecio.es: Guías, Artículos y Soluciones por Sectores y Provincias en España";
 
 const rawDescription = (typeof description !== "undefined" && description)
     ? String(description)
@@ -38,7 +38,7 @@ const safeJson = (obj) => JSON.stringify(obj).replace(/</g, "\\u003c");
 
 const organization = {
     "@type": "Organization",
-    "name": "PidePrecio.es",
+    "name": "DimePrecio.es",
     "url": SITE_URL,
     "logo": { "@type": "ImageObject", "url": SITE_URL + "/images/logo.png" }
 };
@@ -68,7 +68,7 @@ if (typeof customSchemas !== "undefined" && Array.isArray(customSchemas) && cust
                 "name": seoPost.provincia_nombre || (seoProv && seoProv.nombre) || "España"
             }
         },
-        "author": { "@type": "Organization", "name": "PidePrecio.es", "url": SITE_URL },
+        "author": { "@type": "Organization", "name": "DimePrecio.es", "url": SITE_URL },
         "publisher": organization,
         "url": seoCanonical
     });
@@ -121,11 +121,11 @@ if (typeof customSchemas !== "undefined" && Array.isArray(customSchemas) && cust
     <meta name="robots" content="<%= (typeof robots !== "undefined" && robots) ? robots : "index, follow, max-image-preview:large" %>">
     <meta name="theme-color" content="#171717">
     <link rel="canonical" href="<%= seoCanonical %>">
-    <link rel="alternate" type="application/rss+xml" title="PidePrecio.es RSS" href="/feed.xml">
+    <link rel="alternate" type="application/rss+xml" title="DimePrecio.es RSS" href="/feed.xml">
     <link rel="apple-touch-icon" href="<%= SITE_URL %>/images/logo.png">
 
     <!-- Open Graph -->
-    <meta property="og:site_name" content="PidePrecio.es">
+    <meta property="og:site_name" content="DimePrecio.es">
     <meta property="og:locale" content="es_ES">
     <meta property="og:type" content="<%= seoType %>">
     <meta property="og:title" content="<%= seoTitle %>">

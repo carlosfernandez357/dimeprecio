@@ -1,4 +1,4 @@
-<%
+﻿<%
 const userProv = (typeof detectedProvince !== "undefined" && detectedProvince)
     ? detectedProvince
     : { slug: "madrid", nombre: "Madrid" };
@@ -26,10 +26,10 @@ const ago = d => { const m = Math.max(1, Math.round((Date.now() - new Date(d)) /
 <% } %>
 
 <% if (x && part === 'intro') { %>
-<aside class="hx-intro" aria-label="Tu zona en PidePrecio.es">
+<aside class="hx-intro" aria-label="Tu zona en DimePrecio.es">
     <div class="hx-intro-glow"></div>
     <span class="hx-intro-kicker">Zona detectada: 📍 <span data-pp-prov-label><%= userProv.nombre %></span></span>
-    <h2 class="hx-intro-title hx-grad">PidePrecio.es</h2>
+    <h2 class="hx-intro-title hx-grad">DimePrecio.es</h2>
     <p>Entra primero en tu zona y sección para consultar las páginas más relevantes antes de solicitar tu presupuesto personalizado.</p>
     <div class="hx-stats">
         <div><strong data-hx-count="<%= x.totals.posts %>"><%= x.totals.posts %></strong><small>guías activas</small></div>

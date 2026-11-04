@@ -1,5 +1,5 @@
-// ============================================================================
-// PidePrecio.es — Motor de Páginas IA, Anuncios Anónimos, Algoritmos de
+﻿// ============================================================================
+// DimePrecio.es — Motor de Páginas IA, Anuncios Anónimos, Algoritmos de
 // Recomendación/Búsqueda, Matriz 52 Provincias x 30 Sectores y Formularios
 // ============================================================================
 const fs = require('fs');
@@ -7,7 +7,7 @@ const path = require('path');
 const { LOCATIONS_SEED, SECTORS_SEED, TIER_BUSINESS_MODELS } = require('./rankRentData');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
-const STORE_PATH = path.join(DATA_DIR, 'pideprecio-store.json');
+const STORE_PATH = path.join(DATA_DIR, 'DimePrecio-store.json');
 
 function slugify(str) {
   return String(str || '')
@@ -21,7 +21,7 @@ function slugify(str) {
 
 // ----------------------------------------------------------------------------
 // Semilla inicial de Páginas IA (basada en el sistema de artículos de socialsforce)
-// y Anuncios Anónimos / Espacios Destacados de PidePrecio.es
+// y Anuncios Anónimos / Espacios Destacados de DimePrecio.es
 // ----------------------------------------------------------------------------
 function buildInitialPagesAndAds(locations, sectors) {
   const pages = [];
@@ -65,7 +65,7 @@ function buildInitialPagesAndAds(locations, sectors) {
           ? `Aire Acondicionado por Conductos vs Split Inverter en ${prov.nombre}: Guía de instalación y frigorías`
           : `Cuándo acudir a especialistas de ${sec.nombre} en ${prov.nombre} (${barrios.split(',')[0]}) y qué tener en cuenta`,
       subservice: `Asesoramiento y solicitud de ${sec.nombre.toLowerCase()}`,
-      excerpt: `Guía editorial de PidePrecio.es sobre ${sec.nombre.toLowerCase()} en ${prov.nombre}: errores frecuentes a evitar, soluciones recomendadas en ${barrios} y formulario directo del sector abajo.`,
+      excerpt: `Guía editorial de DimePrecio.es sobre ${sec.nombre.toLowerCase()} en ${prov.nombre}: errores frecuentes a evitar, soluciones recomendadas en ${barrios} y formulario directo del sector abajo.`,
       relSec,
     }),
   ];
@@ -110,14 +110,14 @@ function buildInitialPagesAndAds(locations, sectors) {
 <p>Justo debajo de este artículo encontrarás el <strong>formulario exclusivo del sector ${sec.nombre} en ${prov.nombre}</strong> cargado directamente desde la base de datos con su calculadora interactiva. Solo tienes que completar los datos básicos de tu caso y tu teléfono o WhatsApp para que nuestro agente de zona atienda tu solicitud.</p>`,
           featured_image: img,
           image: img,
-          image_alt: `${sec.nombre} en ${prov.nombre} - PidePrecio.es`,
+          image_alt: `${sec.nombre} en ${prov.nombre} - DimePrecio.es`,
           category_id: ((pageId - 1) % 5) + 1,
           category_name: sec.nombre,
           category: sec.nombre,
           category_slug: sec.slug,
           category_color: '#171717',
           author_id: 1,
-          author_name: 'PidePrecio.es',
+          author_name: 'DimePrecio.es',
           status: 'published',
           is_pinned: isPinned ? 1 : 0,
           is_featured: (j < 2 && angleIdx === 0) ? 1 : 0,
@@ -128,7 +128,7 @@ function buildInitialPagesAndAds(locations, sectors) {
           depth: 8,
           views: 420 + ((pageId * 113) % 2800),
           likes: 22 + (pageId % 50),
-          meta_title: `${title} | PidePrecio.es`,
+          meta_title: `${title} | DimePrecio.es`,
           meta_description: `${angle.excerpt}`,
           keywords: `arreglar mi bano en ${prov.nombre.toLowerCase()}, ${sec.nombre.toLowerCase()} ${prov.nombre.toLowerCase()}, aire acondicionado frigorias ${prov.nombre.toLowerCase()}, ${sec.slug} ${prov.slug}`,
           provincia_id: prov.id,
@@ -159,7 +159,7 @@ function buildInitialPagesAndAds(locations, sectors) {
         cta_texto: sec.slug === 'climatizacion-aire-acondicionado'
           ? 'Calcular Frigorías y Pedir Presupuesto'
           : 'Abrir Formulario del Sector',
-        marca_visible: 'PidePrecio.es',
+        marca_visible: 'DimePrecio.es',
         es_anonimo: true,
         provincia_id: prov.id,
         provincia_slug: prov.slug,
@@ -185,7 +185,7 @@ function buildInitialPagesAndAds(locations, sectors) {
 }
 
 // ----------------------------------------------------------------------------
-// Inicialización del almacén persistente de PidePrecio.es
+// Inicialización del almacén persistente de DimePrecio.es
 // ----------------------------------------------------------------------------
 function buildInitialStore() {
   const locations = LOCATIONS_SEED.map((loc, idx) => ({
@@ -217,7 +217,7 @@ function buildInitialStore() {
       comision_pct_custom: 12,
       espacio_destacado_cuota: 249,
       whatsapp_automatico: '34600112233',
-      etiqueta_anuncio: 'Socio Oficial de PidePrecio.es en Zaragoza para Reformas',
+      etiqueta_anuncio: 'Socio Oficial de DimePrecio.es en Zaragoza para Reformas',
       algoritmo_impulsado: true,
       prioridad_zona: 10,
       activa: true,
@@ -235,7 +235,7 @@ function buildInitialStore() {
       comision_pct_custom: 15,
       espacio_destacado_cuota: 299,
       whatsapp_automatico: '34600445566',
-      etiqueta_anuncio: 'Socio Oficial de PidePrecio.es en Málaga para Placas Solares',
+      etiqueta_anuncio: 'Socio Oficial de DimePrecio.es en Málaga para Placas Solares',
       algoritmo_impulsado: true,
       prioridad_zona: 10,
       activa: true,
@@ -253,7 +253,7 @@ function buildInitialStore() {
       comision_pct_custom: 10,
       espacio_destacado_cuota: 199,
       whatsapp_automatico: '',
-      etiqueta_anuncio: 'Central PidePrecio.es Valencia — Venta Directa por Contacto',
+      etiqueta_anuncio: 'Central DimePrecio.es Valencia — Venta Directa por Contacto',
       algoritmo_impulsado: true,
       prioridad_zona: 10,
       activa: true,
@@ -271,7 +271,7 @@ function buildInitialStore() {
       comision_pct_custom: 15,
       espacio_destacado_cuota: 299,
       whatsapp_automatico: '',
-      etiqueta_anuncio: 'Intermediación de Obra PidePrecio.es Madrid (15% comisión)',
+      etiqueta_anuncio: 'Intermediación de Obra DimePrecio.es Madrid (15% comisión)',
       algoritmo_impulsado: true,
       prioridad_zona: 9,
       activa: true,
@@ -332,7 +332,7 @@ function buildInitialStore() {
       valor_estimado_trabajo: 1500,
       estado_agente: 'nuevo_en_bandeja', // nuevo_en_bandeja | enviado_profesional | desbloqueado_pagado | en_seguimiento_comision
       contacto_desbloqueado: false,
-      payment_link: 'https://pideprecio.es/pago-lead/PP-2026-0001',
+      payment_link: 'https://DimePrecio.es/pago-lead/PP-2026-0001',
       notas_agente: '',
       created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
     },
@@ -403,7 +403,7 @@ function buildInitialStore() {
       estado_agente: 'en_seguimiento_comision',
       contacto_desbloqueado: true,
       payment_link: '',
-      notas_agente: 'Operación a comisión del 15% (15.000 € presupuesto estimado -> 2.250 € comisión PidePrecio.es).',
+      notas_agente: 'Operación a comisión del 15% (15.000 € presupuesto estimado -> 2.250 € comisión DimePrecio.es).',
       created_at: new Date(Date.now() - 1000 * 60 * 260).toISOString(),
     },
   ];
@@ -418,10 +418,10 @@ function buildInitialStore() {
   ];
 
   const settings = {
-    site_name: 'PidePrecio.es',
-    site_domain: 'https://pideprecio.es',
+    site_name: 'DimePrecio.es',
+    site_domain: 'https://DimePrecio.es',
     site_tagline: 'Artículos Especializados y Guías por Sectores y Provincias en España',
-    default_author: 'PidePrecio.es',
+    default_author: 'DimePrecio.es',
     algorithm_config: {
       peso_fijados: 65,
       peso_provincia_detectada: 45,
@@ -477,7 +477,7 @@ function loadStore() {
       }
     }
   } catch (e) {
-    console.error('[PidePrecio Store] Error leyendo store, regenerando:', e.message);
+    console.error('[DimePrecio Store] Error leyendo store, regenerando:', e.message);
   }
   memoryStore = buildInitialStore();
   saveStore();
@@ -536,7 +536,7 @@ function syncEntityToDatabase(table, data) {
           data.badge,
           data.sello,
           data.cta_texto,
-          data.marca_visible || 'PidePrecio.es',
+          data.marca_visible || 'DimePrecio.es',
           data.es_anonimo !== false ? 1 : 0,
           data.provincia_slug,
           data.provincia_nombre,
@@ -678,7 +678,7 @@ function addSector(payload) {
       titulo_formulario: payload.titulo_formulario || `Solicitar Presupuesto Oficial de ${nombre}`,
       instrucciones_cliente:
         payload.instrucciones_cliente ||
-        `Describe con detalle qué trabajo de ${nombre.toLowerCase()} necesitas, medidas aproximadas y plazos. Puedes adjuntar fotos, planos o un presupuesto previo para que el agente de PidePrecio.es lo tramite en tu provincia.`,
+        `Describe con detalle qué trabajo de ${nombre.toLowerCase()} necesitas, medidas aproximadas y plazos. Puedes adjuntar fotos, planos o un presupuesto previo para que el agente de DimePrecio.es lo tramite en tu provincia.`,
       permitir_adjuntos: true,
       formatos_admitidos: '.pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx',
       campos: [
@@ -712,7 +712,7 @@ function addSector(payload) {
         },
       ],
       explicacion_label: 'Explicación detallada del trabajo que necesitas para tu presupuesto',
-      explicacion_placeholder: `Explica aquí todos los detalles de tu solicitud de ${nombre.toLowerCase()} (estado actual, materiales deseados, barrio o municipio exacto...). Esta información llega directamente al agente de PidePrecio.es.`,
+      explicacion_placeholder: `Explica aquí todos los detalles de tu solicitud de ${nombre.toLowerCase()} (estado actual, materiales deseados, barrio o municipio exacto...). Esta información llega directamente al agente de DimePrecio.es.`,
     },
     activo: true,
   };
@@ -799,7 +799,7 @@ function getZoneConfig(provinciaSlug, sectorSlug) {
     comision_pct_custom: sec?.precios_negocio?.comision_obra_pct || 12,
     espacio_destacado_cuota: sec?.precios_negocio?.espacio_destacado_mes || 199,
     whatsapp_automatico: '',
-    etiqueta_anuncio: `Servicio Oficial PidePrecio.es — ${sec ? sec.nombre : 'Presupuestos'} en ${prov ? prov.nombre : 'España'}`,
+    etiqueta_anuncio: `Servicio Oficial DimePrecio.es — ${sec ? sec.nombre : 'Presupuestos'} en ${prov ? prov.nombre : 'España'}`,
     algoritmo_impulsado: false,
     prioridad_zona: 5,
     activa: true,
@@ -826,7 +826,7 @@ function upsertZoneConfig(payload) {
     comision_pct_custom: Number(payload.comision_pct_custom ?? sec?.precios_negocio?.comision_obra_pct ?? 12),
     espacio_destacado_cuota: Number(payload.espacio_destacado_cuota ?? sec?.precios_negocio?.espacio_destacado_mes ?? 199),
     whatsapp_automatico: String(payload.whatsapp_automatico || '').replace(/[^0-9+]/g, ''),
-    etiqueta_anuncio: String(payload.etiqueta_anuncio || `PidePrecio.es Oficial · ${sec ? sec.nombre : ''} en ${prov ? prov.nombre : ''}`).trim(),
+    etiqueta_anuncio: String(payload.etiqueta_anuncio || `DimePrecio.es Oficial · ${sec ? sec.nombre : ''} en ${prov ? prov.nombre : ''}`).trim(),
     algoritmo_impulsado: Boolean(payload.algoritmo_impulsado === true || payload.algoritmo_impulsado === 'true' || payload.algoritmo_impulsado === '1' || payload.algoritmo_impulsado === 'on'),
     prioridad_zona: Math.max(1, Math.min(10, Number(payload.prioridad_zona) || 7)),
     activa: payload.activa === undefined ? true : Boolean(payload.activa === true || payload.activa === 'true' || payload.activa === '1' || payload.activa === 'on'),
@@ -852,7 +852,7 @@ function getAllZoneConfigs(filters = {}) {
 }
 
 // ----------------------------------------------------------------------------
-// Gestión de Anuncios Anónimos de PidePrecio.es y Algoritmo de Selección
+// Gestión de Anuncios Anónimos de DimePrecio.es y Algoritmo de Selección
 // ----------------------------------------------------------------------------
 function getAds(filters = {}) {
   const s = loadStore();
@@ -883,7 +883,7 @@ function getAds(filters = {}) {
 }
 
 /**
- * Algoritmo de recomendación de Anuncios de PidePrecio.es
+ * Algoritmo de recomendación de Anuncios de DimePrecio.es
  * Ordena según:
  * 1) Seleccionados por Admin (`seleccionado: true`) + `prioridad` (1..10)
  * 2) Coincidencia con la provincia detectada del visitante (`provincia_slug`)
@@ -968,12 +968,12 @@ function createOrUpdateAd(payload) {
     titulo: String(payload.titulo || `Presupuesto Oficial de ${sec ? sec.nombre : 'Servicios'} en ${prov ? prov.nombre : 'España'}`).trim(),
     subtitulo: String(
       payload.subtitulo ||
-        `Servicio gestionado por PidePrecio.es en ${prov ? prov.nombre : 'toda España'}. Solicita presupuesto personalizado adjuntando los detalles de tu trabajo.`
+        `Servicio gestionado por DimePrecio.es en ${prov ? prov.nombre : 'toda España'}. Solicita presupuesto personalizado adjuntando los detalles de tu trabajo.`
     ).trim(),
-    badge: String(payload.badge || `Anuncio Oficial PidePrecio.es · ${prov ? prov.nombre : 'Nacional'}`).trim(),
-    sello: String(payload.sello || (modelo === 'espacio_destacado' ? `⭐ Empresa Nº1 Recomendada en ${prov ? prov.nombre : 'la Provincia'}` : `Verificado PidePrecio.es`)).trim(),
+    badge: String(payload.badge || `Anuncio Oficial DimePrecio.es · ${prov ? prov.nombre : 'Nacional'}`).trim(),
+    sello: String(payload.sello || (modelo === 'espacio_destacado' ? `⭐ Empresa Nº1 Recomendada en ${prov ? prov.nombre : 'la Provincia'}` : `Verificado DimePrecio.es`)).trim(),
     cta_texto: String(payload.cta_texto || 'Solicitar Presupuesto Ahora').trim(),
-    marca_visible: String(payload.marca_visible || 'PidePrecio.es — Central Oficial de Presupuestos').trim(),
+    marca_visible: String(payload.marca_visible || 'DimePrecio.es — Central Oficial de Presupuestos').trim(),
     es_anonimo: true,
     provincia_id: prov ? prov.id : null,
     provincia_slug: prov ? prov.slug : payload.provincia_slug || 'todas',
@@ -994,7 +994,7 @@ function createOrUpdateAd(payload) {
     cuota_mensual: Number(payload.cuota_mensual ?? (modelo === 'espacio_destacado' ? 199 : 400)),
     comision_pct: Number(payload.comision_pct ?? sec?.precios_negocio?.comision_obra_pct ?? 12),
     whatsapp_destino: String(payload.whatsapp_destino || '').replace(/[^0-9+]/g, ''),
-    payment_link: String(payload.payment_link || 'https://pideprecio.es/pago-contacto').trim(),
+    payment_link: String(payload.payment_link || 'https://DimePrecio.es/pago-contacto').trim(),
     fijado: Boolean(payload.fijado === true || payload.fijado === 'true' || payload.fijado === '1' || payload.fijado === 'on'),
     seleccionado: Boolean(payload.seleccionado === true || payload.seleccionado === 'true' || payload.seleccionado === '1' || payload.seleccionado === 'on'),
     prioridad: Math.max(1, Math.min(10, Number(payload.prioridad) || 8)),
@@ -1354,22 +1354,22 @@ function buildBusinessModelMessages(quote) {
   const cuotaZona = Number(quote.cuota_zona_mensual) || 400;
   const comisionPct = Number(quote.comision_obra_pct) || 12;
   const comisionEuros = Math.round((valorTrabajo * comisionPct) / 100);
-  const payLink = quote.payment_link || `https://pideprecio.es/pago-lead/${quote.codigo}`;
+  const payLink = quote.payment_link || `https://DimePrecio.es/pago-lead/${quote.codigo}`;
 
   // 1. 💰 Venta directa del contacto ("Pago por Lead")
-  const pitchPagoPorLead = `Hola, soy de PidePrecio.es. Acaba de entrar un vecino en ${municipio} (${provNombre}) que necesita ${sectorNombre.toLowerCase()}: "${explicacionResumida}" (presupuesto estimado ${valorTrabajo.toLocaleString('es-ES')} €). ¿Te interesa quedarte su contacto en exclusiva por ${precioLead} €? Puedes desbloquearlo al instante por Bizum o en un clic aquí: ${payLink}`;
+  const pitchPagoPorLead = `Hola, soy de DimePrecio.es. Acaba de entrar un vecino en ${municipio} (${provNombre}) que necesita ${sectorNombre.toLowerCase()}: "${explicacionResumida}" (presupuesto estimado ${valorTrabajo.toLocaleString('es-ES')} €). ¿Te interesa quedarte su contacto en exclusiva por ${precioLead} €? Puedes desbloquearlo al instante por Bizum o en un clic aquí: ${payLink}`;
 
   // Mensaje con datos desbloqueados una vez pagado o para socio de zona
-  const mensajeContactoDesbloqueado = `✅ [PidePrecio.es — Contacto Desbloqueado ${quote.codigo}]\n• Cliente: ${quote.nombre_cliente}\n• Teléfono / WhatsApp: ${quote.telefono_whatsapp}\n• Ubicación: ${municipio} (${provNombre})\n• Servicio: ${sectorNombre}\n• Explicación del cliente: ${quote.explicacion_cliente}\n• Detalles formulario: ${Object.entries(quote.campos_formulario_json || {}).map(([k, v]) => `${k}: ${v}`).join(' | ')}`;
+  const mensajeContactoDesbloqueado = `✅ [DimePrecio.es — Contacto Desbloqueado ${quote.codigo}]\n• Cliente: ${quote.nombre_cliente}\n• Teléfono / WhatsApp: ${quote.telefono_whatsapp}\n• Ubicación: ${municipio} (${provNombre})\n• Servicio: ${sectorNombre}\n• Explicación del cliente: ${quote.explicacion_cliente}\n• Detalles formulario: ${Object.entries(quote.campos_formulario_json || {}).map(([k, v]) => `${k}: ${v}`).join(' | ')}`;
 
   // 2. 🏠 Alquiler mensual de la zona ("Rank & Rent" Puro — 400 €/mes)
-  const pitchAlquilerZona = `Hola, te escribo desde PidePrecio.es. Nuestra página de ${sectorNombre} en ${provNombre} (pideprecio.es/provincia/${quote.provincia_slug}/${quote.sector_slug}) está recibiendo solicitudes constantes como la que acaba de entrar hoy en ${municipio}. No te voy a cobrar por cada contacto suelto: por ${cuotaZona} € al mes fijos, eres el socio oficial de PidePrecio.es en ${provNombre} para ${sectorNombre} y todos los presupuestos y llamadas que entren en ${provNombre} van directos a tu WhatsApp de forma automática.`;
+  const pitchAlquilerZona = `Hola, te escribo desde DimePrecio.es. Nuestra página de ${sectorNombre} en ${provNombre} (DimePrecio.es/provincia/${quote.provincia_slug}/${quote.sector_slug}) está recibiendo solicitudes constantes como la que acaba de entrar hoy en ${municipio}. No te voy a cobrar por cada contacto suelto: por ${cuotaZona} € al mes fijos, eres el socio oficial de DimePrecio.es en ${provNombre} para ${sectorNombre} y todos los presupuestos y llamadas que entren en ${provNombre} van directos a tu WhatsApp de forma automática.`;
 
   // 3. 🤝 Comisión por obra cerrada (Intermediación 10% - 20%)
-  const pitchComisionObra = `Hola, soy el agente de PidePrecio.es en ${provNombre}. Tenemos un cliente filtrado en ${municipio} para ${sectorNombre.toLowerCase()} (presupuesto aprox. ${valorTrabajo.toLocaleString('es-ES')} €: "${explicacionResumida}"). Te pasamos el cliente ya filtrado para que vayas a ver la obra y le pases presupuesto, con nuestro acuerdo de ${comisionPct}% de comisión si se cierra el trabajo (aprox. ${comisionEuros.toLocaleString('es-ES')} €). ¿Te cuadra visitarlo esta semana?`;
+  const pitchComisionObra = `Hola, soy el agente de DimePrecio.es en ${provNombre}. Tenemos un cliente filtrado en ${municipio} para ${sectorNombre.toLowerCase()} (presupuesto aprox. ${valorTrabajo.toLocaleString('es-ES')} €: "${explicacionResumida}"). Te pasamos el cliente ya filtrado para que vayas a ver la obra y le pases presupuesto, con nuestro acuerdo de ${comisionPct}% de comisión si se cierra el trabajo (aprox. ${comisionEuros.toLocaleString('es-ES')} €). ¿Te cuadra visitarlo esta semana?`;
 
   // 4. 📢 Espacio Destacado / "Especialista Oficial de la Provincia" (99€ - 299€/mes)
-  const pitchEspacioDestacado = `Hola, soy de PidePrecio.es. Como habrás visto, posicionamos arriba en Google en ${provNombre} para ${sectorNombre}. Tenemos libre la plaza de "Empresa Nº1 Recomendada en ${provNombre}" con sello verificado y recepción prioritaria de presupuestos por suscripción mensual desde 199 €/mes. ¿Te paso los detalles para activarlo hoy?`;
+  const pitchEspacioDestacado = `Hola, soy de DimePrecio.es. Como habrás visto, posicionamos arriba en Google en ${provNombre} para ${sectorNombre}. Tenemos libre la plaza de "Empresa Nº1 Recomendada en ${provNombre}" con sello verificado y recepción prioritaria de presupuestos por suscripción mensual desde 199 €/mes. ¿Te paso los detalles para activarlo hoy?`;
 
   return {
     pitchPagoPorLead,
@@ -1443,7 +1443,7 @@ function submitQuoteRequestToAgent(payload, uploadedFiles = []) {
     sector_nombre: sec.nombre,
     anuncio_id: payload.anuncio_id ? Number(payload.anuncio_id) : null,
     contenido_origen_id: payload.contenido_origen_id ? Number(payload.contenido_origen_id) : null,
-    origen_titulo: String(payload.origen_titulo || `Solicitud en PidePrecio.es (${sec.nombre} en ${prov.nombre})`).trim(),
+    origen_titulo: String(payload.origen_titulo || `Solicitud en DimePrecio.es (${sec.nombre} en ${prov.nombre})`).trim(),
     nombre_cliente: String(payload.nombre_cliente || 'Vecino Solicitud Web').trim(),
     telefono_whatsapp: String(payload.telefono_whatsapp || '').trim(),
     email_opcional: String(payload.email_opcional || '').trim(),
@@ -1464,7 +1464,7 @@ function submitQuoteRequestToAgent(payload, uploadedFiles = []) {
     whatsapp_socio_zona: zone.whatsapp_automatico || '',
     estado_agente: 'nuevo_en_bandeja',
     contacto_desbloqueado: zone.modelo_activo === 'alquiler_zona' && Boolean(zone.whatsapp_automatico),
-    payment_link: `https://pideprecio.es/pago-lead/${codigo}`,
+    payment_link: `https://DimePrecio.es/pago-lead/${codigo}`,
     notas_agente: '',
     created_at: new Date().toISOString(),
   };
@@ -1528,7 +1528,7 @@ function updateQuoteRequestAgent(quoteId, payload) {
 }
 
 // ----------------------------------------------------------------------------
-// Motor de Búsqueda Personalizada de PidePrecio.es (Páginas IA + Sectores + Anuncios)
+// Motor de Búsqueda Personalizada de DimePrecio.es (Páginas IA + Sectores + Anuncios)
 // ----------------------------------------------------------------------------
 function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null, limit = 24 } = {}) {
   const s = loadStore();
@@ -1608,7 +1608,7 @@ function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null,
 
       if (!tokens.length && !sectorSlug) score += 15;
 
-      // Si hubo match semántico o no hay texto pero sí filtro, aplicar impulso de algoritmo PidePrecio
+      // Si hubo match semántico o no hay texto pero sí filtro, aplicar impulso de algoritmo DimePrecio
       if (score > 0) {
         if (p.is_pinned) {
           score += 75; // Páginas fijadas siempre arriba
@@ -1633,7 +1633,7 @@ function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null,
     .sort((a, b) => b._score - a._score)
     .slice(0, limit);
 
-  // 3. Buscar Anuncios Oficiales de PidePrecio.es recomendados para esta búsqueda
+  // 3. Buscar Anuncios Oficiales de DimePrecio.es recomendados para esta búsqueda
   const recommendedAds = getRecommendedAds({
     provinciaSlug: effectiveProvSlug,
     sectorSlug: sectorSlug || (topMatchedSectorSlugs[0] || null),
