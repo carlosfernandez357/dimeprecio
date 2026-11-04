@@ -1182,7 +1182,7 @@ app.get('/admin/login', (req, res) => {
 
 app.post('/admin/login', async (req, res) => {
   const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USER || 'admin';
+  const adminUser = process.env.ADMIN_USER || process.env.ADMIN_USERNAME || 'admin';
   const adminPass = process.env.ADMIN_PASSWORD || 'Merchan1!';
   if (username === adminUser && password === adminPass) {
     req.session.admin = { id: 1, username: 'admin', displayName: 'Agente PidePrecio.es', role: 'admin' };

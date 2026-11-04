@@ -484,6 +484,110 @@ function loadStore() {
   return memoryStore;
 }
 
+function syncEntityToDatabase(table, data) {
+  try {
+    const db = require('../db');
+    if (!db || typeof db.query !== 'function') return;
+
+    if (table === 'pp_quote_requests') {
+      db.query(
+        `INSERT INTO pp_quote_requests 
+         (codigo, provincia_slug, provincia_nombre, municipio, sector_slug, sector_nombre, anuncio_id, contenido_origen_id, origen_titulo, nombre_cliente, telefono_whatsapp, email_opcional, campos_formulario_json, explicacion_cliente, archivos_adjuntos_json, modelo_negocio_aplicado, precio_venta_lead, valor_estimado_trabajo, estado_agente, contacto_desbloqueado, payment_link, notas_agente)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE estado_agente = VALUES(estado_agente), notas_agente = VALUES(notas_agente), contacto_desbloqueado = VALUES(contacto_desbloqueado), modelo_negocio_aplicado = VALUES(modelo_negocio_aplicado), precio_venta_lead = VALUES(precio_venta_lead)`,
+        [
+          data.codigo,
+          data.provincia_slug,
+          data.provincia_nombre,
+          data.municipio,
+          data.sector_slug,
+          data.sector_nombre,
+          data.anuncio_id || null,
+          data.contenido_origen_id || null,
+          data.origen_titulo,
+          data.nombre_cliente,
+          data.telefono_whatsapp,
+          data.email_opcional,
+          JSON.stringify(data.campos_formulario_json || {}),
+          data.explicacion_cliente,
+          JSON.stringify(data.archivos_adjuntos || []),
+          data.modelo_negocio_aplicado,
+          data.precio_venta_lead || 35,
+          data.valor_estimado_trabajo || 1500,
+          data.estado_agente || 'nuevo_en_bandeja',
+          data.contacto_desbloqueado ? 1 : 0,
+          data.payment_link || '',
+          data.notas_agente || ''
+        ]
+      ).catch(err => {
+        // En local silencioso si MySQL no está accesible
+      });
+    } else if (table === 'pp_ads') {
+      db.query(
+        `INSERT INTO pp_ads 
+         (id, codigo, titulo, subtitulo, badge, sello, cta_texto, marca_visible, es_anonimo, provincia_slug, provincia_nombre, sector_slug, sector_nombre, sector_icono, municipios_cubiertos, fijado, seleccionado, prioridad, activo, impresiones, clics, conversiones)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE titulo=VALUES(titulo), subtitulo=VALUES(subtitulo), cta_texto=VALUES(cta_texto), fijado=VALUES(fijado), seleccionado=VALUES(seleccionado), prioridad=VALUES(prioridad), activo=VALUES(activo), conversiones=VALUES(conversiones)`,
+        [
+          data.id,
+          data.codigo,
+          data.titulo,
+          data.subtitulo,
+          data.badge,
+          data.sello,
+          data.cta_texto,
+          data.marca_visible || 'PidePrecio.es',
+          data.es_anonimo !== false ? 1 : 0,
+          data.provincia_slug,
+          data.provincia_nombre,
+          data.sector_slug,
+          data.sector_nombre,
+          data.sector_icono,
+          JSON.stringify(data.municipios_cubiertos || []),
+          data.fijado ? 1 : 0,
+          data.seleccionado ? 1 : 0,
+          data.prioridad || 8,
+          data.activo !== false ? 1 : 0,
+          data.impresiones || 0,
+          data.clics || 0,
+          data.conversiones || 0
+        ]
+      ).catch(() => {});
+    } else if (table === 'pp_sector_forms') {
+      db.query(
+        `INSERT INTO pp_sector_forms
+         (form_key, sector_slug, sector_nombre, provincia_slug, titulo, titulo_formulario, explicacion_cliente, instrucciones_cliente, explicacion_label, explicacion_placeholder, calculadora_json, campos_json, permitir_adjuntos, formatos_admitidos)
+         VALUES (?, ?, ?, 'todas', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON DUPLICATE KEY UPDATE titulo=VALUES(titulo), titulo_formulario=VALUES(titulo_formulario), explicacion_cliente=VALUES(explicacion_cliente), instrucciones_cliente=VALUES(instrucciones_cliente), calculadora_json=VALUES(calculadora_json), campos_json=VALUES(campos_json), permitir_adjuntos=VALUES(permitir_adjuntos)`,
+        [
+          `${data.sector_slug}__todas`,
+          data.sector_slug,
+          data.sector_nombre,
+          data.titulo,
+          data.titulo_formulario,
+          data.explicacion_cliente,
+          data.instrucciones_cliente,
+          data.explicacion_label,
+          data.explicacion_placeholder,
+          JSON.stringify(data.calculadora_json || {}),
+          JSON.stringify({ campos: data.campos || [], campos_personalizados: data.campos_personalizados || [] }),
+          data.permitir_adjuntos !== false ? 1 : 0,
+          data.formatos_admitidos || ''
+        ]
+      ).catch(() => {});
+    } else if (table === 'pp_visitor_interests') {
+      db.query(
+        `INSERT INTO pp_visitor_interests (visitor_id, provincia_slug, sector_slug, last_post_id, hits)
+         VALUES (?, ?, ?, ?, 1)
+         ON DUPLICATE KEY UPDATE hits = hits + 1`,
+        [data.visitor_id, data.provincia_slug, data.sector_slug, data.last_post_id || null]
+      ).catch(() => {});
+    }
+  } catch (e) {
+    // Protección contra excepciones
+  }
+}
+
 function saveStore() {
   try {
     if (!fs.existsSync(DATA_DIR)) {
@@ -670,6 +774,7 @@ function updateSector(sectorSlug, payload) {
   }
 
   saveStore();
+  syncEntityToDatabase('pp_sector_forms', sec);
   return sec;
 }
 
@@ -925,6 +1030,7 @@ function toggleAdStatus(adId, field = 'seleccionado') {
   if (field === 'seleccionado') ad.seleccionado = !ad.seleccionado;
   if (field === 'activo') ad.activo = !ad.activo;
   saveStore();
+  syncEntityToDatabase('pp_ads', ad);
   return ad;
 }
 
@@ -1379,6 +1485,7 @@ function submitQuoteRequestToAgent(payload, uploadedFiles = []) {
   }
 
   saveStore();
+  syncEntityToDatabase('pp_quote_requests', record);
   return {
     ...record,
     mensajes_negocio: buildBusinessModelMessages(record),
@@ -1420,6 +1527,7 @@ function updateQuoteRequestAgent(quoteId, payload) {
     );
   }
   saveStore();
+  syncEntityToDatabase('pp_quote_requests', q);
   return {
     ...q,
     mensajes_negocio: buildBusinessModelMessages(q),
