@@ -589,14 +589,7 @@ function syncEntityToDatabase(table, data) {
 }
 
 function saveStore() {
-  try {
-    if (!fs.existsSync(DATA_DIR)) {
-      fs.mkdirSync(DATA_DIR, { recursive: true });
-    }
-    fs.writeFileSync(STORE_PATH, JSON.stringify(memoryStore, null, 2), 'utf8');
-  } catch (e) {
-    console.error('[PidePrecio Store] Error guardando store:', e.message);
-  }
+  // Desactivado: El almacenamiento ahora se realiza directamente en MySQL
 }
 
 // ----------------------------------------------------------------------------
