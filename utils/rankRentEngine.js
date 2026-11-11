@@ -1,4 +1,4 @@
-﻿// ============================================================================
+// ============================================================================
 // DimePrecio.es — Motor de Páginas IA, Anuncios Anónimos, Algoritmos de
 // Recomendación/Búsqueda, Matriz 52 Provincias x 30 Sectores y Formularios
 // ============================================================================
@@ -20,168 +20,10 @@ function slugify(str) {
 }
 
 // ----------------------------------------------------------------------------
-// Semilla inicial de Páginas IA (basada en el sistema de artículos de socialsforce)
-// y Anuncios Anónimos / Espacios Destacados de DimePrecio.es
+// Semilla inicial limpia: Los artículos y anuncios se leen exclusivamente de MySQL
 // ----------------------------------------------------------------------------
 function buildInitialPagesAndAds(locations, sectors) {
-  const pages = [];
-  const ads = [];
-  let pageId = 1;
-  let adId = 1;
-
-  const topProvSlugs = ['madrid', 'barcelona', 'valencia', 'sevilla', 'zaragoza', 'malaga', 'murcia', 'alicante', 'vizcaya', 'a-coruna'];
-  const topProvs = locations.filter(l => topProvSlugs.includes(l.slug));
-  const topSectors = sectors.slice(0, 12);
-
-  const imgPool = [
-    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&q=80',
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80',
-    'https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=900&q=80',
-    'https://images.unsplash.com/photo-1556911220-e15b29be8c8f?w=900&q=80',
-    'https://images.unsplash.com/photo-1509391366360-2e959784a276?w=900&q=80',
-    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80',
-    'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=900&q=80',
-    'https://images.unsplash.com/photo-1513694203232-719a280e022f?w=900&q=80',
-  ];
-
-  // Plantillas de artículos SEO orientados a búsquedas reales de clientes ("arreglar mi baño en Madrid", "instalar aire acondicionado y calcular frigorías", etc.)
-  const specificAngles = [
-    (sec, prov, barrios, relSec) => ({
-      title: sec.slug === 'reformas-integrales'
-        ? `Arreglar mi baño o hacer reformas pequeñas de casa en ${prov.nombre}: Guía práctica y soluciones`
-        : sec.slug === 'climatizacion-aire-acondicionado'
-          ? `Instalar Aire Acondicionado en ${prov.nombre}: Cómo calcular las frigorías exactas y elegir equipo en ${barrios.split(',')[0]}`
-          : `${sec.nombre} en ${prov.nombre}: Guía completa para solucionar tu caso en ${barrios.split(',')[0]}`,
-      subservice: `Soluciones de ${sec.nombre.toLowerCase()} en ${prov.nombre}`,
-      excerpt: sec.slug === 'climatizacion-aire-acondicionado'
-        ? `Guía técnica de climatización y aire acondicionado en ${prov.nombre} (${barrios}): cuántas frigorías necesitas por m², diferencias entre Split 1x1, Multisplit y Conductos, y calculador de frigorías con formulario abajo.`
-        : `Si buscas ${sec.nombre.toLowerCase()} en ${prov.nombre} (${barrios}), revisa qué aspectos técnicos valorar, cómo preparar tu solicitud y cómo rellenar el formulario específico de ${sec.nombre.toLowerCase()} al final de esta página.`,
-      relSec,
-    }),
-    (sec, prov, barrios, relSec) => ({
-      title: sec.slug === 'reformas-integrales'
-        ? `Cambiar bañera por plato de ducha y reformar cocina o baño en ${prov.nombre}: Paso a paso`
-        : sec.slug === 'climatizacion-aire-acondicionado'
-          ? `Aire Acondicionado por Conductos vs Split Inverter en ${prov.nombre}: Guía de instalación y frigorías`
-          : `Cuándo acudir a especialistas de ${sec.nombre} en ${prov.nombre} (${barrios.split(',')[0]}) y qué tener en cuenta`,
-      subservice: `Asesoramiento y solicitud de ${sec.nombre.toLowerCase()}`,
-      excerpt: `Guía editorial de DimePrecio.es sobre ${sec.nombre.toLowerCase()} en ${prov.nombre}: errores frecuentes a evitar, soluciones recomendadas en ${barrios} y formulario directo del sector abajo.`,
-      relSec,
-    }),
-  ];
-
-  for (let i = 0; i < topProvs.length; i++) {
-    const prov = topProvs[i];
-    // Generar páginas para los 12 sectores principales en cada provincia top (y 2 artículos para los sectores más demandados como reformas y aire acondicionado)
-    for (let j = 0; j < topSectors.length; j++) {
-      const sec = topSectors[j];
-      const relSec1 = topSectors[(j + 1) % topSectors.length];
-      const relSec2 = topSectors[(j + 2) % topSectors.length];
-      const barrios = (prov.municipios || [prov.nombre]).slice(0, 4).join(', ');
-      const anglesToCreate = (sec.slug === 'climatizacion-aire-acondicionado' || sec.slug === 'reformas-integrales' || j < 4) ? [0, 1] : [j % 2];
-
-      for (const angleIdx of anglesToCreate) {
-        const angleFn = specificAngles[angleIdx];
-        const angle = angleFn(sec, prov, barrios, relSec1);
-        const title = angle.title;
-        const slug = slugify(`${sec.slug}-${prov.slug}-${pageId}`);
-        const img = sec.slug === 'climatizacion-aire-acondicionado'
-          ? 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80'
-          : imgPool[(pageId - 1) % imgPool.length];
-        const isPinned = (i < 2 && j === 0 && angleIdx === 0);
-        const isSelected = (angleIdx === 0 || i < 4);
-
-        pages.push({
-          id: pageId,
-          title,
-          slug,
-          excerpt: angle.excerpt,
-          content: `<p>Muchos vecinos de <strong><a href="/${prov.slug}">${prov.nombre}</a></strong> (especialmente en zonas como <em>${barrios}</em>) buscan a diario soluciones fiables de <strong><a href="/${prov.slug}/${sec.slug}">${sec.nombre.toLowerCase()}</a></strong> para resolver averías, climatizar o renovar su vivienda con garantías.</p>
-<h2>1. Qué evaluar antes de solicitar ${sec.nombre.toLowerCase()} en ${prov.nombre}</h2>
-<p>Tanto si necesitas una actuación puntual como una instalación completa en <strong>${prov.nombre}</strong>, definir bien el estado actual evita retrasos e imprevistos:</p>
-<ul>
-  <li><strong>Ubicación y zona exacta en ${prov.nombre}:</strong> indica siempre tu municipio o barrio (${barrios}) y el tipo de inmueble (piso, vivienda unifamiliar, local o comunidad).</li>
-  <li><strong>Cálculo técnico e información del servicio:</strong> utiliza la herramienta interactiva del formulario inferior (por ejemplo, el calculador de frigorías o de superficie m²) para detallar tu caso.</li>
-  <li><strong>Fotografías o croquis opcionales:</strong> adjuntar una imagen del estado actual en el formulario inferior ayuda a valorar tu solicitud con mucha más rapidez.</li>
-</ul>
-<h2>2. Soluciones habituales de ${sec.nombre} en ${barrios}</h2>
-<p>Dentro de la sección de <a href="/${prov.slug}/${sec.slug}">${sec.nombre} en ${prov.nombre}</a>, las consultas más habituales suelen combinarse con otros gremios estrechamente conectados como <a href="/${prov.slug}/${relSec1.slug}">${relSec1.nombre} en ${prov.nombre}</a> y <a href="/${prov.slug}/${relSec2.slug}">${relSec2.nombre} en ${prov.nombre}</a>, lo que permite coordinar toda la intervención sin complicaciones.</p>
-<h2>3. Cómo enviar tu solicitud en el formulario inferior de ${sec.nombre}</h2>
-<p>Justo debajo de este artículo encontrarás el <strong>formulario exclusivo del sector ${sec.nombre} en ${prov.nombre}</strong> cargado directamente desde la base de datos con su calculadora interactiva. Solo tienes que completar los datos básicos de tu caso y tu teléfono o WhatsApp para que nuestro agente de zona atienda tu solicitud.</p>`,
-          featured_image: img,
-          image: img,
-          image_alt: `${sec.nombre} en ${prov.nombre} - DimePrecio.es`,
-          category_id: ((pageId - 1) % 5) + 1,
-          category_name: sec.nombre,
-          category: sec.nombre,
-          category_slug: sec.slug,
-          category_color: '#171717',
-          author_id: 1,
-          author_name: 'DimePrecio.es',
-          status: 'published',
-          is_pinned: isPinned ? 1 : 0,
-          is_featured: (j < 2 && angleIdx === 0) ? 1 : 0,
-          is_breaking: (i < 3 && j === 0 && angleIdx === 0) ? 1 : 0,
-          is_selected: isSelected ? 1 : 0,
-          priority_weight: isPinned ? 10 : isSelected ? 9 : 7,
-          evergreen: 9,
-          depth: 8,
-          views: 420 + ((pageId * 113) % 2800),
-          likes: 22 + (pageId % 50),
-          meta_title: `${title} | DimePrecio.es`,
-          meta_description: `${angle.excerpt}`,
-          keywords: `arreglar mi bano en ${prov.nombre.toLowerCase()}, ${sec.nombre.toLowerCase()} ${prov.nombre.toLowerCase()}, aire acondicionado frigorias ${prov.nombre.toLowerCase()}, ${sec.slug} ${prov.slug}`,
-          provincia_id: prov.id,
-          provincia_slug: prov.slug,
-          provincia_nombre: prov.nombre,
-          sector_id: sec.id,
-          sector_slug: sec.slug,
-          sector_nombre: sec.nombre,
-          sector_icono: sec.icono,
-          subservicio: angle.subservice,
-          municipio_tag: (prov.municipios && prov.municipios[0]) || prov.nombre,
-          published_at: new Date(Date.now() - pageId * 3600000 * 2).toISOString(),
-          created_at: new Date(Date.now() - pageId * 3600000 * 2).toISOString(),
-        });
-        pageId++;
-      }
-
-      // Crear Anuncio Recomendado por cada sector principal en esta provincia para que al ver ese sector (ej. Aire Acondicionado) se muestre su anuncio recomendado en la zona
-      ads.push({
-        id: adId++,
-        codigo: `PP-AD-${prov.slug.toUpperCase()}-${sec.slug.substring(0, 6).toUpperCase()}-${adId}`,
-        titulo: sec.slug === 'climatizacion-aire-acondicionado'
-          ? `❄️ Instalación de Aire Acondicionado y Cálculo de Frigorías en ${prov.nombre}`
-          : `¿Necesitas ${sec.nombre} en ${prov.nombre}? Solicita presupuesto en tu zona`,
-        subtitulo: `Servicio disponible en ${(prov.municipios || []).slice(0, 4).join(', ')} y toda la provincia de ${prov.nombre}. Configura tu solicitud en 1 minuto.`,
-        badge: `Recomendado en ${prov.nombre}`,
-        sello: j === 0 ? `📌 Fijado en ${prov.nombre}` : `⭐ Anuncio Recomendado · ${prov.nombre}`,
-        cta_texto: sec.slug === 'climatizacion-aire-acondicionado'
-          ? 'Calcular Frigorías y Pedir Presupuesto'
-          : 'Abrir Formulario del Sector',
-        marca_visible: 'DimePrecio.es',
-        es_anonimo: true,
-        provincia_id: prov.id,
-        provincia_slug: prov.slug,
-        provincia_nombre: prov.nombre,
-        sector_id: sec.id,
-        sector_slug: sec.slug,
-        sector_nombre: sec.nombre,
-        sector_icono: sec.icono,
-        municipios_cubiertos: prov.municipios || [prov.nombre],
-        fijado: (i < 3 && j === 0),
-        seleccionado: true,
-        prioridad: j === 0 ? 10 : 9,
-        activo: true,
-        impresiones: 740 + i * 90 + j * 15,
-        clics: 58 + i * 7 + j * 3,
-        conversiones: 12 + i * 2,
-        created_at: new Date().toISOString(),
-      });
-    }
-  }
-
-  return { pages, ads };
+  return { pages: [], ads: [] };
 }
 
 // ----------------------------------------------------------------------------
@@ -590,6 +432,96 @@ function syncEntityToDatabase(table, data) {
 
 function saveStore() {
   // Desactivado: El almacenamiento ahora se realiza directamente en MySQL
+}
+
+// ----------------------------------------------------------------------------
+// Sincronización limpia desde MySQL (posts reales, anuncios reales, etc.)
+// ----------------------------------------------------------------------------
+async function syncFromDatabase() {
+  try {
+    const db = require('../db');
+    if (!db || typeof db.query !== 'function') return;
+
+    const s = loadStore();
+
+    // 1. Sincronizar artículos reales desde MySQL
+    const [postRows] = await db.query("SELECT * FROM posts WHERE status = 'published' ORDER BY views DESC");
+    if (Array.isArray(postRows)) {
+      s.posts = postRows.map(p => ({
+        ...p,
+        image: p.featured_image || p.image || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&q=80',
+        featured_image: p.featured_image || p.image || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&q=80',
+        category: p.sector_nombre ? `${p.provincia_nombre || 'España'} · ${p.sector_nombre}` : (p.category_name || 'DimePrecio.es'),
+        category_name: p.sector_nombre || p.category_name || 'DimePrecio.es',
+        category_slug: p.sector_slug || p.category_slug || 'servicios',
+      }));
+    }
+
+    // 2. Sincronizar anuncios reales desde MySQL
+    const [adRows] = await db.query("SELECT * FROM pp_ads WHERE activo = 1 ORDER BY fijado DESC, prioridad DESC");
+    if (Array.isArray(adRows)) {
+      s.ads = adRows.map(a => {
+        let mun = [];
+        if (typeof a.municipios_cubiertos === 'string') {
+          try { mun = JSON.parse(a.municipios_cubiertos); } catch (e) { mun = [a.provincia_nombre || '']; }
+        } else if (Array.isArray(a.municipios_cubiertos)) {
+          mun = a.municipios_cubiertos;
+        }
+        return {
+          ...a,
+          municipios_cubiertos: mun,
+          fijado: Boolean(a.fijado),
+          seleccionado: Boolean(a.seleccionado),
+          activo: Boolean(a.activo),
+        };
+      });
+    }
+
+    // 3. Sincronizar provincias reales desde MySQL
+    const [locRows] = await db.query("SELECT * FROM pp_locations ORDER BY id ASC, nombre ASC");
+    if (Array.isArray(locRows) && locRows.length > 0) {
+      s.locations = locRows.map(l => {
+        let mun = [];
+        if (typeof l.municipios === 'string') {
+          try { mun = JSON.parse(l.municipios); } catch (e) { mun = [l.nombre]; }
+        } else if (Array.isArray(l.municipios)) {
+          mun = l.municipios;
+        }
+        return {
+          ...l,
+          municipios: mun,
+          activa: Boolean(l.activa),
+        };
+      });
+    }
+
+    // 4. Sincronizar sectores reales desde MySQL
+    const [secRows] = await db.query("SELECT * FROM pp_sectors ORDER BY id ASC, nombre ASC");
+    if (Array.isArray(secRows) && secRows.length > 0) {
+      s.sectors = secRows.map(sec => {
+        let kw = [];
+        if (typeof sec.keywords === 'string') {
+          try { kw = JSON.parse(sec.keywords); } catch (e) { kw = []; }
+        } else if (Array.isArray(sec.keywords)) {
+          kw = sec.keywords;
+        }
+        let form = {};
+        if (typeof sec.formula_precio_base_json === 'string') {
+          try { form = JSON.parse(sec.formula_precio_base_json); } catch (e) { form = {}; }
+        } else if (typeof sec.formula_precio_base_json === 'object') {
+          form = sec.formula_precio_base_json;
+        }
+        return {
+          ...sec,
+          keywords: kw,
+          formula_precio_base_json: form,
+          activo: Boolean(sec.activo),
+        };
+      });
+    }
+  } catch (err) {
+    console.error('[rankRentEngine] Error syncing from database:', err.message);
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -1763,4 +1695,5 @@ module.exports = {
   searchEverything,
   getAdminOverviewStats,
   updateAlgorithmConfig,
+  syncFromDatabase,
 };

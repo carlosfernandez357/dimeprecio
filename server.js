@@ -1,4 +1,4 @@
-﻿require('dotenv').config();
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -346,20 +346,7 @@ app.get('/', async (req, res) => {
           `SELECT p.* FROM posts p WHERE p.provincia_slug = ? AND p.sector_slug = ? AND p.status = 'published' ORDER BY p.views DESC LIMIT 6`,
           [userProv.slug, preferredSector.slug]
         );
-        const fallbackSecPosts = rr.searchEverything({
-          provinciaSlug: userProv.slug,
-          sectorSlug: preferredSector.slug,
-          limit: 6,
-        }).matchedPages;
-        const combinedSecPosts = [...(secPostsRows || [])];
-        const seenIds = new Set(combinedSecPosts.map(p => p.id || p.slug));
-        for (const fp of fallbackSecPosts) {
-          if (!seenIds.has(fp.id || fp.slug)) {
-            combinedSecPosts.push(fp);
-            seenIds.add(fp.id || fp.slug);
-          }
-        }
-        preferredSectorPosts = combinedSecPosts.slice(0, 3).map(normalizePost);
+        preferredSectorPosts = (secPostsRows || []).slice(0, 3).map(normalizePost);
       }
     }
 
@@ -375,12 +362,15 @@ app.get('/', async (req, res) => {
       sectorSlug: preferredSector ? preferredSector.slug : null,
     });
 
-    const searchLocal = rr.searchEverything({ provinciaSlug: userProv.slug, limit: 14 });
-    const latest = searchLocal.matchedPages.map(p => ({
-      ...p,
-      image: p.image || p.featured_image,
-      category: `${p.provincia_nombre || userProv.nombre} · ${p.sector_nombre || 'Servicio'}`,
-    }));
+    // Artículos más recientes directamente desde MySQL
+    const [latestRows] = await pool.query(
+      `SELECT p.*, c.name as category_name, c.slug as category_slug
+       FROM posts p
+       LEFT JOIN categories c ON p.category_id = c.id
+       WHERE p.status = 'published'
+       ORDER BY p.published_at DESC LIMIT 14`
+    );
+    const latest = (latestRows && latestRows.length ? latestRows : forYouPosts).map(normalizePost);
 
     const featured = (forYouPosts.length ? forYouPosts : latest).slice(0, 3);
     const recommendedAds = getRecommendedAds({
@@ -454,9 +444,7 @@ app.get('/pedir-presupuesto', async (req, res) => {
       `SELECT p.* FROM posts p WHERE p.provincia_slug = ? AND p.sector_slug = ? AND p.status = 'published' ORDER BY p.views DESC LIMIT 6`,
       [currentProvince.slug, currentSector.slug]
     );
-    const sectorPages = (sectorPostsRows && sectorPostsRows.length)
-      ? sectorPostsRows
-      : rr.searchEverything({ provinciaSlug: currentProvince.slug, sectorSlug: currentSector.slug, limit: 4 }).matchedPages;
+    const sectorPages = sectorPostsRows || [];
 
     const sidebarData = await buildSidebarData({
       provinciaSlug: currentProvince.slug,
@@ -503,12 +491,9 @@ app.get('/provincias', async (req, res) => {
 app.get('/categories', async (req, res) => {
   const userProv = req.detectedProvince || rr.getLocationBySlug('madrid');
   const allSectors = rr.getSectors(false);
+  const [dbPosts] = await pool.query("SELECT * FROM posts WHERE status = 'published' ORDER BY views DESC");
   const sectorsWithPosts = allSectors.slice(0, 14).map(sec => {
-    const pages = rr.searchEverything({
-      provinciaSlug: userProv.slug,
-      sectorSlug: sec.slug,
-      limit: 4,
-    }).matchedPages;
+    const pages = (dbPosts || []).filter(p => p.sector_slug === sec.slug && (!userProv || p.provincia_slug === userProv.slug || !p.provincia_slug));
     return {
       ...sec,
       posts: pages,
@@ -541,8 +526,7 @@ async function renderProvincePage(req, res, provinciaSlug) {
     provinciaSlug: province.slug,
     cookies: req.cookies,
   });
-  const searchRes = rr.searchEverything({ provinciaSlug: province.slug, limit: 12 });
-  const provincePages = rankedPages.length >= 4 ? rankedPages : searchRes.matchedPages;
+  const provincePages = rankedPages;
   const provinceAds = rr.getRecommendedAds({ provinciaSlug: province.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,
@@ -586,8 +570,7 @@ async function renderProvinceSectorPage(req, res, provinciaSlug, sectorSlug) {
     sectorSlug: sector.slug,
     cookies: req.cookies,
   });
-  const searchRes = rr.searchEverything({ provinciaSlug: province.slug, sectorSlug: sector.slug, limit: 8 });
-  const sectorPages = rankedSectorPages.length ? rankedSectorPages : searchRes.matchedPages;
+  const sectorPages = rankedSectorPages;
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,
     sectorSlug: sector.slug,
@@ -1198,7 +1181,28 @@ app.get('/admin/logout', (req, res) => {
 
 // 1. DASHBOARD GENERAL DE DimePrecio.ES
 app.get('/admin', requireAdmin, async (req, res) => {
-  const overview = rr.getAdminOverviewStats();
+  const [postsCountRows] = await pool.query('SELECT COUNT(*) as total, SUM(CASE WHEN is_pinned=1 THEN 1 ELSE 0 END) as pinned, SUM(CASE WHEN is_selected=1 THEN 1 ELSE 0 END) as selected FROM posts');
+  const [adsCountRows] = await pool.query('SELECT COUNT(*) as total, SUM(CASE WHEN fijado=1 THEN 1 ELSE 0 END) as pinned, SUM(CASE WHEN seleccionado=1 THEN 1 ELSE 0 END) as selected FROM pp_ads');
+  const [quotesCountRows] = await pool.query('SELECT COUNT(*) as total, SUM(CASE WHEN estado_agente="nuevo_en_bandeja" THEN 1 ELSE 0 END) as new_inbox FROM pp_quote_requests');
+  const [locationsRows] = await pool.query('SELECT COUNT(*) as total FROM pp_locations');
+  const [sectorsRows] = await pool.query('SELECT COUNT(*) as total FROM pp_sectors');
+
+  const baseOverview = rr.getAdminOverviewStats();
+  const overview = {
+    ...baseOverview,
+    totalProvinces: locationsRows[0]?.total || 52,
+    totalSectors: sectorsRows[0]?.total || 30,
+    totalCombinations: (locationsRows[0]?.total || 52) * (sectorsRows[0]?.total || 30),
+    totalPages: postsCountRows[0]?.total || 0,
+    pinnedPages: postsCountRows[0]?.pinned || 0,
+    selectedPages: postsCountRows[0]?.selected || 0,
+    totalAds: adsCountRows[0]?.total || 0,
+    pinnedAds: adsCountRows[0]?.pinned || 0,
+    selectedAds: adsCountRows[0]?.selected || 0,
+    totalQuotes: quotesCountRows[0]?.total || 0,
+    newQuotesInInbox: quotesCountRows[0]?.new_inbox || 0,
+  };
+
   const recentQuotes = rr.getQuoteRequests().slice(0, 8);
   const [recentPosts] = await pool.query(`
     SELECT p.*, c.name as category_name
@@ -1216,14 +1220,15 @@ app.get('/admin', requireAdmin, async (req, res) => {
 });
 
 // 2. GESTIÓN DE ANUNCIOS ANÓNIMOS Y ALGORITMO DE RECOMENDACIÓN
-app.get('/admin/anuncios', requireAdmin, (req, res) => {
+app.get('/admin/anuncios', requireAdmin, async (req, res) => {
   const filters = {
     provincia_slug: req.query.provincia || '',
     sector_slug: req.query.sector || '',
     modelo_negocio: req.query.modelo || '',
     onlyActive: false,
   };
-  const ads = rr.getAds(filters);
+  const [adsFromDb] = await pool.query('SELECT * FROM pp_ads ORDER BY fijado DESC, prioridad DESC, id DESC');
+  const ads = adsFromDb && adsFromDb.length ? adsFromDb : rr.getAds(filters);
   const overview = rr.getAdminOverviewStats();
   res.render('admin/anuncios', {
     title: 'Anuncios y Algoritmo — DimePrecio.es',
@@ -1558,7 +1563,10 @@ app.use((req, res) => {
   res.status(404).render('error', { title: '404 — DimePrecio.es', message: 'La página que buscas no existe en DimePrecio.es' });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(`[DimePrecio.es] Servidor activo en http://localhost:${PORT}`);
+  if (rr.syncFromDatabase) {
+    await rr.syncFromDatabase().catch(err => console.error('[Sync DB Error]', err.message));
+  }
   setupCronJobs();
 });
