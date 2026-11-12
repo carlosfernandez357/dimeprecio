@@ -565,12 +565,15 @@ async function renderProvinceSectorPage(req, res, provinciaSlug, sectorSlug) {
   const sectorAds = rr.getRecommendedAds({ provinciaSlug: province.slug, sectorSlug: sector.slug, limit: 6 });
   const [formRows] = await pool.query('SELECT * FROM pp_sector_forms WHERE sector_slug = ?', [sector.slug, province.slug]);
   const customForm = (formRows && formRows[0]) || rr.getCustomForm(sector.slug, province.slug);
-  const rankedSectorPages = await getForYou(visitorUid, 8, [], {
-    provinciaSlug: province.slug,
-    sectorSlug: sector.slug,
-    cookies: req.cookies,
-  });
-  const sectorPages = rankedSectorPages;
+  const [sectorPostsRows] = await pool.query(
+    `SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
+     FROM posts p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.status = 'published' AND p.sector_slug = ? AND (p.provincia_slug = ? OR p.provincia_slug IS NULL)
+     ORDER BY p.views DESC LIMIT 8`,
+    [sector.slug, province.slug]
+  );
+  const sectorPages = (sectorPostsRows || []).map(normalizePost);
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,
     sectorSlug: sector.slug,

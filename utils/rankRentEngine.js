@@ -822,9 +822,10 @@ function getAds(filters = {}) {
  * 3) Coincidencia con el sector actual o afinidad de búsqueda del usuario (`sector_slug`)
  * 4) Impulso de la zona configurada en la matriz (`algoritmo_impulsado`)
  */
-function getRecommendedAds({ provinciaSlug = null, sectorSlug = null, preferredSectors = [], limit = 6 } = {}) {
+function getRecommendedAds({ provinciaSlug = null, sectorSlug = null, preferredSectors = [], onlySectors = null, limit = 6 } = {}) {
   const s = loadStore();
   const cfg = s.settings?.algorithm_config || {
+    peso_fijados: 65,
     peso_provincia_detectada: 45,
     peso_anuncio_seleccionado: 35,
     peso_afinidad_sector: 25,
@@ -832,7 +833,19 @@ function getRecommendedAds({ provinciaSlug = null, sectorSlug = null, preferredS
     peso_popularidad: 10,
   };
 
-  const activeAds = (s.ads || []).filter(a => a.activo !== false);
+  let activeAds = (s.ads || []).filter(a => a.activo !== false);
+
+  if (onlySectors && Array.isArray(onlySectors) && onlySectors.length > 0) {
+    activeAds = activeAds.filter(a => onlySectors.includes(a.sector_slug));
+  } else if (sectorSlug) {
+    const sectorMatches = activeAds.filter(a => a.sector_slug === sectorSlug);
+    if (sectorMatches.length > 0) {
+      activeAds = sectorMatches;
+    } else {
+      activeAds = [];
+    }
+  }
+
   const scored = activeAds.map(ad => {
     let score = 0;
 
@@ -1566,10 +1579,12 @@ function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null,
     .slice(0, limit);
 
   // 3. Buscar Anuncios Oficiales de DimePrecio.es recomendados para esta búsqueda
+  const effectiveSector = sectorSlug || (topMatchedSectorSlugs[0] || null);
   const recommendedAds = getRecommendedAds({
     provinciaSlug: effectiveProvSlug,
-    sectorSlug: sectorSlug || (topMatchedSectorSlugs[0] || null),
+    sectorSlug: effectiveSector,
     preferredSectors: topMatchedSectorSlugs,
+    onlySectors: topMatchedSectorSlugs.length > 0 ? topMatchedSectorSlugs : null,
     limit: 6,
   });
 
