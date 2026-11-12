@@ -1,4 +1,4 @@
-﻿<%
+<%
 const footerProv = (typeof detectedProvince !== "undefined" && detectedProvince)
     ? detectedProvince
     : { slug: "madrid", nombre: "Madrid" };
@@ -52,6 +52,7 @@ const footerProv = (typeof detectedProvince !== "undefined" && detectedProvince)
     </div>
 </footer>
 <%- include("consent") %>
+<%- include("operator-widget") %>
 <script src="/js/consent.js"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/tracker.js"></script>

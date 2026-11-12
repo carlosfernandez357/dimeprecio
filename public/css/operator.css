@@ -1,0 +1,204 @@
+/* ============================================================================
+   BOTONES Y MODAL: LLAMAR A UN OPERADOR — DimePrecio.es
+   Diseño sutil, sobrio y elegante, pero con visibilidad y notoriedad claras
+   ============================================================================ */
+
+.operator-dot {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    flex-shrink: 0;
+    box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+    animation: operatorDotPulse 2.4s infinite ease-in-out;
+}
+
+@keyframes operatorDotPulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+}
+
+/* 1. Botón sutil en cabecera (Header) */
+.operator-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid #d4d4d8;
+    padding: 7px 13px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.operator-header-btn:hover {
+    background: #f8fafc;
+    border-color: #0f172a;
+    color: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.07);
+}
+
+.operator-header-btn svg {
+    color: #475569;
+    transition: color 0.2s ease;
+}
+
+.operator-header-btn:hover svg {
+    color: #0f172a;
+}
+
+/* Ocultar texto en pantallas muy estrechas si es necesario, o mantener compacto */
+@media (max-width: 680px) {
+    .operator-header-btn span.operator-text {
+        display: none;
+    }
+    .operator-header-btn {
+        padding: 7px 10px;
+    }
+}
+
+/* 2. Botón flotante inferior (Floating Button) */
+.operator-floating-btn {
+    position: fixed;
+    bottom: 22px;
+    right: 22px;
+    z-index: 995;
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    background: #ffffff;
+    color: #0f172a;
+    border: 1px solid #cbd5e1;
+    padding: 10px 17px;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(15, 23, 42, 0.10), 0 1px 3px rgba(0, 0, 0, 0.05);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+}
+
+.operator-floating-btn:hover {
+    background: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.20);
+}
+
+.operator-floating-btn svg {
+    color: #0f172a;
+    transition: color 0.2s ease;
+}
+
+.operator-floating-btn:hover svg {
+    color: #ffffff;
+}
+
+@media (max-width: 480px) {
+    .operator-floating-btn {
+        bottom: 16px;
+        right: 16px;
+        padding: 9px 14px;
+        font-size: 12.5px;
+    }
+}
+
+/* 3. Botón sutil en línea (Forms, Artículos, Zonas) */
+.operator-pill-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: #ffffff;
+    color: #1e293b;
+    border: 1px solid #d4d4d8;
+    padding: 7px 14px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 600;
+    text-decoration: none;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.operator-pill-btn:hover {
+    background: #f1f5f9;
+    border-color: #0f172a;
+    color: #0f172a;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
+}
+
+/* 4. Modal / Diálogo de atención al cliente */
+.operator-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10050;
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: blur(4px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.operator-modal-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.operator-modal-card {
+    background: #ffffff;
+    border-radius: 14px;
+    max-width: 420px;
+    width: 100%;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(15, 23, 42, 0.22);
+    position: relative;
+    border: 1px solid #e2e8f0;
+    transform: scale(0.96);
+    transition: transform 0.2s ease;
+}
+
+.operator-modal-overlay.active .operator-modal-card {
+    transform: scale(1);
+}
+
+.operator-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: transparent;
+    border: 0;
+    font-size: 18px;
+    color: #94a3b8;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+    line-height: 1;
+    transition: all 0.15s ease;
+}
+
+.operator-modal-close:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+}

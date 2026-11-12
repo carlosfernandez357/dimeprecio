@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -57,9 +57,23 @@
                             </time>
                             <span> · DimePrecio.es</span>
                         </div>
-                        <a href="#solicitar-presupuesto" style="background:#171717;color:#fff;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:700;text-decoration:none;">
-                            Ir al formulario de <%= articleSec.nombre %> ↓
-                        </a>
+                        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                            <a
+                                href="tel:<%= typeof operatorPhoneRaw !== 'undefined' ? operatorPhoneRaw : '+34622158703' %>"
+                                class="operator-pill-btn"
+                                data-open-operator-modal
+                                title="Llamar a un operador de DimePrecio.es"
+                            >
+                                <span class="operator-dot" aria-hidden="true"></span>
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                                </svg>
+                                <span>Llamar a un operador</span>
+                            </a>
+                            <a href="#solicitar-presupuesto" style="background:#171717;color:#fff;padding:7px 14px;border-radius:6px;font-size:12.5px;font-weight:700;text-decoration:none;">
+                                Ir al formulario de <%= articleSec.nombre %> ↓
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>

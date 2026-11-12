@@ -1,0 +1,75 @@
+<%
+  const opPhone = typeof operatorPhone !== 'undefined' ? operatorPhone : '+34 622 15 87 03';
+  const opPhoneRaw = typeof operatorPhoneRaw !== 'undefined' ? operatorPhoneRaw : '+34622158703';
+%>
+<link rel="stylesheet" href="/css/operator.css">
+
+<!-- BOTÓN FLOTANTE SUTIL Y NOTORIO (INFERIOR DERECHA) -->
+<a
+    href="tel:<%= opPhoneRaw %>"
+    class="operator-floating-btn"
+    data-open-operator-modal
+    aria-label="Llamar a un operador de DimePrecio.es"
+    title="Llamar a un operador de DimePrecio.es"
+>
+    <span class="operator-dot" aria-hidden="true"></span>
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+    </svg>
+    <span>Llamar a un operador</span>
+</a>
+
+<!-- MODAL DIÁLOGO DE ATENCIÓN TELEFÓNICA -->
+<div id="operatorModalOverlay" class="operator-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="operatorModalTitle">
+    <div class="operator-modal-card">
+        <button type="button" class="operator-modal-close" data-close-operator-modal aria-label="Cerrar ventana">✕</button>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+            <div style="width:38px;height:38px;border-radius:50%;background:#f1f5f9;display:flex;align-items:center;justify-content:center;color:#0f172a;flex-shrink:0;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+                </svg>
+            </div>
+            <div>
+                <h3 id="operatorModalTitle" style="margin:0;font-size:17px;font-weight:700;color:#0f172a;">Llamar a un operador</h3>
+                <span style="font-size:12px;color:#10b981;font-weight:600;display:inline-flex;align-items:center;gap:5px;">
+                    <span class="operator-dot"></span> Operadores disponibles ahora
+                </span>
+            </div>
+        </div>
+
+        <p style="font-size:13.5px;color:#475569;line-height:1.5;margin:0 0 16px;">
+            Un agente de DimePrecio.es te orientará gratis sobre precios, tarifas medias y cómo comparar presupuestos verificados en tu zona.
+        </p>
+
+        <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 16px;text-align:center;margin-bottom:16px;">
+            <div style="font-size:11.5px;color:#64748b;text-transform:uppercase;font-weight:700;letter-spacing:0.05em;margin-bottom:4px;">Teléfono de atención</div>
+            <a href="tel:<%= opPhoneRaw %>" id="operatorModalPhoneText" style="font-size:24px;font-weight:800;color:#0f172a;text-decoration:none;letter-spacing:-0.5px;display:inline-block;">
+                <%= opPhone %>
+            </a>
+            <div style="font-size:12px;color:#64748b;margin-top:4px;">Llamada sin coste adicional (España)</div>
+        </div>
+
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+            <a
+                href="tel:<%= opPhoneRaw %>"
+                style="flex:1;min-width:160px;background:#0f172a;color:#ffffff;text-align:center;padding:11px 16px;border-radius:8px;font-size:13.5px;font-weight:700;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;"
+            >
+                <span>📞</span>
+                <span>Llamar ahora</span>
+            </a>
+            <button
+                type="button"
+                onclick="copyOperatorPhone(this)"
+                style="background:#f1f5f9;color:#0f172a;border:1px solid #cbd5e1;padding:11px 14px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;"
+            >
+                Copiar número
+            </button>
+        </div>
+
+        <div style="font-size:11.5px;color:#94a3b8;line-height:1.4;text-align:center;">
+            🕒 Horario: Lunes a Viernes de 8:00 a 20:00 · Sábados de 9:00 a 14:00
+        </div>
+    </div>
+</div>
+<script src="/js/operator.js"></script>

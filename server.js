@@ -224,6 +224,8 @@ app.use(async (req, res, next) => {
     res.locals.currentPath = req.path;
     res.locals.siteUrl = SITE_URL;
     res.locals.siteName = 'DimePrecio.es';
+    res.locals.operatorPhone = process.env.OPERATOR_PHONE || '+34 622 15 87 03';
+    res.locals.operatorPhoneRaw = (process.env.OPERATOR_PHONE || '+34622158703').replace(/\s+/g, '');
   } catch (e) {
     res.locals.categories = [];
     res.locals.allLocations = rr.getLocations(false);
@@ -232,6 +234,8 @@ app.use(async (req, res, next) => {
     res.locals.currentPath = req.path;
     res.locals.siteUrl = SITE_URL;
     res.locals.siteName = 'DimePrecio.es';
+    res.locals.operatorPhone = process.env.OPERATOR_PHONE || '+34 622 15 87 03';
+    res.locals.operatorPhoneRaw = (process.env.OPERATOR_PHONE || '+34622158703').replace(/\s+/g, '');
   }
   next();
 });
