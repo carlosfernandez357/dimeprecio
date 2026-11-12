@@ -39,7 +39,7 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 const PORT = process.env.PORT || 3000;
-const SITE_URL = process.env.SITE_URL || 'https://DimePrecio.es';
+const SITE_URL = (process.env.SITE_URL || 'https://dimeprecio.es').toLowerCase().replace(/\/$/, '');
 
 // Asegurar carpetas de subidas (imágenes de artículos y formularios/presupuestos de clientes)
 const UPLOADS_DIR = path.join(__dirname, 'public', 'uploads');
@@ -1082,31 +1082,96 @@ app.post('/api/article/:id/like', async (req, res) => {
 // ============================================================================
 // SITEMAP.XML, ROBOTS.TXT Y FEED RSS PARA DimePrecio.ES
 // ============================================================================
+function xmlEscape(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
 app.get('/robots.txt', (req, res) => {
   res.type('text/plain').send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nDisallow: /pedir-presupuesto?\n\nSitemap: ${SITE_URL}/sitemap.xml\n`);
 });
 
 app.get('/sitemap.xml', async (req, res) => {
-  const locations = rr.getLocations(true);
-  const sectors = rr.getSectors(true);
-  const [posts] = await pool.query("SELECT slug, published_at FROM posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 50000");
-  const today = new Date().toISOString().slice(0, 10);
+  try {
+    const locations = rr.getLocations(true);
+    const sectors = rr.getSectors(true);
+    const [posts] = await pool.query(
+      "SELECT title, slug, featured_image, image_alt, published_at, updated_at, provincia_slug, sector_slug FROM posts WHERE status = 'published' ORDER BY published_at DESC LIMIT 50000"
+    );
+    const today = new Date().toISOString().slice(0, 10);
+    const baseUrl = (SITE_URL || 'https://dimeprecio.es').replace(/\/$/, '');
 
-  // URLs canónicas: las mismas que declaran las páginas con <link rel="canonical">
-  let urls = `<url><loc>${SITE_URL}/</loc><lastmod>${today}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>`;
-  urls += `<url><loc>${SITE_URL}/provincias</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
-  for (const loc of locations) {
-    urls += `<url><loc>${SITE_URL}/${loc.slug}</loc><lastmod>${today}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>`;
-    for (const sec of sectors) {
-      urls += `<url><loc>${SITE_URL}/${loc.slug}/${sec.slug}</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
+    // Fechas de última actualización por provincia y por combinación provincia x sector
+    const latestDateByProvSec = new Map();
+    const latestDateByProv = new Map();
+    for (const p of posts || []) {
+      const pDate = p.updated_at || p.published_at;
+      if (!pDate) continue;
+      const dStr = new Date(pDate).toISOString().slice(0, 10);
+      if (p.provincia_slug && p.sector_slug) {
+        const key = `${p.provincia_slug}__${p.sector_slug}`;
+        if (!latestDateByProvSec.has(key) || latestDateByProvSec.get(key) < dStr) {
+          latestDateByProvSec.set(key, dStr);
+        }
+      }
+      if (p.provincia_slug) {
+        if (!latestDateByProv.has(p.provincia_slug) || latestDateByProv.get(p.provincia_slug) < dStr) {
+          latestDateByProv.set(p.provincia_slug, dStr);
+        }
+      }
     }
-  }
-  for (const p of posts || []) {
-    const lm = p.published_at ? new Date(p.published_at).toISOString().slice(0, 10) : today;
-    urls += `<url><loc>${SITE_URL}/article/${p.slug}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>`;
-  }
 
-  res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">${urls}</urlset>`);
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+    xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n`;
+
+    // 1. Portada y páginas hub principales
+    xml += `  <url><loc>${baseUrl}/</loc><lastmod>${today}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>\n`;
+    xml += `  <url><loc>${baseUrl}/provincias</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+    xml += `  <url><loc>${baseUrl}/categories</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+    xml += `  <url><loc>${baseUrl}/pedir-presupuesto</loc><lastmod>${today}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+
+    // 2. Directorio de 52 provincias y 1.560 páginas [Provincia x Sector]
+    for (const loc of locations) {
+      const locMod = latestDateByProv.get(loc.slug) || '2026-01-15';
+      xml += `  <url><loc>${baseUrl}/${loc.slug}</loc><lastmod>${locMod}</lastmod><changefreq>daily</changefreq><priority>0.9</priority></url>\n`;
+      for (const sec of sectors) {
+        const secMod = latestDateByProvSec.get(`${loc.slug}__${sec.slug}`) || locMod;
+        xml += `  <url><loc>${baseUrl}/${loc.slug}/${sec.slug}</loc><lastmod>${secMod}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority></url>\n`;
+      }
+    }
+
+    // 3. Artículos editoriales y guías en BD (con extensión de imágenes para Google Images)
+    for (const p of posts || []) {
+      const lm = p.updated_at || p.published_at ? new Date(p.updated_at || p.published_at).toISOString().slice(0, 10) : today;
+      let imgXml = '';
+      if (p.featured_image) {
+        const imgUrl = p.featured_image.startsWith('http') ? p.featured_image : `${baseUrl}${p.featured_image.startsWith('/') ? '' : '/'}${p.featured_image}`;
+        imgXml = `<image:image><image:loc>${xmlEscape(imgUrl)}</image:loc><image:title>${xmlEscape(p.image_alt || p.title)}</image:title></image:image>`;
+      }
+      xml += `  <url><loc>${baseUrl}/article/${xmlEscape(p.slug)}</loc><lastmod>${lm}</lastmod><changefreq>weekly</changefreq><priority>0.8</priority>${imgXml}</url>\n`;
+    }
+
+    // 4. Páginas legales y de transparencia
+    xml += `  <url><loc>${baseUrl}/legal</loc><lastmod>2026-01-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>\n`;
+    xml += `  <url><loc>${baseUrl}/privacy</loc><lastmod>2026-01-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>\n`;
+    xml += `  <url><loc>${baseUrl}/cookies</loc><lastmod>2026-01-01</lastmod><changefreq>yearly</changefreq><priority>0.3</priority></url>\n`;
+
+    xml += `</urlset>`;
+
+    res.set({
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'public, max-age=3600, s-maxage=14400',
+    });
+    res.send(xml);
+  } catch (err) {
+    console.error('[Sitemap Error]', err);
+    res.status(500).type('text/plain').send('Error generating sitemap');
+  }
 });
 
 app.get('/feed.xml', async (req, res) => {

@@ -1,5 +1,5 @@
-﻿<%
-const SITE_URL = process.env.SITE_URL || "https://DimePrecio.es";
+<%
+const SITE_URL = (process.env.SITE_URL || "https://dimeprecio.es").toLowerCase().replace(/\/$/, "");
 const SITE_NAME = "DimePrecio.es · Artículos Especializados, Guías y Soluciones por Sectores y Provincias";
 
 const seoType = (typeof pageType !== "undefined" && pageType === "article") ? "article" : "website";
