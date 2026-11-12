@@ -1472,29 +1472,171 @@ function updateQuoteRequestAgent(quoteId, payload) {
   };
 }
 
-// ----------------------------------------------------------------------------
-// Motor de Búsqueda Personalizada de DimePrecio.es (Páginas IA + Sectores + Anuncios)
-// ----------------------------------------------------------------------------
-function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null, limit = 24 } = {}) {
-  const s = loadStore();
-  const rawQ = String(query || '').trim();
-  const normQ = rawQ
+// ============================================================================
+// MOTOR DE BÚSQUEDA HÍBRIDO SEMÁNTICO, FUZZY Y FILTRADO AVANZADO (DimePrecio.es)
+// ============================================================================
+function levenshteinDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const matrix = [];
+  for (let i = 0; i <= b.length; i++) matrix[i] = [i];
+  for (let j = 0; j <= a.length; j++) matrix[0][j] = j;
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1
+        );
+      }
+    }
+  }
+  return matrix[b.length][a.length];
+}
+
+function fuzzyMatchWord(target, queryWord) {
+  if (!target || !queryWord) return 0;
+  if (target === queryWord) return 1.0;
+  if (target.includes(queryWord) || queryWord.includes(target)) {
+    return Math.min(target.length, queryWord.length) / Math.max(target.length, queryWord.length);
+  }
+  if (queryWord.length < 3) return 0;
+  const dist = levenshteinDistance(target, queryWord);
+  const maxLen = Math.max(target.length, queryWord.length);
+  const maxErrors = maxLen >= 7 ? 2 : (maxLen >= 4 ? 1 : 0);
+  if (dist <= maxErrors) {
+    return 1 - (dist / maxLen);
+  }
+  return 0;
+}
+
+const SPANISH_STOPWORDS = new Set([
+  'de', 'del', 'la', 'las', 'el', 'los', 'en', 'para', 'por', 'con', 'un', 'una', 'unos', 'unas',
+  'y', 'o', 'que', 'al', 'a', 'se', 'es', 'su', 'sus', 'como', 'donde', 'cuando', 'mas', 'muy',
+  'sobre', 'sin', 'entre', 'mi', 'mis', 'tu', 'tus', 'necesito', 'busco', 'quiero', 'cuanto',
+  'cuesta', 'precio', 'precios', 'presupuesto', 'presupuestos', 'barato', 'baratos', 'urgente', 'urgentes'
+]);
+
+const SERVICE_INTENTS = {
+  'cerrajeros-24h': [
+    'cerrajero', 'cerrajeros', 'cerrajeria', 'cerradura', 'cerraduras', 'bombin', 'bombines',
+    'bombillo', 'ganzua', 'llave', 'llaves', 'abrir puerta', 'puerta cerrada', 'copia de llaves',
+    'fac', 'fichet', 'cerrojo', 'cerrojos', 'puerta blindada', 'puerta acorazada', 'atrancada',
+    'me quede fuera', 'cambiar bombin', 'cambiar cerradura', 'apertura urgente'
+  ],
+  'fontaneria-desatascos': [
+    'fontanero', 'fontaneros', 'fontaneria', 'grifo', 'grifos', 'gotera', 'goteras', 'fuga',
+    'fugas', 'fuga de agua', 'tuberia', 'tuberias', 'atasco', 'atascos', 'desatasco', 'desatascos',
+    'bajante', 'bajantes', 'cisterna', 'inodoro', 'wc', 'bide', 'bote sifonico', 'desague', 'desagues',
+    'presion agua', 'termo electrico', 'calentador', 'caldera', 'humedad por filtracion'
+  ],
+  'reformas-integrales': [
+    'reforma', 'reformas', 'reformar', 'albanil', 'albaniles', 'obra', 'obras', 'tabique', 'tabiques',
+    'tirar tabique', 'albanileria', 'piso completo', 'reforma vivienda', 'reforma cocina', 'reforma bano',
+    'reforma piso', 'licencia obra', 'llave en mano', 'cocina nueva', 'demolicion', 'distribucion'
+  ],
+  'electricistas-boletines': [
+    'electricista', 'electricistas', 'electricidad', 'cuadro electrico', 'enchufe', 'enchufes',
+    'interruptor', 'diferencial', 'saltan los plomos', 'apagon', 'cortocircuito', 'boletin electrico',
+    'cie', 'instalacion electrica', 'cableado', 'iluminacion', 'led', 'cuadro de luces'
+  ],
+  'tejados-cubiertas': [
+    'tejado', 'tejados', 'cubierta', 'cubiertas', 'teja', 'tejas', 'gotera tejado', 'filtracion tejado',
+    'impermeabilizacion', 'impermeabilizar', 'tela asfaltica', 'canalon', 'canalones', 'filtraciones terraza',
+    'azotea', 'panel sandwich', 'onduline'
+  ],
+  'placas-solares-aerotermia': [
+    'placas solares', 'paneles solares', 'energia solar', 'aerotermia', 'autoconsumo', 'fotovoltaica',
+    'inversor solar', 'bateria solar', 'subvencion placas'
+  ],
+  'climatizacion-aire-acondicionado': [
+    'aire acondicionado', 'climatizacion', 'bomba de calor', 'split', 'splits', 'multisplit',
+    'conductos', 'recarga gas', 'recarga aire', 'daikin', 'mitsubishi', 'fujitsu', 'frio calor', 'clima'
+  ],
+  'carpinteria-aluminio-ventanas-pvc': [
+    'ventana', 'ventanas', 'ventana pvc', 'ventanas pvc', 'carpinteria aluminio', 'climalit',
+    'doble acristalamiento', 'persiana', 'persianas', 'mosquitera', 'mosquiteras', 'cerramiento terraza',
+    'puerta aluminio', 'cambiar ventanas'
+  ],
+  'pintores-alisado-paredes': [
+    'pintor', 'pintores', 'pintura', 'pintar', 'pintar piso', 'pintar paredes', 'alisar gotele',
+    'quitar gotele', 'gotele', 'estuco', 'esmalte', 'pintura plastica', 'alisado paredes'
+  ],
+  'control-plagas-desinfeccion': [
+    'plagas', 'cucarachas', 'chinches', 'ratas', 'ratones', 'termitas', 'carcoma', 'avispas',
+    'desratizacion', 'desinsectacion', 'fumigacion', 'fumigar', 'desinfeccion'
+  ],
+  'mudanzas-guardamuebles': [
+    'mudanza', 'mudanzas', 'portes', 'transportes', 'furgoneta portes', 'vaciado de pisos',
+    'guardamuebles', 'traslado muebles', 'embalaje'
+  ],
+  'instalacion-suelos-parquet': [
+    'parquet', 'parque', 'tarima', 'tarima flotante', 'acuchillar parquet', 'lijar parquet',
+    'suelo laminado', 'rodapie', 'zocalo', 'suelo vinilico'
+  ],
+  'aislamiento-termico-humedades': [
+    'aislamiento termico', 'aislar pared', 'lana de roca', 'sate', 'condensacion', 'moho',
+    'humedades por condensacion', 'insonorizacion', 'insonorizar', 'lana mineral'
+  ],
+  'empresas-limpieza-cristales': [
+    'limpieza', 'limpiar', 'limpieza a fondo', 'fin de obra', 'limpiacristales', 'pulido de suelos',
+    'limpieza oficinas', 'limpieza comunidades'
+  ],
+  'jardineria-piscinas': [
+    'jardinero', 'jardineros', 'jardineria', 'cortar cesped', 'poda', 'talar arboles', 'desbroce',
+    'piscina', 'piscinas', 'depuradora piscina', 'limpieza piscina', 'cloracion salina'
+  ],
+  'puertas-automaticas-garajes': [
+    'puerta automatica', 'puerta garaje', 'persiana local', 'motor puerta garaje', 'mando garaje',
+    'seccional', 'basculante', 'puerta corredera'
+  ],
+  'abogados-especialistas': [
+    'abogado', 'abogados', 'despacho abogados', 'herencias', 'divorcios', 'despidos', 'laboralista',
+    'penalista', 'accidentes', 'reclamaciones'
+  ],
+  'asesorias-gestorias': [
+    'asesoria', 'gestoria', 'asesor fiscal', 'autonomos', 'declaracion renta', 'nominas', 'contabilidad'
+  ],
+  'arquitectos-licencias': [
+    'arquitecto', 'arquitectos', 'proyecto obra', 'cedula habitabilidad', 'ite', 'certificado energetico',
+    'peritaje', 'tasacion'
+  ]
+};
+
+function normalizeSearchText(str) {
+  return String(str || '')
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '');
-  const tokens = normQ.split(/\s+/).filter(t => t.length >= 2);
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null, limit = 24, posts = null } = {}) {
+  const s = loadStore();
+  const rawQ = String(query || '').trim();
+  const normQ = normalizeSearchText(rawQ);
+
+  // Tokens significativos sin stopwords
+  const rawWords = normQ.split(/[\s,.;:!?\-\/]+/).filter(Boolean);
+  const meaningfulTokens = rawWords.filter(w => !SPANISH_STOPWORDS.has(w) && w.length >= 2);
+  const tokens = meaningfulTokens.length ? meaningfulTokens : rawWords.filter(w => w.length >= 2);
 
   // Detectar si en la propia consulta escribió el nombre de alguna provincia o municipio
   let detectedProvInQuery = null;
   if (normQ) {
-    for (const loc of s.locations) {
-      const locNorm = loc.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      if (normQ.includes(locNorm) || normQ.includes(loc.slug.replace(/-/g, ' '))) {
+    for (const loc of s.locations || []) {
+      const locNorm = normalizeSearchText(loc.nombre);
+      const locSlugWords = loc.slug.replace(/-/g, ' ');
+      if (normQ.includes(locNorm) || normQ.includes(locSlugWords)) {
         detectedProvInQuery = loc;
         break;
       }
       for (const mun of loc.municipios || []) {
-        const munNorm = mun.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const munNorm = normalizeSearchText(mun);
         if (munNorm.length >= 4 && normQ.includes(munNorm)) {
           detectedProvInQuery = loc;
           break;
@@ -1506,79 +1648,162 @@ function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null,
 
   const effectiveProvSlug = provinciaSlug || (detectedProvInQuery ? detectedProvInQuery.slug : null);
 
-  // 1. Buscar sectores coincidentes
-  const matchedSectors = s.sectors
-    .map(sec => {
-      let score = 0;
-      const nameNorm = sec.nombre.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      const kws = (sec.keywords || []).map(k => k.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''));
+  // 1. Scoring híbrido de sectores (exacto + sinónimos + fuzzy + filtro)
+  const scoredSectors = (s.sectors || []).map(sec => {
+    let score = 0;
+    const secNorm = normalizeSearchText(sec.nombre);
+    const secSlugWords = sec.slug.split('-');
+    const secKws = (sec.keywords || []).map(k => normalizeSearchText(k));
+    const intentList = (SERVICE_INTENTS[sec.slug] || []).map(normalizeSearchText);
 
-      if (sectorSlug && sec.slug === sectorSlug) score += 80;
-      if (!tokens.length && !sectorSlug) score += 10;
+    // Si el usuario aplicó filtro de sector específico
+    if (sectorSlug && sec.slug === sectorSlug) score += 120;
+    if (!tokens.length && !sectorSlug) score += 10;
 
-      for (const tok of tokens) {
-        if (nameNorm.includes(tok)) score += 35;
-        if (sec.slug.includes(tok)) score += 25;
-        for (const kw of kws) {
-          if (kw.includes(tok)) score += 22;
+    // Coincidencia con frase completa en diccionario de intenciones
+    for (const intent of intentList) {
+      if (normQ && (normQ.includes(intent) || intent.includes(normQ))) {
+        score += 80;
+      }
+    }
+
+    for (const tok of tokens) {
+      // Substring directo en nombre o keywords
+      if (secNorm.includes(tok)) score += 40;
+      for (const sw of secSlugWords) {
+        if (sw === tok) score += 35;
+      }
+      for (const kw of secKws) {
+        if (kw.includes(tok)) score += 30;
+      }
+
+      // Comparación con sinónimos e intenciones
+      for (const intent of intentList) {
+        if (intent.includes(tok)) {
+          score += 45;
+        } else {
+          const sim = fuzzyMatchWord(intent, tok);
+          if (sim >= 0.75) {
+            score += Math.round(40 * sim);
+          }
         }
       }
-      return { ...sec, _score: score };
-    })
-    .filter(sec => sec._score > 0)
-    .sort((a, b) => b._score - a._score)
-    .slice(0, 8);
+
+      // Fuzzy contra partes del slug o nombre
+      for (const sw of secSlugWords) {
+        const sim = fuzzyMatchWord(sw, tok);
+        if (sim >= 0.75) {
+          score += Math.round(30 * sim);
+        }
+      }
+    }
+
+    return { ...sec, _score: score };
+  });
+
+  let matchedSectors = scoredSectors.filter(sec => sec._score > 0).sort((a, b) => b._score - a._score);
+  let isFallbackSector = false;
+
+  // Fallback si no hay sectores coincidentes
+  if (!matchedSectors.length) {
+    isFallbackSector = true;
+    if (sectorSlug) {
+      const direct = (s.sectors || []).find(sec => sec.slug === sectorSlug);
+      if (direct) matchedSectors = [direct];
+    }
+    if (!matchedSectors.length) {
+      const prioritySlugs = ['reformas-integrales', 'fontaneria-desatascos', 'cerrajeros-24h', 'electricistas-boletines', 'tejados-cubiertas', 'climatizacion-aire-acondicionado'];
+      matchedSectors = (s.sectors || []).filter(sec => prioritySlugs.includes(sec.slug));
+      if (!matchedSectors.length) matchedSectors = (s.sectors || []).slice(0, 6);
+    }
+  }
 
   const topMatchedSectorSlugs = matchedSectors.map(sec => sec.slug);
 
-  // 2. Buscar páginas IA (`posts`) con impulso por provincia del usuario y páginas seleccionadas
-  const matchedPages = (s.posts || [])
-    .filter(p => p.status === 'published')
-    .map(p => {
-      let score = 0;
-      const hay = `${p.title} ${p.excerpt || ''} ${p.keywords || ''} ${p.sector_nombre || ''} ${p.provincia_nombre || ''} ${p.municipio_tag || ''}`
-        .toLowerCase()
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '');
+  // 2. Scoring híbrido de páginas / artículos (`posts`)
+  const allAvailablePosts = Array.isArray(posts) && posts.length ? posts : (s.posts || []);
+  const publishedPosts = allAvailablePosts.filter(p => p.status === 'published');
 
-      if (sectorSlug && p.sector_slug === sectorSlug) score += 45;
-      else if (topMatchedSectorSlugs.includes(p.sector_slug)) score += 25;
+  const scoredPages = publishedPosts.map(p => {
+    let score = 0;
+    const titleNorm = normalizeSearchText(p.title);
+    const excerptNorm = normalizeSearchText(p.excerpt || '');
+    const kwNorm = normalizeSearchText(p.keywords || '');
+    const secNorm = normalizeSearchText(p.sector_nombre || '');
+    const hay = `${titleNorm} ${excerptNorm} ${kwNorm} ${secNorm} ${p.sector_slug || ''}`;
 
-      for (const tok of tokens) {
-        if (hay.includes(tok)) score += 28;
-        if ((p.title || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').includes(tok)) {
-          score += 20;
+    // Si hay filtro estricto de sector
+    if (sectorSlug) {
+      if (p.sector_slug === sectorSlug) score += 90;
+      else return { ...p, _score: 0 }; // Excluir otros sectores si se filtró por uno
+    } else if (topMatchedSectorSlugs.includes(p.sector_slug)) {
+      score += 40;
+    }
+
+    // Coincidencia con tokens
+    for (const tok of tokens) {
+      if (titleNorm.includes(tok)) score += 50;
+      if (excerptNorm.includes(tok)) score += 20;
+      if (kwNorm.includes(tok)) score += 25;
+      if (hay.includes(tok)) score += 15;
+
+      // Fuzzy en título si la palabra es suficientemente larga
+      if (tok.length >= 4) {
+        const titleWords = titleNorm.split(/[\s,.;:!?\-\/]+/);
+        for (const tw of titleWords) {
+          const sim = fuzzyMatchWord(tw, tok);
+          if (sim >= 0.75) {
+            score += Math.round(35 * sim);
+            break;
+          }
         }
       }
+    }
 
-      if (!tokens.length && !sectorSlug) score += 15;
+    // Si no había texto pero sí filtro de sector o zona
+    if (!tokens.length) {
+      score += 20;
+    }
 
-      // Si hubo match semántico o no hay texto pero sí filtro, aplicar impulso de algoritmo DimePrecio
-      if (score > 0) {
-        if (p.is_pinned) {
-          score += 75; // Páginas fijadas siempre arriba
-        }
-        if (effectiveProvSlug && p.provincia_slug === effectiveProvSlug) {
-          score += 50; // Fuerte priorización de la provincia detectada del usuario
-        }
-        if (p.is_selected) {
-          score += 35; // Priorización de páginas recomendadas en Admin
-        }
-        score += (Number(p.priority_weight) || 5) * 3;
+    // Boosts de calidad y provincia
+    if (score > 0) {
+      if (effectiveProvSlug && p.provincia_slug === effectiveProvSlug) {
+        score += 45; // Priorizar fuertemente la provincia
       }
+      if (p.is_pinned) score += 30;
+      if (p.is_selected) score += 20;
+      score += (Number(p.priority_weight) || 5) * 2;
+    }
 
-      return { ...p, _score: score };
-    })
-    .filter(p => {
-      if (provinciaSlug && p.provincia_slug && p.provincia_slug !== provinciaSlug && tokens.length === 0) {
-        return false;
-      }
-      return p._score > 0;
-    })
-    .sort((a, b) => b._score - a._score)
-    .slice(0, limit);
+    return { ...p, _score: score };
+  });
 
-  // 3. Buscar Anuncios Oficiales de DimePrecio.es recomendados para esta búsqueda
+  let matchedPages = scoredPages.filter(p => p._score > 0).sort((a, b) => b._score - a._score).slice(0, limit);
+  let isFallback = isFallbackSector;
+
+  // Fallback inteligente para páginas si NO hay resultados directos con las palabras
+  if (!matchedPages.length) {
+    isFallback = true;
+    let fallbackPool = publishedPosts;
+
+    if (sectorSlug) {
+      fallbackPool = fallbackPool.filter(p => p.sector_slug === sectorSlug);
+    }
+    if (effectiveProvSlug) {
+      const provPool = fallbackPool.filter(p => p.provincia_slug === effectiveProvSlug);
+      if (provPool.length) fallbackPool = provPool;
+    }
+
+    matchedPages = fallbackPool
+      .sort((a, b) => {
+        if (a.is_pinned !== b.is_pinned) return b.is_pinned ? 1 : -1;
+        if (a.is_selected !== b.is_selected) return b.is_selected ? 1 : -1;
+        return (b.priority_weight || 0) - (a.priority_weight || 0);
+      })
+      .slice(0, limit);
+  }
+
+  // 3. Anuncios recomendados
   const effectiveSector = sectorSlug || (topMatchedSectorSlugs[0] || null);
   const recommendedAds = getRecommendedAds({
     provinciaSlug: effectiveProvSlug,
@@ -1590,11 +1815,13 @@ function searchEverything({ query = '', provinciaSlug = null, sectorSlug = null,
 
   return {
     query: rawQ,
+    isFallback,
     effectiveProvSlug,
     detectedProvInQuery,
-    matchedSectors,
+    matchedSectors: matchedSectors.slice(0, 8),
     matchedPages,
     recommendedAds,
+    totalResults: matchedPages.length,
   };
 }
 

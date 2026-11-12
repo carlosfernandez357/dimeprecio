@@ -147,7 +147,7 @@ const topNavSectors = headerSectors.slice(0, 12);
 
     </div>
 
-    <!-- BUSCADOR DESPLEGABLE ESTILO SOCIALSFORCE -->
+    <!-- BUSCADOR HÍBRIDO CON FILTROS EN TIEMPO REAL -->
     <div id="search-container">
         <form id="search-form" action="/search" method="GET" style="position:relative;">
             <div class="search-input-wrapper">
@@ -159,9 +159,28 @@ const topNavSectors = headerSectors.slice(0, 12);
                     id="search-input"
                     name="q"
                     type="search"
-                    placeholder="Buscar en <%= userProv.nombre %> (ej. reformas pequeñas casa, bañera por ducha, fontanero, tejados)..."
+                    placeholder="Buscar servicio o precio en <%= userProv.nombre %> (ej. cerrajero urgente, gotera, pintar piso)..."
                     autocomplete="off"
                 >
+                <div class="search-filters-inline">
+                    <select id="search-prov-select" name="provincia" class="search-filter-select" aria-label="Filtrar por provincia">
+                        <% if (typeof allLocations !== 'undefined' && allLocations && allLocations.length) { %>
+                            <% allLocations.forEach(loc => { %>
+                                <option value="<%= loc.slug %>" <%= (userProv && userProv.slug === loc.slug) ? 'selected' : '' %>>📍 <%= loc.nombre %></option>
+                            <% }) %>
+                        <% } else { %>
+                            <option value="<%= userProv.slug %>" selected>📍 <%= userProv.nombre %></option>
+                        <% } %>
+                    </select>
+                    <select id="search-sector-select" name="sector" class="search-filter-select" aria-label="Filtrar por oficio o servicio">
+                        <option value="">🛠️ Todos los servicios</option>
+                        <% if (typeof allSectors !== 'undefined' && allSectors && allSectors.length) { %>
+                            <% allSectors.forEach(sec => { %>
+                                <option value="<%= sec.slug %>"><%= sec.icono || '🛠️' %> <%= sec.nombre %></option>
+                            <% }) %>
+                        <% } %>
+                    </select>
+                </div>
                 <button id="search-submit" type="submit">Buscar</button>
             </div>
             <div id="ppSearchDropdown" class="pp-search-dropdown" style="display:none;"></div>

@@ -858,12 +858,17 @@ app.get('/search', async (req, res) => {
       q,
       query: q,
       sectorFilter: secParam,
+      provFilter: provParam,
+      allLocations: rr.getLocations(false),
+      allSectors: rr.getSectors(false),
       currentProvince,
       currentSector,
+      isFallback: Boolean(searchData.isFallback),
       matchedSectors: searchData.matchedSectors,
       recommendedAds: searchData.recommendedAds,
       posts: searchData.matchedPages,
       results: searchData.matchedPages,
+      totalResults: searchData.totalResults,
       sidebarData,
     });
   } catch (err) {
@@ -951,16 +956,21 @@ app.post('/api/user/location', (req, res) => {
 // 2. Autocompletado instantáneo y personalizado del buscador (/api/search/suggest)
 app.get('/api/search/suggest', (req, res) => {
   const q = String(req.query.q || '').trim();
-  const prov = req.detectedProvince || rr.getLocationBySlug('madrid');
+  const provParam = String(req.query.provincia || '').trim();
+  const secParam = String(req.query.sector || '').trim();
+  const prov = (provParam && rr.getLocationBySlug(provParam)) || req.detectedProvince || rr.getLocationBySlug('madrid');
   const data = rr.searchEverything({
     query: q,
     provinciaSlug: prov.slug,
+    sectorSlug: secParam || null,
     limit: 6,
   });
 
   res.json({
     ok: true,
+    isFallback: Boolean(data.isFallback),
     detectedProvince: { slug: prov.slug, nombre: prov.nombre },
+    activeSector: secParam ? rr.getSectorBySlug(secParam) : null,
     sectors: data.matchedSectors.slice(0, 5).map(s => ({
       slug: s.slug,
       nombre: s.nombre,
@@ -980,6 +990,7 @@ app.get('/api/search/suggest', (req, res) => {
       title: p.title,
       provincia_nombre: p.provincia_nombre,
       sector_nombre: p.sector_nombre,
+      image: p.featured_image || p.image,
     })),
   });
 });

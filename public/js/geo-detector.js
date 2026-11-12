@@ -192,65 +192,115 @@
     }
   }
 
-  // 3. Autocompletado en vivo para el buscador de SocialsForce (#search-input)
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  // 3. Autocompletado y Búsqueda Híbrida en Tiempo Real (#search-input)
   function bindLiveSearch() {
     var input = document.getElementById('search-input') || document.getElementById('ppSearchInput');
     var dropdown = document.getElementById('ppSearchDropdown');
+    var provSelect = document.getElementById('search-prov-select');
+    var secSelect = document.getElementById('search-sector-select');
     if (!input || !dropdown) return;
 
     var debounceTimer = null;
-    input.addEventListener('input', function () {
+
+    async function executeLiveSearch() {
       var q = input.value.trim();
+      var provVal = provSelect ? provSelect.value : '';
+      var secVal = secSelect ? secSelect.value : '';
+
+      try {
+        var url = '/api/search/suggest?q=' + encodeURIComponent(q);
+        if (provVal) url += '&provincia=' + encodeURIComponent(provVal);
+        if (secVal) url += '&sector=' + encodeURIComponent(secVal);
+
+        var res = await fetch(url);
+        if (!res.ok) return;
+        var data = await res.json();
+        if (!data || !data.ok) return;
+
+        var provSlug = (data.detectedProvince && data.detectedProvince.slug) || (provVal || 'madrid');
+        var provName = (data.detectedProvince && data.detectedProvince.nombre) || 'tu zona';
+        var html = '';
+
+        if (data.isFallback && q.length > 0) {
+          html += '<div style="background:#f8fafc;border-left:3px solid #3b82f6;padding:8px 12px;margin:4px 6px 8px;border-radius:4px;font-size:12.5px;color:#475569;">' +
+                  'ℹ️ Sin coincidencia exacta para <em>"' + escapeHtml(q) + '"</em>. Mostrando los más recomendados en <strong>' + escapeHtml(provName) + '</strong>:' +
+                  '</div>';
+        }
+
+        if (data.sectors && data.sectors.length) {
+          html += '<div class="pp-sug-group">Servicios ' + (data.isFallback ? 'populares' : 'relacionados') + ' en ' + escapeHtml(provName) + '</div>';
+          data.sectors.forEach(function (s) {
+            html +=
+              '<a class="pp-sug-item" href="/' + provSlug + '/' + s.slug + '" style="display:flex;align-items:center;justify-content:space-between;">' +
+              '<span>' + (s.icono || '🛠️') + ' <strong>' + escapeHtml(s.nombre) + '</strong></span>' +
+              (s.precio_min ? '<span style="font-size:11.5px;color:#10b981;font-weight:700;background:#ecfdf5;padding:2px 7px;border-radius:12px;">Desde ' + s.precio_min + '€</span>' : '<small>Ver precios →</small>') +
+              '</a>';
+          });
+        }
+
+        if (data.pages && data.pages.length) {
+          html += '<div class="pp-sug-group">Guías de precios y artículos en ' + escapeHtml(provName) + '</div>';
+          data.pages.forEach(function (p) {
+            html +=
+              '<a class="pp-sug-item" href="/article/' + p.slug + '">' +
+              '<div style="font-weight:700;color:#0f172a;line-height:1.35;">📄 ' + escapeHtml(p.title) + '</div>' +
+              (p.sector_nombre ? '<small style="color:#64748b;font-size:11.5px;">' + escapeHtml(p.sector_nombre) + (p.provincia_nombre ? ' · ' + escapeHtml(p.provincia_nombre) : '') + '</small>' : '') +
+              '</a>';
+          });
+        }
+
+        // Acceso directo a pedir presupuesto o llamar
+        html += '<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;margin-top:6px;border-top:1px solid #f1f5f9;background:#fafafa;border-radius:0 0 10px 10px;font-size:12px;">' +
+                '<a href="/pedir-presupuesto" style="color:#0f172a;font-weight:700;text-decoration:none;">📋 Solicitar presupuesto sin compromiso →</a>' +
+                '<a href="tel:+34622158703" style="color:#10b981;font-weight:700;text-decoration:none;">📞 Llamar a un operador</a>' +
+                '</div>';
+
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+      } catch (e) {}
+    }
+
+    function scheduleSearch(delay) {
       clearTimeout(debounceTimer);
-      if (q.length < 2) {
-        dropdown.style.display = 'none';
-        dropdown.innerHTML = '';
-        return;
-      }
-      debounceTimer = setTimeout(async function () {
-        try {
-          var res = await fetch('/api/search/suggest?q=' + encodeURIComponent(q));
-          if (!res.ok) return;
-          var data = await res.json();
-          if (!data || !data.ok) return;
+      debounceTimer = setTimeout(executeLiveSearch, delay || 140);
+    }
 
-          var provSlug = (data.detectedProvince && data.detectedProvince.slug) || 'madrid';
-          var provName = (data.detectedProvince && data.detectedProvince.nombre) || 'Madrid';
-          var html = '';
-
-          if (data.sectors && data.sectors.length) {
-            html += '<div class="pp-sug-group">Secciones en ' + provName + '</div>';
-            data.sectors.forEach(function (s) {
-              html +=
-                '<a class="pp-sug-item" href="/' + provSlug + '/' + s.slug + '">' +
-                (s.icono || '•') + ' <strong>' + s.nombre + ' en ' + provName + '</strong>' +
-                '<small>Ver páginas y pedir presupuesto →</small></a>';
-            });
-          }
-
-          if (data.pages && data.pages.length) {
-            html += '<div class="pp-sug-group">Páginas recomendadas</div>';
-            data.pages.forEach(function (p) {
-              html +=
-                '<a class="pp-sug-item" href="/article/' + p.slug + '">' +
-                '<strong>' + p.title + '</strong>' +
-                (p.provincia_nombre ? '<small>· ' + p.provincia_nombre + '</small>' : '') +
-                '</a>';
-            });
-          }
-
-          if (!html) {
-            dropdown.style.display = 'none';
-            return;
-          }
-          dropdown.innerHTML = html;
-          dropdown.style.display = 'block';
-        } catch (e) {}
-      }, 160);
+    input.addEventListener('input', function () {
+      scheduleSearch(140);
     });
 
+    input.addEventListener('focus', function () {
+      if (input.value.trim().length === 0) {
+        scheduleSearch(10);
+      } else {
+        scheduleSearch(50);
+      }
+    });
+
+    if (provSelect) {
+      provSelect.addEventListener('change', function () {
+        scheduleSearch(10);
+      });
+    }
+
+    if (secSelect) {
+      secSelect.addEventListener('change', function () {
+        scheduleSearch(10);
+      });
+    }
+
     document.addEventListener('click', function (e) {
-      if (!dropdown.contains(e.target) && e.target !== input) {
+      if (!dropdown.contains(e.target) && e.target !== input && e.target !== provSelect && e.target !== secSelect) {
         dropdown.style.display = 'none';
       }
     });
