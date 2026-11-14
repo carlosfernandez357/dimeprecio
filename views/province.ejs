@@ -74,12 +74,11 @@
                             </div>
                         </div>
 
-                        <!-- PÁGINAS MÁS RELEVANTES EN ESTA PROVINCIA (ALGORITMO SOCIALSFORCE) -->
-                        <div class="section-header" style="margin-bottom:20px;">
-                            <h2 class="section-title" style="font-size:21px;">2. Páginas más relevantes en <%= province.nombre %></h2>
-                        </div>
-
+                        <!-- PÁGINAS MÁS RELEVANTES EN ESTA PROVINCIA -->
                         <% if (provincePages && provincePages.length > 0) { %>
+                        <div class="section-header" style="margin-bottom:20px;">
+                            <h2 class="section-title" style="font-size:21px;">2. Guías de precios y páginas destacadas en <%= province.nombre %></h2>
+                        </div>
                         <div class="listing-posts-grid">
                             <% provincePages.forEach(function(post, idx) { %>
                             <article class="post-card" data-rec-pl="province_listing" data-rec-pos="<%= idx %>" data-pid="<%= post.id %>">

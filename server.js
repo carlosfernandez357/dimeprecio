@@ -526,11 +526,18 @@ async function renderProvincePage(req, res, provinciaSlug) {
   res.locals.detectedProvince = province;
 
   const visitorUid = req.cookies.sf_uid || null;
-  const rankedPages = await getForYou(visitorUid, 12, [], {
-    provinciaSlug: province.slug,
-    cookies: req.cookies,
-  });
-  const provincePages = rankedPages;
+
+  // Filtrar estrictamente solo los artículos propios de esta provincia
+  const [dbProvincePosts] = await pool.query(
+    `SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
+     FROM posts p
+     LEFT JOIN categories c ON p.category_id = c.id
+     WHERE p.status = 'published' AND p.provincia_slug = ?
+     ORDER BY p.is_pinned DESC, p.priority_weight DESC, p.views DESC
+     LIMIT 12`,
+    [province.slug]
+  );
+  const provincePages = (dbProvincePosts || []).map(normalizePost);
   const provinceAds = rr.getRecommendedAds({ provinciaSlug: province.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,

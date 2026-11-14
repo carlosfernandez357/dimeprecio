@@ -247,14 +247,22 @@ function scorePost(p, { uid = null, provinciaSlug = null, sectorSlug = null, cli
 
 async function getForYou(visitorUid, limit = 6, excludePostIds = [], context = {}) {
   try {
-    const [posts] = await pool.query(`
+    let sql = `
       SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
       FROM posts p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'published'
-      ORDER BY p.published_at DESC
-      LIMIT 250
-    `);
+    `;
+    const params = [];
+
+    if (context.provinciaSlug) {
+      sql += ' AND p.provincia_slug = ? ';
+      params.push(context.provinciaSlug);
+    }
+
+    sql += ' ORDER BY p.is_pinned DESC, p.priority_weight DESC, p.views DESC LIMIT 100 ';
+
+    const [posts] = await pool.query(sql, params);
 
     const preferredSectors = resolvePreferredSectors(visitorUid, context.cookies || {});
     const combinedCats = Array.from(new Set([...(context.clientCats || []), ...preferredSectors]));
@@ -277,7 +285,7 @@ async function getForYou(visitorUid, limit = 6, excludePostIds = [], context = {
     return scored.slice(0, limit);
   } catch (err) {
     console.error('[Recommend] Error in getForYou:', err.message);
-    return getTrending(limit, excludePostIds, context);
+    return [];
   }
 }
 
@@ -285,14 +293,32 @@ async function getTrending(limit = 6, excludeIds = [], context = {}) {
   try {
     const provSlug = context.provinciaSlug || null;
     const secSlug = context.sectorSlug || null;
-    const [rows] = await pool.query(`
+    let sql = `
       SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
       FROM posts p
       LEFT JOIN categories c ON p.category_id = c.id
       WHERE p.status = 'published'
-      ORDER BY p.views DESC
-      LIMIT 60
-    `);
+    `;
+    const params = [];
+    if (provSlug) {
+      sql += ' AND p.provincia_slug = ? ';
+      params.push(provSlug);
+    }
+    sql += ' ORDER BY p.views DESC LIMIT 60 ';
+    let [rows] = await pool.query(sql, params);
+
+    // Si la provincia no tiene artículos suficientes, no inventar ni mezclar sin avisar
+    if (!rows || rows.length === 0) {
+      const [globalRows] = await pool.query(`
+        SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
+        FROM posts p
+        LEFT JOIN categories c ON p.category_id = c.id
+        WHERE p.status = 'published'
+        ORDER BY p.views DESC
+        LIMIT 60
+      `);
+      rows = globalRows;
+    }
 
     const filtered = (rows || [])
       .filter(r => !excludeIds.includes(Number(r.id)))
@@ -301,8 +327,8 @@ async function getTrending(limit = 6, excludeIds = [], context = {}) {
     filtered.sort((a, b) => {
       const aPin = a.is_pinned ? 55 : 0;
       const bPin = b.is_pinned ? 55 : 0;
-      const aProv = provSlug && a.provincia_slug === provSlug ? 38 : 0;
-      const bProv = provSlug && b.provincia_slug === provSlug ? 38 : 0;
+      const aProv = provSlug && a.provincia_slug === provSlug ? 45 : 0;
+      const bProv = provSlug && b.provincia_slug === provSlug ? 45 : 0;
       const aSec = secSlug && a.sector_slug === secSlug ? 28 : 0;
       const bSec = secSlug && b.sector_slug === secSlug ? 28 : 0;
       const aSel = a.is_selected ? 25 : 0;
