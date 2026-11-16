@@ -6,6 +6,7 @@
 // ============================================================================
 const pool = require('../db');
 const rr = require('./rankRentEngine');
+const imageManager = require('./imageManager');
 
 // Almacén en memoria de telemetría de lectura e impresiones (estilo SocialsForce tracker.js)
 const visitorProfiles = new Map(); // uid -> { cats: Map<string, number>, seen: Set<number>, provs: Map<string, number> }
@@ -165,7 +166,10 @@ function recordClick(uid, impId) {
 // Normaliza un post para que funcione con todas las plantillas de SocialsForce y PidePrecio.es
 function normalizePost(p) {
   if (!p) return p;
-  const img = p.featured_image || p.image || 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=900&q=80';
+  let img = p.featured_image || p.image;
+  if (!img || img === '/images/noimage.jpg') {
+    img = imageManager.getRandomFallbackImage(p.slug || p.id);
+  }
   const cat = p.sector_nombre || p.category_name || p.category || 'Presupuestos';
   return {
     ...p,
@@ -408,16 +412,18 @@ async function buildSidebarData({ provinciaSlug = null, sectorSlug = null, curre
 // Construye los datos de `home-extras.ejs` (ticker, carousel, duoPairs, spotlight, discover) estilo SocialsForce
 async function buildHomeExtrasData({ provinciaSlug = null, visitorUid = null, cookies = {} } = {}) {
   const seenSectors = resolvePreferredSectors(visitorUid, cookies);
-  const allPosts = await getForYou(visitorUid, 48, [], {
+  const rawAllPosts = await getForYou(visitorUid, 48, [], {
     provinciaSlug,
     clientCats: seenSectors,
     cookies,
   });
-  const globalPosts = await getForYou(visitorUid, 80, [], {
+  const allPosts = imageManager.diversifyArticleImages(rawAllPosts);
+  const rawGlobalPosts = await getForYou(visitorUid, 80, [], {
     provinciaSlug: null,
     clientCats: seenSectors,
     cookies,
   });
+  const globalPosts = imageManager.diversifyArticleImages(rawGlobalPosts);
   const sectors = rr.getSectors(true);
   const locations = rr.getLocations(true);
 

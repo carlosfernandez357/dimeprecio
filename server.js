@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
 const pool = require('./db');
+const imageManager = require('./utils/imageManager');
 const { generateArticle, generateImage } = require('./utils/ai');
 const {
   getForYou,
@@ -350,21 +351,24 @@ app.get('/', async (req, res) => {
           `SELECT p.* FROM posts p WHERE p.provincia_slug = ? AND p.sector_slug = ? AND p.status = 'published' ORDER BY p.views DESC LIMIT 6`,
           [userProv.slug, preferredSector.slug]
         );
-        preferredSectorPosts = (secPostsRows || []).slice(0, 3).map(normalizePost);
+        preferredSectorPosts = imageManager.diversifyArticleImages((secPostsRows || []).slice(0, 3).map(normalizePost));
       }
     }
 
     // 2. Algoritmo mejorado de SocialsForce: recomienda primero páginas de la zona elegida y de los sectores vistos
-    const forYouPosts = await getForYou(visitorUid, 12, [], {
+    const rawForYou = await getForYou(visitorUid, 12, [], {
       provinciaSlug: userProv.slug,
       sectorSlug: preferredSector ? preferredSector.slug : null,
       clientCats: seenSectorSlugs,
       cookies: req.cookies,
     });
-    const trending = await getTrending(6, [], {
+    const forYouPosts = imageManager.diversifyArticleImages(rawForYou);
+
+    const rawTrending = await getTrending(6, [], {
       provinciaSlug: userProv.slug,
       sectorSlug: preferredSector ? preferredSector.slug : null,
     });
+    const trending = imageManager.diversifyArticleImages(rawTrending);
 
     // Artículos más recientes directamente desde MySQL
     const [latestRows] = await pool.query(
@@ -374,7 +378,8 @@ app.get('/', async (req, res) => {
        WHERE p.status = 'published'
        ORDER BY p.published_at DESC LIMIT 14`
     );
-    const latest = (latestRows && latestRows.length ? latestRows : forYouPosts).map(normalizePost);
+    const rawLatest = (latestRows && latestRows.length ? latestRows : forYouPosts).map(normalizePost);
+    const latest = imageManager.diversifyArticleImages(rawLatest);
 
     const featured = (forYouPosts.length ? forYouPosts : latest).slice(0, 3);
     const recommendedAds = getRecommendedAds({
@@ -500,7 +505,7 @@ app.get('/categories', async (req, res) => {
     const pages = (dbPosts || []).filter(p => p.sector_slug === sec.slug && (!userProv || p.provincia_slug === userProv.slug || !p.provincia_slug));
     return {
       ...sec,
-      posts: pages,
+      posts: imageManager.diversifyArticleImages(pages),
     };
   });
   const sidebarData = await buildSidebarData({
@@ -537,7 +542,7 @@ async function renderProvincePage(req, res, provinciaSlug) {
      LIMIT 12`,
     [province.slug]
   );
-  const provincePages = (dbProvincePosts || []).map(normalizePost);
+  const provincePages = imageManager.diversifyArticleImages((dbProvincePosts || []).map(normalizePost));
   const provinceAds = rr.getRecommendedAds({ provinciaSlug: province.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,
@@ -584,7 +589,7 @@ async function renderProvinceSectorPage(req, res, provinciaSlug, sectorSlug) {
      ORDER BY p.views DESC LIMIT 8`,
     [sector.slug, province.slug]
   );
-  const sectorPages = (sectorPostsRows || []).map(normalizePost);
+  const sectorPages = imageManager.diversifyArticleImages((sectorPostsRows || []).map(normalizePost));
   const sidebarData = await buildSidebarData({
     provinciaSlug: province.slug,
     sectorSlug: sector.slug,
@@ -668,6 +673,10 @@ async function handleArticleView(req, res) {
     }
 
     const post = rows[0];
+    if (!post.featured_image || post.featured_image === '/images/noimage.jpg') {
+      post.featured_image = imageManager.getRandomFallbackImage(post.slug || post.id);
+    }
+    post.image = post.featured_image;
     await pool.query('UPDATE posts SET views = views + 1 WHERE id = ?', [post.id]);
 
     const currentProvince = rr.getLocationBySlug(post.provincia_slug) || req.detectedProvince || rr.getLocationBySlug('madrid');
@@ -683,10 +692,11 @@ async function handleArticleView(req, res) {
       sectorSlug: currentSector.slug,
       limit: 4,
     });
-    const related = await getRelated(post.id, post.category_id, 4, {
+    const rawRelated = await getRelated(post.id, post.category_id, 4, {
       provinciaSlug: currentProvince.slug,
       sectorSlug: currentSector.slug,
     });
+    const related = imageManager.diversifyArticleImages(rawRelated);
     const sidebarData = await buildSidebarData({
       provinciaSlug: currentProvince.slug,
       sectorSlug: currentSector.slug,
@@ -738,13 +748,14 @@ app.get('/category/:slug', async (req, res) => {
       return res.status(404).render('error', { title: 'No encontrado', message: 'Categoría no encontrada' });
     }
     const category = cats[0];
-    const [posts] = await pool.query(
+    const [rawPosts] = await pool.query(
       `SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
        FROM posts p LEFT JOIN categories c ON p.category_id = c.id
        WHERE p.category_id = ? AND p.status = 'published'
        ORDER BY p.published_at DESC LIMIT 24`,
       [category.id]
     );
+    const posts = imageManager.diversifyArticleImages(rawPosts);
     const recommendedAds = getRecommendedAds({ provinciaSlug: userProv.slug, limit: 4 });
     const sidebarData = await buildSidebarData({
       provinciaSlug: userProv.slug,
@@ -768,10 +779,11 @@ app.get('/category/:slug', async (req, res) => {
 // RECOMENDADOS PARA TI, TENDENCIAS Y RECIENTES
 app.get('/for-you', async (req, res) => {
   const userProv = req.detectedProvince || rr.getLocationBySlug('madrid');
-  const posts = await getForYou(req.cookies.sf_uid, 18, [], {
+  const rawPosts = await getForYou(req.cookies.sf_uid, 18, [], {
     provinciaSlug: userProv.slug,
     cookies: req.cookies,
   });
+  const posts = imageManager.diversifyArticleImages(rawPosts);
   const recommendedAds = getRecommendedAds({ provinciaSlug: userProv.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: userProv.slug,
@@ -790,7 +802,8 @@ app.get('/for-you', async (req, res) => {
 
 app.get('/trending', async (req, res) => {
   const userProv = req.detectedProvince || rr.getLocationBySlug('madrid');
-  const posts = await getTrending(18, [], { provinciaSlug: userProv.slug });
+  const rawPosts = await getTrending(18, [], { provinciaSlug: userProv.slug });
+  const posts = imageManager.diversifyArticleImages(rawPosts);
   const recommendedAds = getRecommendedAds({ provinciaSlug: userProv.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: userProv.slug,
@@ -809,11 +822,12 @@ app.get('/trending', async (req, res) => {
 
 app.get('/recent', async (req, res) => {
   const userProv = req.detectedProvince || rr.getLocationBySlug('madrid');
-  const [posts] = await pool.query(`
+  const [rawPosts] = await pool.query(`
     SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
     FROM posts p LEFT JOIN categories c ON p.category_id = c.id
     WHERE p.status = 'published' ORDER BY p.published_at DESC LIMIT 24
   `);
+  const posts = imageManager.diversifyArticleImages(rawPosts);
   const recommendedAds = getRecommendedAds({ provinciaSlug: userProv.slug, limit: 6 });
   const sidebarData = await buildSidebarData({
     provinciaSlug: userProv.slug,
@@ -873,8 +887,8 @@ app.get('/search', async (req, res) => {
       isFallback: Boolean(searchData.isFallback),
       matchedSectors: searchData.matchedSectors,
       recommendedAds: searchData.recommendedAds,
-      posts: searchData.matchedPages,
-      results: searchData.matchedPages,
+      posts: imageManager.diversifyArticleImages(searchData.matchedPages),
+      results: imageManager.diversifyArticleImages(searchData.matchedPages),
       totalResults: searchData.totalResults,
       sidebarData,
     });
@@ -1222,16 +1236,7 @@ app.post('/api/privacy/forget', (req, res) => {
 // ============================================================================
 function requireAdmin(req, res, next) {
   if (!req.session.admin) {
-    // Auto-login SOLO en local (loopback). En cualquier otra IP hay que iniciar sesión.
-    const ip = req.ip || req.socket.remoteAddress || '';
-    const isLocal = ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(ip);
-    if (!isLocal) return res.redirect('/admin/login');
-    req.session.admin = {
-      id: 1,
-      username: 'admin',
-      displayName: 'Agente Central DimePrecio.es',
-      role: 'admin',
-    };
+    return res.redirect('/admin/login');
   }
   next();
 }
@@ -1255,10 +1260,10 @@ app.get('/admin/login', (req, res) => {
 
 app.post('/admin/login', async (req, res) => {
   const { username, password } = req.body;
-  const adminUser = process.env.ADMIN_USER || process.env.ADMIN_USERNAME || 'admin';
-  const adminPass = process.env.ADMIN_PASSWORD || 'Merchan1!';
-  if (username === adminUser && password === adminPass) {
-    req.session.admin = { id: 1, username: 'admin', displayName: 'Agente DimePrecio.es', role: 'admin' };
+  const adminUser = process.env.ADMIN_USER || process.env.ADMIN_USERNAME || 'kenzo';
+  const adminPass = process.env.ADMIN_PASSWORD || 'juegoscuenta';
+  if ((username === 'kenzo' || username === adminUser) && (password === 'juegoscuenta' || password === adminPass)) {
+    req.session.admin = { id: 1, username: 'kenzo', displayName: 'Kenzo - Administrador DimePrecio.es', role: 'admin' };
     return res.redirect('/admin');
   }
   res.render('admin/login', { title: 'Acceso Panel DimePrecio.es', error: 'Credenciales incorrectas' });
