@@ -1,0 +1,217 @@
+<%- include("partials/header") %>
+<%- include("partials/sidebar") %>
+
+<% const s = settings || {}; %>
+
+<main class="admin-main">
+    <link rel="stylesheet" href="/css/admin.css">
+
+    <div class="admin-page-header">
+        <div>
+            <h1>⚙️ Configuración del Proveedor de IA</h1>
+            <p>Elige qué IA genera los artículos (en "Crear Artículo" y en la Programación Automática). Puedes usar tu propio webhook o pegar directamente una API key de OpenAI, Claude o Gemini.</p>
+        </div>
+    </div>
+
+    <% if (typeof saved !== "undefined" && saved) { %>
+    <div style="background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;padding:12px 16px;border-radius:8px;margin-bottom:18px;font-weight:600;">
+        ✔ Configuración guardada. A partir de ahora los artículos se generan con: <strong><%= s.provider %></strong>
+    </div>
+    <% } %>
+
+    <div class="admin-dashboard-grid">
+        <section class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h2>Proveedor activo</h2>
+                    <p>Si la IA falla o no responde, el sistema usa automáticamente el generador artesanal de respaldo.</p>
+                </div>
+            </div>
+
+            <form action="/admin/config" method="POST" id="configForm" autocomplete="off">
+                <div class="admin-form-group">
+                    <label>Proveedor de IA</label>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <% [
+                            ["webhook", "🔗 Webhook propio (n8n / API)"],
+                            ["openai", "🟢 OpenAI (ChatGPT)" + (s.hasOpenaiKey ? " ✔" : "")],
+                            ["anthropic", "🟠 Claude (Anthropic)" + (s.hasAnthropicKey ? " ✔" : "")],
+                            ["gemini", "🔵 Google Gemini" + (s.hasGeminiKey ? " ✔" : "")]
+                        ].forEach(function(p) { %>
+                        <label style="display:flex;align-items:center;gap:8px;border:1px solid #e2e8f0;border-radius:8px;padding:10px;cursor:pointer;background:#f8fafc;">
+                            <input type="radio" name="provider" value="<%= p[0] %>" <%= s.provider === p[0] ? "checked" : "" %>>
+                            <span style="font-weight:600;font-size:13.5px;"><%= p[1] %></span>
+                        </label>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <!-- WEBHOOK -->
+                <div class="provider-box" data-provider="webhook">
+                    <div class="admin-form-group">
+                        <label>URL del webhook</label>
+                        <input type="url" name="webhookUrl" value="<%= s.webhookUrl || "" %>" placeholder="https://tu-n8n.com/webhook/...">
+                        <small>Recibe POST JSON <code>{ systemPrompt, prompt }</code> y debe devolver el JSON del artículo.</small>
+                    </div>
+                </div>
+
+                <!-- OPENAI -->
+                <div class="provider-box" data-provider="openai">
+                    <div class="admin-form-group">
+                        <label>API key de OpenAI <% if (s.hasOpenaiKey) { %><span style="color:#16a34a;">(guardada: <%= s.openaiKey %>)</span><% } %></label>
+                        <input type="password" name="openaiKey" id="key-openai" placeholder="<%= s.hasOpenaiKey ? 'Déjalo vacío para mantener la actual' : 'sk-...' %>">
+                        <small>Consíguela en platform.openai.com → API keys.</small>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Modelo</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" name="openaiModel" id="model-openai" list="list-openai" value="<%= s.openaiModel %>" style="flex:1;">
+                            <button type="button" class="admin-primary-button btn-models" data-provider="openai" style="background:#0f172a;font-size:12px;padding:8px 12px;">Cargar modelos</button>
+                        </div>
+                        <datalist id="list-openai"></datalist>
+                    </div>
+                </div>
+
+                <!-- ANTHROPIC -->
+                <div class="provider-box" data-provider="anthropic">
+                    <div class="admin-form-group">
+                        <label>API key de Claude (Anthropic) <% if (s.hasAnthropicKey) { %><span style="color:#16a34a;">(guardada: <%= s.anthropicKey %>)</span><% } %></label>
+                        <input type="password" name="anthropicKey" id="key-anthropic" placeholder="<%= s.hasAnthropicKey ? 'Déjalo vacío para mantener la actual' : 'sk-ant-...' %>">
+                        <small>Consíguela en console.anthropic.com → API Keys.</small>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Modelo</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" name="anthropicModel" id="model-anthropic" list="list-anthropic" value="<%= s.anthropicModel %>" style="flex:1;">
+                            <button type="button" class="admin-primary-button btn-models" data-provider="anthropic" style="background:#0f172a;font-size:12px;padding:8px 12px;">Cargar modelos</button>
+                        </div>
+                        <datalist id="list-anthropic"></datalist>
+                    </div>
+                </div>
+
+                <!-- GEMINI -->
+                <div class="provider-box" data-provider="gemini">
+                    <div class="admin-form-group">
+                        <label>API key de Gemini <% if (s.hasGeminiKey) { %><span style="color:#16a34a;">(guardada: <%= s.geminiKey %>)</span><% } %></label>
+                        <input type="password" name="geminiKey" id="key-gemini" placeholder="<%= s.hasGeminiKey ? 'Déjalo vacío para mantener la actual' : 'AIza...' %>">
+                        <small>Consíguela en aistudio.google.com → Get API key.</small>
+                    </div>
+                    <div class="admin-form-group">
+                        <label>Modelo</label>
+                        <div style="display:flex;gap:8px;">
+                            <input type="text" name="geminiModel" id="model-gemini" list="list-gemini" value="<%= s.geminiModel %>" style="flex:1;">
+                            <button type="button" class="admin-primary-button btn-models" data-provider="gemini" style="background:#0f172a;font-size:12px;padding:8px 12px;">Cargar modelos</button>
+                        </div>
+                        <datalist id="list-gemini"></datalist>
+                    </div>
+                </div>
+
+                <div class="admin-form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                    <div>
+                        <label>Creatividad (temperature 0 - 2)</label>
+                        <input type="number" name="temperature" step="0.1" min="0" max="2" value="<%= s.temperature %>">
+                    </div>
+                    <div>
+                        <label>Máx. tokens de respuesta</label>
+                        <input type="number" name="maxTokens" step="500" min="1000" max="64000" value="<%= s.maxTokens %>">
+                    </div>
+                </div>
+
+                <button type="submit" class="admin-primary-button" style="width:100%;background:#2563eb;">💾 Guardar configuración</button>
+            </form>
+        </section>
+
+        <section class="admin-card">
+            <div class="admin-card-header">
+                <div>
+                    <h2>🧪 Probar conexión</h2>
+                    <p>Genera un artículo de prueba con el proveedor <strong>guardado</strong> (no se publica nada). Guarda primero si has cambiado algo.</p>
+                </div>
+            </div>
+
+            <div class="admin-form-group">
+                <label>Búsqueda de prueba</label>
+                <input type="text" id="testPrompt" value="cuanto cuesta un fontanero en madrid">
+            </div>
+            <button type="button" id="btnTest" class="admin-primary-button" style="width:100%;background:#10b981;">⚡ Generar artículo de prueba</button>
+            <div id="testResult" class="admin-ai-status" style="margin-top:12px;white-space:pre-wrap;">Esperando...</div>
+
+            <div style="margin-top:20px;font-size:12.5px;color:#64748b;line-height:1.6;">
+                <strong>Notas:</strong><br>
+                • Las keys se guardan en la base de datos (tabla <code>app_settings</code>) y nunca se muestran completas en el panel.<br>
+                • Para borrar una key guardada escribe <code>__clear__</code> en su campo y guarda.<br>
+                • En modo API directa la imagen del artículo se asigna desde el catálogo verificado de cada sector.
+            </div>
+        </section>
+    </div>
+</main>
+
+<script>
+(function () {
+    const radios = document.querySelectorAll('input[name="provider"]');
+    const boxes = document.querySelectorAll(".provider-box");
+    function refresh() {
+        const sel = document.querySelector('input[name="provider"]:checked');
+        const value = sel ? sel.value : "webhook";
+        boxes.forEach(b => { b.style.display = b.dataset.provider === value ? "block" : "none"; });
+    }
+    radios.forEach(r => r.addEventListener("change", refresh));
+    refresh();
+
+    document.querySelectorAll(".btn-models").forEach(btn => {
+        btn.addEventListener("click", async () => {
+            const provider = btn.dataset.provider;
+            const key = document.getElementById("key-" + provider).value;
+            const original = btn.textContent;
+            btn.disabled = true; btn.textContent = "Cargando...";
+            try {
+                const res = await fetch("/admin/config/models", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ provider, key })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                const list = document.getElementById("list-" + provider);
+                list.innerHTML = data.models.map(m => `<option value="${m}"></option>`).join("");
+                btn.textContent = `✔ ${data.models.length} modelos`;
+                document.getElementById("model-" + provider).focus();
+            } catch (err) {
+                alert("No se pudieron cargar los modelos: " + err.message);
+                btn.textContent = original;
+            } finally {
+                btn.disabled = false;
+            }
+        });
+    });
+
+    const btnTest = document.getElementById("btnTest");
+    const out = document.getElementById("testResult");
+    btnTest.addEventListener("click", async () => {
+        btnTest.disabled = true;
+        out.textContent = "⏳ Generando artículo de prueba (puede tardar 20-90 segundos)...";
+        try {
+            const res = await fetch("/admin/config/test", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt: document.getElementById("testPrompt").value })
+            });
+            const data = await res.json();
+            if (!data.success) throw new Error(data.error + " (" + data.seconds + "s)");
+            out.textContent =
+                "✔ Funciona con " + data.provider + " en " + data.seconds + "s\n\n" +
+                "Título: " + data.title + "\n" +
+                "Slug: " + data.slug + "\n" +
+                "Categoría: " + data.category + "\n" +
+                "Extracto: " + data.excerpt + "\n" +
+                "HTML generado: " + data.contentLength + " caracteres";
+        } catch (err) {
+            out.textContent = "✖ Error: " + err.message;
+        } finally {
+            btnTest.disabled = false;
+        }
+    });
+})();
+</script>
+
+<%- include("partials/footer") %>

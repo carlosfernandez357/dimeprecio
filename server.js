@@ -1678,6 +1678,68 @@ app.post('/admin/schedules/:id/toggle', requireAdmin, async (req, res) => {
   res.redirect('/admin/schedules');
 });
 
+// ============================================================================
+// CONFIGURACIÓN DEL PROVEEDOR DE IA (Webhook propio / OpenAI / Claude / Gemini)
+// ============================================================================
+app.get('/admin/config', requireAdmin, async (req, res) => {
+  const aiSettings = require('./utils/aiSettings');
+  const settings = await aiSettings.getPublicSettings();
+  res.render('admin/config', { title: 'Configuración IA — DimePrecio.es', settings, saved: req.query.saved === '1' });
+});
+
+app.post('/admin/config', requireAdmin, async (req, res) => {
+  try {
+    const aiSettings = require('./utils/aiSettings');
+    await aiSettings.saveSettings(req.body || {});
+    res.redirect('/admin/config?saved=1');
+  } catch (err) {
+    console.error('[Config Save Error]', err);
+    res.redirect('/admin/config');
+  }
+});
+
+// Lista los modelos disponibles con la key guardada (o la que se está escribiendo)
+app.post('/admin/config/models', requireAdmin, async (req, res) => {
+  try {
+    const aiSettings = require('./utils/aiSettings');
+    const { listModels } = require('./utils/ai');
+    const provider = req.body.provider;
+    const cfg = { ...(await aiSettings.getSettings()) };
+    const typedKey = (req.body.key || '').trim();
+    if (typedKey && !typedKey.includes('•')) {
+      if (provider === 'openai') cfg.openaiKey = typedKey;
+      if (provider === 'anthropic') cfg.anthropicKey = typedKey;
+      if (provider === 'gemini') cfg.geminiKey = typedKey;
+    }
+    const models = await listModels(provider, cfg);
+    res.json({ success: true, models });
+  } catch (err) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// Genera un artículo de prueba con el proveedor guardado (no se publica)
+app.post('/admin/config/test', requireAdmin, async (req, res) => {
+  const started = Date.now();
+  try {
+    const aiSettings = require('./utils/aiSettings');
+    const cfg = await aiSettings.getSettings();
+    const article = await generateArticle(req.body.prompt || 'cuanto cuesta un fontanero en madrid');
+    res.json({
+      success: true,
+      provider: cfg.provider,
+      seconds: Math.round((Date.now() - started) / 1000),
+      title: article.title,
+      slug: article.slug,
+      excerpt: article.excerpt,
+      category: article.category,
+      contentLength: (article.content || '').length,
+    });
+  } catch (err) {
+    res.status(400).json({ success: false, seconds: Math.round((Date.now() - started) / 1000), error: err.message });
+  }
+});
+
 app.get('/admin/categories', requireAdmin, async (req, res) => {
   const [cats] = await pool.query('SELECT * FROM categories ORDER BY name');
   res.render('admin/categories', { title: 'Categorías — DimePrecio.es', categories: cats });
