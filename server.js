@@ -1446,8 +1446,41 @@ async function handleAiCreateArticle(req, res) {
     const promptText = req.body.prompt || req.body.topic || '';
     if (!promptText) return res.status(400).json({ success: false, error: 'El tema o prompt es obligatorio' });
 
-    const article = await generateArticle(promptText, req.body.category || 'Presupuestos DimePrecio.es', 'profesional', 'es');
-    const imageUrl = article.image_prompt ? await generateImage(article.image_prompt) : 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80';
+    const trendsEngine = require('./utils/trendsEngine');
+    const sectorSlug = req.body.sector_slug || 'reformas-integrales';
+    const provinciaSlug = req.body.provincia_slug || 'madrid';
+    const categoryName = req.body.category || 'Reformas y Obras';
+
+    let article;
+    let imageUrl;
+
+    try {
+      article = await generateArticle(promptText, categoryName, 'profesional', 'es');
+      imageUrl = article.image_prompt ? await generateImage(article.image_prompt) : (trendsEngine.SECTOR_VERIFIED_IMAGES[sectorSlug] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80');
+    } catch (aiErr) {
+      console.warn('[AI External Webhook Failed, using Artisan Trends Generator fallback]:', aiErr.message);
+      const loc = rr.getLocationBySlug(provinciaSlug) || { nombre: provinciaSlug.charAt(0).toUpperCase() + provinciaSlug.slice(1) };
+      const sec = rr.getSectorBySlug(sectorSlug) || { nombre: categoryName };
+
+      const artisan = trendsEngine.buildArtisanArticleForTrend({
+        trendQuery: promptText,
+        sectorSlug,
+        provinciaSlug,
+        sectorNombre: sec.nombre,
+        provinciaNombre: loc.nombre
+      });
+
+      article = {
+        title: artisan.title,
+        slug: artisan.slug,
+        excerpt: artisan.excerpt,
+        content: artisan.content,
+        category: sec.nombre,
+        keywords: artisan.keywords,
+        image: artisan.featured_image
+      };
+      imageUrl = artisan.featured_image;
+    }
 
     res.json({
       ok: true,
@@ -1455,9 +1488,9 @@ async function handleAiCreateArticle(req, res) {
       article,
       imageUrl,
       title: article.title,
-      slug: rr.slugify(article.title),
+      slug: article.slug || rr.slugify(article.title),
       excerpt: article.excerpt,
-      category: req.body.category || 'Reformas y Construcción',
+      category: article.category || categoryName,
       image: imageUrl,
       tags: (article.keywords || '').split(',').map(k => k.trim()).filter(Boolean),
       content: article.content,
@@ -1470,6 +1503,23 @@ async function handleAiCreateArticle(req, res) {
 
 app.post('/createArticle', requireAdmin, handleAiCreateArticle);
 app.post('/api/ai/generate', requireAdmin, handleAiCreateArticle);
+
+// Endpoint de búsqueda de sugerencias y tendencias en Google en tiempo real
+app.get('/api/trends/suggestions', requireAdmin, async (req, res) => {
+  try {
+    const trendsEngine = require('./utils/trendsEngine');
+    const { query, location, deep } = req.query;
+    if (!query) return res.status(400).json({ success: false, error: 'El parámetro query es obligatorio' });
+    const data = await trendsEngine.getGoogleSuggestions(query, location || 'madrid', {
+      deep: deep === 'true' || deep === '1',
+      max: 20
+    });
+    res.json({ success: true, ...data });
+  } catch (err) {
+    console.error('[API Trends Error]', err);
+    res.status(500).json({ success: false, error: 'Error consultando tendencias: ' + err.message });
+  }
+});
 
 async function handleSaveAdminArticle(req, res) {
   try {
@@ -1564,25 +1614,56 @@ app.post('/admin/delete-article/:id', requireAdmin, async (req, res) => {
 
 app.get('/admin/schedules', requireAdmin, async (req, res) => {
   const [schedules] = await pool.query('SELECT * FROM schedules ORDER BY created_at DESC');
-  res.render('admin/schedules', { title: 'Programación Automática IA — DimePrecio.es', schedules });
+  res.render('admin/schedules', {
+    title: 'Programación Automática IA y Tendencias — DimePrecio.es',
+    schedules,
+    allLocations: rr.getLocations(false),
+    allSectors: rr.getSectors(false)
+  });
 });
 
 app.post('/admin/schedules', requireAdmin, async (req, res) => {
-  const { topic, category_id, frequency, cron_time, auto_publish } = req.body;
-  const cronMap = {
-    hourly: '0 * * * *',
-    every_6h: '0 */6 * * *',
-    daily: `0 ${(cron_time || '09:00').split(':')[0]} * * *`,
-    weekly: `0 ${(cron_time || '09:00').split(':')[0]} * * 1`,
-  };
-  const cronExpr = cronMap[frequency] || '0 9 * * *';
+  try {
+    const { topic, category_id, provincia_slug, sector_slug, frequency, cron_time, auto_publish, use_trends } = req.body;
+    const cronMap = {
+      hourly: '0 * * * *',
+      every_6h: '0 */6 * * *',
+      daily: `0 ${(cron_time || '09:00').split(':')[0]} * * *`,
+      weekly: `0 ${(cron_time || '09:00').split(':')[0]} * * 1`,
+    };
+    const cronExpr = cronMap[frequency] || '0 9 * * *';
 
-  await pool.query(
-    'INSERT INTO schedules (topic, category_id, frequency, cron_expr, auto_publish, is_active) VALUES (?, ?, ?, ?, ?, 1)',
-    [topic, category_id || 1, frequency, cronExpr, auto_publish ? 1 : 0]
-  );
-  setupCronJobs();
-  res.redirect('/admin/schedules');
+    await pool.query(
+      'INSERT INTO schedules (topic, category_id, provincia_slug, sector_slug, frequency, cron_expr, auto_publish, use_trends, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)',
+      [
+        topic || (sector_slug ? sector_slug.replace(/-/g, ' ') : 'Servicios generales'),
+        category_id || 1,
+        provincia_slug || 'madrid',
+        sector_slug || 'reformas-integrales',
+        frequency || 'daily',
+        cronExpr,
+        auto_publish ? 1 : 0,
+        use_trends ? 1 : 0
+      ]
+    );
+    setupCronJobs();
+    res.redirect('/admin/schedules');
+  } catch (err) {
+    console.error('[Create Schedule Error]', err);
+    res.redirect('/admin/schedules');
+  }
+});
+
+app.post('/admin/schedules/:id/run', requireAdmin, async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM schedules WHERE id = ?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Programación no encontrada' });
+    const result = await executeScheduleJob(rows[0]);
+    res.json({ success: true, ...result });
+  } catch (err) {
+    console.error('[Run Schedule Error]', err);
+    res.status(500).json({ success: false, error: err.message });
+  }
 });
 
 app.post('/admin/schedules/:id/delete', requireAdmin, async (req, res) => {
@@ -1616,9 +1697,67 @@ app.get('/:provinciaSlug/:sectorSlug', async (req, res, next) => {
 });
 
 // ============================================================================
-// CRON JOBS PARA CREACIÓN AUTOMÁTICA DE PÁGINAS CON IA (COMO EN SOCIALSFORCE)
+// CRON JOBS PARA CREACIÓN AUTOMÁTICA DE PÁGINAS BASADAS EN TENDENCIAS DE GOOGLE
 // ============================================================================
 let activeCronJobs = [];
+
+async function executeScheduleJob(sched) {
+  const trendsEngine = require('./utils/trendsEngine');
+  const sectorSlug = sched.sector_slug || 'fontaneria-desatascos';
+  const provinciaSlug = sched.provincia_slug || 'madrid';
+
+  let targetQuery = sched.topic;
+  if (sched.use_trends !== 0 || !targetQuery) {
+    const trendData = await trendsEngine.getTrendingTopicForSchedule({
+      sectorSlug,
+      provinciaSlug,
+      fallbackTopic: targetQuery
+    });
+    targetQuery = trendData.chosenQuery;
+  }
+
+  const sector = rr.getSectorBySlug(sectorSlug) || { nombre: sectorSlug.replace(/-/g, ' ') };
+  const loc = rr.getLocationBySlug(provinciaSlug) || { nombre: provinciaSlug.charAt(0).toUpperCase() + provinciaSlug.slice(1) };
+
+  let article;
+  try {
+    article = await generateArticle(targetQuery, sector.nombre);
+  } catch (e) {
+    article = trendsEngine.buildArtisanArticleForTrend({
+      trendQuery: targetQuery,
+      sectorSlug,
+      provinciaSlug,
+      sectorNombre: sector.nombre,
+      provinciaNombre: loc.nombre
+    });
+  }
+
+  const slug = article.slug || rr.slugify(article.title) + '-' + Date.now().toString(36);
+  const status = sched.auto_publish ? 'published' : 'draft';
+  const image = article.featured_image || article.image || trendsEngine.SECTOR_VERIFIED_IMAGES[sectorSlug] || 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=900&q=80';
+
+  const [ins] = await pool.query(
+    `INSERT INTO posts (title, slug, excerpt, content, featured_image, image_alt, category_id, author_id, status, is_featured, is_breaking, is_selected, priority_weight, meta_title, meta_description, keywords, provincia_slug, provincia_nombre, sector_slug, sector_nombre, published_at, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 1, 0, 1, 9, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW(), NOW())`,
+    [
+      article.title, slug, article.excerpt, article.content, image, article.image_alt || article.title,
+      sched.category_id || 1, status, article.meta_title || article.title, article.meta_description || article.excerpt,
+      article.keywords || (Array.isArray(article.tags) ? article.tags.join(', ') : ''),
+      provinciaSlug, loc.nombre, sectorSlug, sector.nombre
+    ]
+  );
+
+  await pool.query('UPDATE schedules SET last_run = NOW() WHERE id = ?', [sched.id]);
+  console.log(`[Cron Schedule #${sched.id}] Publicado nuevo artículo desde Google Trends: "${article.title}"`);
+  return {
+    articleId: ins.insertId,
+    title: article.title,
+    slug,
+    url: `/article/${slug}`,
+    trendQuery: targetQuery,
+    status
+  };
+}
 
 async function setupCronJobs() {
   activeCronJobs.forEach(j => clearInterval(j));
@@ -1627,25 +1766,14 @@ async function setupCronJobs() {
     const [schedules] = await pool.query('SELECT * FROM schedules WHERE is_active = 1');
     for (const sched of schedules) {
       const intervalMs = sched.frequency === 'hourly' ? 3600000 : sched.frequency === 'every_6h' ? 21600000 : 86400000;
-      const timer = setInterval(async () => {
-        try {
-          const article = await generateArticle(sched.topic, 'Presupuestos DimePrecio.es');
-          const imageUrl = article.image_prompt ? await generateImage(article.image_prompt) : null;
-          const slug = rr.slugify(article.title) + '-' + Date.now().toString(36);
-          const status = sched.auto_publish ? 'published' : 'draft';
-          await pool.query(
-            `INSERT INTO posts (title, slug, excerpt, content, featured_image, image_alt, category_id, author_id, status, meta_title, meta_description, keywords, published_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?, ?, ?, NOW())`,
-            [article.title, slug, article.excerpt, article.content, imageUrl, article.image_alt || article.title, sched.category_id, status, article.meta_title, article.meta_description, article.keywords]
-          );
-          await pool.query('UPDATE schedules SET last_run = NOW() WHERE id = ?', [sched.id]);
-        } catch (err) {
-          console.error('[Cron] Error:', err.message);
-        }
+      const timer = setInterval(() => {
+        executeScheduleJob(sched).catch(err => console.error('[Cron Runner Error]', err.message));
       }, intervalMs);
       activeCronJobs.push(timer);
     }
-  } catch (err) {}
+  } catch (err) {
+    console.error('[setupCronJobs Error]', err.message);
+  }
 }
 
 // 404 Handler

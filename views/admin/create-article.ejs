@@ -12,7 +12,55 @@
     <script src="https://cdn.tiny.cloud/1/no-api-key/tinymce/6/tinymce.min.js"></script>
     <div class="admin-create-layout">
 
-        <div class="admin-card">
+        <div class="admin-card" style="border: 2px solid #2563eb; background: #ffffff;">
+
+            <div class="admin-card-header" style="background:#eff6ff; margin:-20px -20px 16px -20px; padding:16px 20px; border-bottom:1px solid #bfdbfe; border-radius:8px 8px 0 0;">
+                <h2 style="color:#1d4ed8; font-size:17px; margin:0; display:flex; align-items:center; gap:8px;">
+                    🔥 Tendencias en Tiempo Real de Google (SEO / AEO)
+                </h2>
+                <p style="margin:4px 0 0; font-size:12.5px; color:#475569;">
+                    Descubre las búsquedas y preguntas exactas que la gente hace ahora mismo en Google España. Pulsa cualquier sugerencia para auto-rellenar y optimizar tu artículo.
+                </p>
+            </div>
+
+            <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:15px;">
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-bottom:8px;">
+                    <div>
+                        <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Servicio a consultar</label>
+                        <input type="text" id="trendKeywordInput" placeholder="Ej: fontanero, reformas, aire acondicionado..." style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+                    </div>
+                    <div>
+                        <label style="font-size:11.5px; font-weight:700; color:#475569; display:block; margin-bottom:4px;">Provincia de búsqueda</label>
+                        <select id="trendLocationInput" style="width:100%; padding:8px 10px; border:1px solid #cbd5e1; border-radius:6px; font-size:13px;">
+                            <% (allLocations || []).forEach(function(loc) { %>
+                                <option value="<%= loc.slug %>" <%= loc.slug === 'madrid' ? 'selected' : '' %>><%= loc.nombre %></option>
+                            <% }) %>
+                        </select>
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                    <button type="button" id="btnExploreTrends" class="admin-primary-button" style="background:#2563eb; font-size:13px; padding:8px 14px; flex:1;">
+                        🔍 Explorar Búsquedas Reales
+                    </button>
+                    <button type="button" id="btnExploreDeep" class="admin-primary-button" style="background:#0f172a; font-size:13px; padding:8px 14px;">
+                        ⚡ Modo Profundo (A-Z)
+                    </button>
+                </div>
+            </div>
+
+            <div id="trendsBox" style="display:none; margin-bottom:16px;">
+                <div style="margin-bottom:12px;">
+                    <span style="font-size:12px; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">💰 Búsquedas con Mayor Intención de Compra y Tarifas:</span>
+                    <div id="priceQueriesList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                </div>
+
+                <div>
+                    <span style="font-size:12px; font-weight:700; color:#1e293b; display:block; margin-bottom:6px;">❓ Preguntas Frecuentes de Usuarios (AEO para IA):</span>
+                    <div id="questionQueriesList" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                </div>
+            </div>
+
+            <hr style="border:none; border-top:1px solid #e2e8f0; margin:15px 0;">
 
             <div class="admin-card-header">
                 <h2>AI Generator</h2>
@@ -28,8 +76,9 @@
                 <button
                     type="submit"
                     class="admin-primary-button"
+                    style="background:#10b981;"
                 >
-                    Generate Article
+                    ✨ Generar Artículo Completo con IA y Tendencias
                 </button>
 
             </form>
@@ -193,6 +242,104 @@
 </main>
 
 <script>
+// Manejo de Tendencias de Google en Vivo
+(function() {
+    const kwInput = document.getElementById("trendKeywordInput");
+    const locInput = document.getElementById("trendLocationInput");
+    const sectorSelect = document.getElementById("sector_slug");
+    const provSelect = document.getElementById("provincia_slug");
+    const btnExplore = document.getElementById("btnExploreTrends");
+    const btnDeep = document.getElementById("btnExploreDeep");
+    const box = document.getElementById("trendsBox");
+    const priceList = document.getElementById("priceQueriesList");
+    const questionList = document.getElementById("questionQueriesList");
+
+    // Sincronizar selección de provincia y sector
+    if (sectorSelect && kwInput) {
+        kwInput.value = sectorSelect.options[sectorSelect.selectedIndex]?.text?.split(" ")[0]?.toLowerCase() || "reformas";
+        sectorSelect.addEventListener("change", function() {
+            kwInput.value = this.options[this.selectedIndex]?.text?.split(" ")[0]?.toLowerCase() || "";
+        });
+    }
+
+    if (provSelect && locInput) {
+        locInput.value = provSelect.value;
+        provSelect.addEventListener("change", function() {
+            locInput.value = this.value;
+        });
+        locInput.addEventListener("change", function() {
+            provSelect.value = this.value;
+        });
+    }
+
+    async function loadTrends(isDeep = false) {
+        const query = kwInput.value.trim() || "reformas";
+        const location = locInput.value || "madrid";
+
+        const originalBtnText = isDeep ? btnDeep.textContent : btnExplore.textContent;
+        if (isDeep) { btnDeep.textContent = "Buscando..."; btnDeep.disabled = true; }
+        else { btnExplore.textContent = "Buscando..."; btnExplore.disabled = true; }
+
+        try {
+            const url = `/api/trends/suggestions?query=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}${isDeep ? '&deep=1' : ''}`;
+            const res = await fetch(url);
+            const data = await res.json();
+
+            if (!data.success) throw new Error(data.error || "No se pudieron obtener tendencias");
+
+            priceList.innerHTML = "";
+            questionList.innerHTML = "";
+
+            const prices = data.priceQueries && data.priceQueries.length ? data.priceQueries : (data.suggestions || []).slice(0, 6);
+            const questions = data.questions && data.questions.length ? data.questions : (data.suggestions || []).slice(6, 12);
+
+            function createChip(text, isPrice = true) {
+                const badge = document.createElement("button");
+                badge.type = "button";
+                badge.style.cssText = `background:${isPrice ? '#ecfdf5' : '#eff6ff'}; color:${isPrice ? '#065f46' : '#1e40af'}; border:1px solid ${isPrice ? '#a7f3d0' : '#bfdbfe'}; padding:5px 10px; border-radius:20px; font-size:12px; cursor:pointer; font-weight:600; text-align:left; transition:all 0.15s ease;`;
+                badge.innerHTML = (isPrice ? "💵 " : "❓ ") + text;
+                badge.title = "Haz clic para rellenar el artículo con esta búsqueda exacta";
+                badge.addEventListener("mouseenter", () => badge.style.transform = "scale(1.02)");
+                badge.addEventListener("mouseleave", () => badge.style.transform = "scale(1)");
+                badge.addEventListener("click", () => {
+                    document.getElementById("aiPrompt").value = text;
+                    const cap = text.charAt(0).toUpperCase() + text.slice(1);
+                    document.getElementById("title").value = `${cap}: Precios y Guía (2026)`;
+                    document.getElementById("slug").value = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-2026";
+                    
+                    const tagsField = document.getElementById("tags");
+                    const currentTags = tagsField.value ? tagsField.value.split(",").map(t => t.trim()) : [];
+                    if (!currentTags.includes(text)) currentTags.push(text);
+                    tagsField.value = currentTags.join(", ");
+
+                    // Feedback visual
+                    const promptArea = document.getElementById("aiPrompt");
+                    promptArea.style.border = "2px solid #10b981";
+                    setTimeout(() => promptArea.style.border = "", 1400);
+                });
+                return badge;
+            }
+
+            prices.forEach(p => priceList.appendChild(createChip(p, true)));
+            questions.forEach(q => questionList.appendChild(createChip(q, false)));
+
+            if (prices.length === 0 && questions.length === 0) {
+                priceList.innerHTML = `<span style="font-size:12px; color:#64748b;">No se encontraron sugerencias directas para "${query}". Prueba con otra palabra clave.</span>`;
+            }
+
+            box.style.display = "block";
+        } catch (err) {
+            alert("Error buscando tendencias: " + err.message);
+        } finally {
+            if (isDeep) { btnDeep.textContent = originalBtnText; btnDeep.disabled = false; }
+            else { btnExplore.textContent = originalBtnText; btnExplore.disabled = false; }
+        }
+    }
+
+    if (btnExplore) btnExplore.addEventListener("click", () => loadTrends(false));
+    if (btnDeep) btnDeep.addEventListener("click", () => loadTrends(true));
+})();
+
 document.getElementById("aiForm").addEventListener("submit", async e => {
     e.preventDefault();
 
@@ -207,26 +354,28 @@ document.getElementById("aiForm").addEventListener("submit", async e => {
     }
 
     status.textContent = "";
-    log("Starting article generation...");
-    log(`Prompt length: ${prompt.length} characters`);
+    log("Iniciando generación de artículo optimizado para SEO / AEO...");
+    log(`Tema / Búsqueda: "${prompt}"`);
 
     button.disabled = true;
-    button.textContent = "Generating...";
+    button.textContent = "Generando artículo...";
 
     try {
-        log("Sending request to /createArticle...");
+        log("Enviando solicitud al motor generador...");
         const response = await fetch("/createArticle", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
                 prompt,
-                category: document.getElementById("category").value
+                category: document.getElementById("category").value,
+                provincia_slug: document.getElementById("provincia_slug").value,
+                sector_slug: document.getElementById("sector_slug").value
             })
         });
 
-        log(`Response received: HTTP ${response.status}`);
+        log(`Respuesta recibida: HTTP ${response.status}`);
         if (!response.ok) {
-            throw new Error(`Server returned HTTP ${response.status}`);
+            throw new Error(`El servidor devolvió HTTP ${response.status}`);
         }
 
         const article = await response.json();
@@ -234,7 +383,7 @@ document.getElementById("aiForm").addEventListener("submit", async e => {
             throw new Error(article.error || "No se pudo generar el artículo");
         }
 
-        log("Article generated successfully.");
+        log("¡Artículo generado y optimizado con éxito!");
         document.getElementById("title").value = article.title || "";
         document.getElementById("slug").value = article.slug || "";
         document.getElementById("excerpt").value = article.excerpt || "";
@@ -249,12 +398,12 @@ document.getElementById("aiForm").addEventListener("submit", async e => {
             document.getElementById("content").value = article.content || "";
         }
 
-        log("Form updated successfully. Done.");
+        log("Formulario completado. Puedes revisar y pulsar 'Publish Article'.");
     } catch (err) {
         log(`ERROR: ${err.message}`);
     } finally {
         button.disabled = false;
-        button.textContent = "Generate Article";
+        button.textContent = "✨ Generar Artículo Completo con IA y Tendencias";
     }
 });
 
