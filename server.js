@@ -1492,7 +1492,11 @@ async function handleAiCreateArticle(req, res) {
       excerpt: article.excerpt,
       category: article.category || categoryName,
       image: imageUrl,
-      tags: (article.keywords || '').split(',').map(k => k.trim()).filter(Boolean),
+      tags: Array.isArray(article.tags) ? article.tags : (article.keywords || '').split(',').map(k => k.trim()).filter(Boolean),
+      topics: article.topics || [],
+      topicsString: article.topicsString || (Array.isArray(article.topics) ? article.topics.map(t => typeof t === 'object' ? `${t.name}:${t.weight}` : t).join(', ') : ''),
+      evergreen: article.evergreen || 9,
+      depth: article.depth || 9,
       content: article.content,
     });
   } catch (err) {
@@ -1561,6 +1565,16 @@ async function handleSaveAdminArticle(req, res) {
         priority_weight: priority_weight || 9,
         provincia_slug: provincia_slug || 'madrid',
         sector_slug: sector_slug || 'reformas-integrales',
+      });
+      const ai = require('./utils/ai');
+      await ai.savePostExtras(ins.insertId, {
+        evergreen: req.body.evergreen,
+        depth: req.body.depth,
+        provincia_slug: provincia_slug || 'madrid',
+        sector_slug: sector_slug || 'reformas-integrales',
+        topics: req.body.topics,
+        tags: keywords || tags || '',
+        content: content || ''
       });
     }
 

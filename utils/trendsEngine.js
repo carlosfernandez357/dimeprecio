@@ -166,7 +166,7 @@ function buildArtisanArticleForTrend({ trendQuery, sectorSlug = 'reformas-integr
   const content = `
 <div style="background:#f8fafc;border-left:4px solid #10b981;padding:18px 22px;margin:20px 0;border-radius:8px;">
   <p style="margin:0;font-size:15.5px;line-height:1.6;color:#1e293b;">
-    <strong>Resumen AEO de DimePrecio.es:</strong> Al buscar <em>"${trendQuery}"</em> en <strong>${provinciaNombre}</strong>, los presupuestos medios de profesionales verificados oscilan entre tarifas estándar y servicios de urgencia según la magnitud del trabajo y las características del inmueble. En DimePrecio.es auditamos precios oficiales de mano de obra y materiales para garantizar presupuestos transparentes sin sobrecostes ocultos en la Comunidad de ${provinciaNombre}.
+    <strong>Resumen de precios y tarifas en DimePrecio.es:</strong> Al buscar <em>"${trendQuery}"</em> en <strong>${provinciaNombre}</strong>, los presupuestos medios de profesionales verificados oscilan entre tarifas estándar y servicios de urgencia según la magnitud del trabajo y las características del inmueble. En DimePrecio.es auditamos precios oficiales de mano de obra y materiales para garantizar presupuestos transparentes sin sobrecostes ocultos en la Comunidad de ${provinciaNombre}.
   </p>
 </div>
 

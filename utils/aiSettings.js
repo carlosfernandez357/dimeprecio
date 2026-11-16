@@ -15,7 +15,7 @@ const DEFAULTS = {
     geminiKey: process.env.GEMINI_API_KEY || "",
     geminiModel: "gemini-2.5-flash",
     temperature: 0.7,
-    maxTokens: 8000
+    maxTokens: 12000
 };
 
 const KEY_FIELDS = ["openaiKey", "anthropicKey", "geminiKey"];

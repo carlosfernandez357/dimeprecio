@@ -389,7 +389,17 @@ document.getElementById("aiForm").addEventListener("submit", async e => {
         document.getElementById("excerpt").value = article.excerpt || "";
         document.getElementById("category").value = article.category || document.getElementById("category").value;
         document.getElementById("image").value = article.image || "";
-        document.getElementById("tags").value = Array.isArray(article.tags) ? article.tags.join(", ") : "";
+        document.getElementById("tags").value = Array.isArray(article.tags) ? article.tags.join(", ") : (article.tags || "");
+        
+        if (document.getElementById("topics")) {
+            document.getElementById("topics").value = article.topicsString || (Array.isArray(article.topics) ? article.topics.map(t => typeof t === 'object' ? `${t.name}:${t.weight}` : t).join(", ") : "");
+        }
+        if (document.getElementById("evergreen") && article.evergreen) {
+            document.getElementById("evergreen").value = article.evergreen;
+        }
+        if (document.getElementById("depth") && article.depth) {
+            document.getElementById("depth").value = article.depth;
+        }
 
         const editor = tinymce.get("content");
         if (editor) {

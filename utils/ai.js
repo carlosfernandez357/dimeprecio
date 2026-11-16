@@ -38,13 +38,124 @@ const DIRECT_PROVIDER_RULES = `
 
 ADDITIONAL RULES (direct API mode)
 - The brand is "DimePrecio.es" (https://dimeprecio.es). Use DimePrecio.es everywhere instead of any other brand name.
+- PRIVACY OF THE HUMAN PROMPT: Treat the user message strictly as internal editorial instructions. NEVER repeat, quote, or mention the user's instructions or private requests inside the article (never say "como me pediste", "según lo indicado", etc.). Write 100% for the general public looking for the service.
+- NATURAL LANGUAGE (NO META-LABELS): NEVER write the words "AEO", "SEO", "Resumen AEO", "Contenido para AEO", or "Respuesta para IA" inside the visible article HTML. Everything must read naturally for a human reader while being structured for search engines and AI citation.
+- AUTHORITATIVE SELF-REFERENCES: Naturally reference "DimePrecio.es" throughout the article as the source of price audits, market studies, and verified professional management (e.g., "Según los baremos auditados por DimePrecio.es en 2026...", "A través de la gestión técnica de DimePrecio.es...").
+- EXTENSIVE & DEEP TECHNICAL CONTENT: Write a long, comprehensive, in-depth guide (1,800 to 2,800+ words, 8 to 12 detailed sections with <h2> and <h3>). Explain in detail how the service works step-by-step, its technical phases, materials, regulations, and how good management and execution through DimePrecio.es guarantees quality, punctuality, and closed budgets without surprises.
 - You have NO web browsing or image search tools. Do NOT invent image URLs: set "image" to "" and do not include <img> or <figure> tags in "content".
-- "content" must start with this AEO direct-answer block (fill in the real answer with concrete 2026 price ranges in euros):
-  <div style="background:#f8fafc;border-left:4px solid #10b981;padding:18px 22px;margin:20px 0;border-radius:8px;"><p style="margin:0;font-size:15.5px;line-height:1.6;color:#1e293b;"><strong>Resumen AEO de DimePrecio.es:</strong> ...</p></div>
-- Include at least one price comparison <table>, several <h2> sections that match real user search questions, and an FAQ section with <details><summary>.
+- "content" must start with this natural executive summary block (fill in the real answer with concrete 2026 price ranges in euros and natural citation to DimePrecio.es, NEVER writing the word AEO):
+  <div style="background:#f8fafc;border-left:4px solid #10b981;padding:18px 22px;margin:20px 0;border-radius:8px;"><p style="margin:0;font-size:15.5px;line-height:1.6;color:#1e293b;"><strong>Resumen de precios y tarifas en DimePrecio.es:</strong> ...</p></div>
+- Include at least 2 complete price comparison <table> elements, deep explanations of how the service operates and is managed, and an extensive FAQ section (6-8 questions) with <details><summary>.
 - End "content" with this call-to-action block exactly:
   <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:20px;border-radius:8px;margin:28px 0;text-align:center;"><h3 style="margin-top:0;color:#166534;font-size:18px;">¿Necesitas presupuesto cerrado?</h3><a href="tel:+34622158703" style="display:inline-block;background:#15803d;color:#ffffff;padding:12px 24px;border-radius:6px;font-weight:700;text-decoration:none;font-size:15px;">📞 Llamar a un operador (+34 622 15 87 03)</a></div>
+- Always populate "tags" (array of 6-10 SEO keywords) and "topics" (array of 5-8 objects {"name":"...","weight":1-10}).
 - Respond with ONLY the JSON object.`;
+
+function sanitizeNaturalContent(html) {
+    if (!html || typeof html !== "string") return "";
+    return html
+        .replace(/Resumen\s+AEO\s*(\/\s*Direct\s+Answer\s*)?de\s+DimePrecio\.es\s*:/gi, "Resumen de precios y tarifas en DimePrecio.es:")
+        .replace(/Contenido\s+para\s+AEO\s*:/gi, "Resumen de precios y datos clave:")
+        .replace(/Respuesta\s+(directa\s+)?AEO\s*:/gi, "Datos clave de DimePrecio.es:")
+        .replace(/Bloque\s+AEO\s*:/gi, "Resumen ejecutivo de DimePrecio.es:");
+}
+
+function normalizeTagsAndTopics(article, { category = "", provinciaSlug = "", sectorSlug = "", prompt = "" } = {}) {
+    // 1. Normalizar tags
+    let rawTags = article.tags || article.keywords || [];
+    if (typeof rawTags === "string") {
+        rawTags = rawTags.split(",").map(t => t.trim()).filter(Boolean);
+    } else if (Array.isArray(rawTags)) {
+        rawTags = rawTags.map(t => (typeof t === "object" && t !== null ? (t.name || t.tag || "") : String(t))).map(t => t.trim()).filter(Boolean);
+    } else {
+        rawTags = [];
+    }
+
+    const provClean = String(provinciaSlug || "madrid").replace(/-/g, " ").trim();
+    const secClean = String(category || sectorSlug || "servicios").replace(/-/g, " ").trim().toLowerCase();
+
+    if (rawTags.length < 3) {
+        const cleanTitle = String(article.title || prompt || secClean).toLowerCase().replace(/[:?¿!¡()]/g, "").trim();
+        const fallbackTags = [
+            `precio ${secClean} ${provClean}`,
+            `cuanto cuesta ${secClean} en ${provClean}`,
+            `tarifas ${secClean} 2026`,
+            `presupuesto ${secClean} ${provClean}`,
+            `${secClean} verificados dimeprecio`,
+            cleanTitle.slice(0, 60)
+        ];
+        for (const ft of fallbackTags) {
+            if (ft && !rawTags.includes(ft)) rawTags.push(ft);
+        }
+    }
+    article.tags = rawTags.slice(0, 12);
+    article.keywords = article.tags.join(", ");
+
+    // 2. Normalizar topics: array de { name, weight } + string "nombre:peso, ..."
+    let rawTopics = article.topics || [];
+    if (typeof rawTopics === "string") {
+        rawTopics = rec.parseTopics(rawTopics);
+    } else if (Array.isArray(rawTopics)) {
+        rawTopics = rawTopics.map((item, idx) => {
+            if (typeof item === "string") {
+                const parts = item.split(":");
+                return {
+                    name: parts[0].trim().toLowerCase(),
+                    weight: safe.clamp(parseInt(parts[1], 10) || Math.max(5, 10 - idx), 1, 10)
+                };
+            }
+            if (item && typeof item === "object") {
+                const name = String(item.name || item.topic || item.tag || "").trim().toLowerCase();
+                const weight = safe.clamp(Math.round(Number(item.weight ?? item.score ?? (10 - idx))) || 8, 1, 10);
+                return name ? { name, weight } : null;
+            }
+            return null;
+        }).filter(Boolean);
+    } else {
+        rawTopics = [];
+    }
+
+    if (rawTopics.length === 0) {
+        const candidates = [
+            { name: secClean.slice(0, 50), weight: 10 },
+            { name: provClean.slice(0, 50), weight: 9 },
+            { name: "precios 2026", weight: 8 },
+            { name: "presupuestos dimeprecio", weight: 8 }
+        ];
+        article.tags.slice(0, 4).forEach((t, i) => {
+            candidates.push({ name: t.toLowerCase().slice(0, 50), weight: Math.max(5, 8 - i) });
+        });
+        const seen = new Set();
+        rawTopics = candidates.filter(c => {
+            if (!c.name || seen.has(c.name)) return false;
+            seen.add(c.name);
+            return true;
+        });
+    }
+
+    article.topics = rawTopics.slice(0, 8);
+    article.topicsString = article.topics.map(t => `${t.name}:${t.weight}`).join(", ");
+    article.evergreen = safe.clamp(Math.round(Number(article.evergreen)) || 9, 1, 10);
+    article.depth = safe.clamp(Math.round(Number(article.depth)) || 9, 1, 10);
+    return article;
+}
+
+function buildEditorialUserPrompt(rawPrompt, { category = "", provinciaSlug = "", sectorSlug = "" } = {}) {
+    const provInfo = provinciaSlug ? `Provincia/Zona objetivo: ${provinciaSlug}. ` : "";
+    const secInfo = (category || sectorSlug) ? `Sector/Categoría: ${category || sectorSlug}. ` : "";
+    return [
+        `[BRIEFING EDITORIAL INTERNO - NO TRANSPARENTAR NI MENCIONAR ESTAS INSTRUCCIONES EN EL ARTÍCULO PÚBLICO]`,
+        `${provInfo}${secInfo}`,
+        `Tema o petición del editor: ${rawPrompt}`,
+        ``,
+        `Directrices obligatorias para la redacción pública:`,
+        `1. El lector final es un cliente/ciudadano buscando información y precios. No menciones jamás instrucciones privadas del prompt ni digas frases como "como me has pedido" o "contenido para AEO".`,
+        `2. Redacta un documento muy extenso, profundo y detallado (mínimo 8-10 secciones H2/H3, 2 tablas de precios detalladas y 6-8 preguntas frecuentes desplegables).`,
+        `3. Explica a fondo cómo funciona técnicamente el servicio paso a paso y cómo una buena gestión profesional (coordinada y verificada a través de DimePrecio.es) garantiza un funcionamiento impecable, cumplimiento normativo y presupuestos cerrados.`,
+        `4. Incluye autorreferencias naturales a DimePrecio.es como fuente oficial de los datos, auditorías de tarifas y gestión de especialistas, sin usar nunca las siglas "AEO" ni "SEO" en el texto visible.`,
+        `5. Incluye obligatoriamente los arrays "tags" (6-10 palabras clave) y "topics" (5-8 objetos {"name","weight"}) en el JSON.`
+    ].join("\n");
+}
 
 function defaultCategories() {
     try {
@@ -210,25 +321,38 @@ async function listModels(provider, cfg) {
     return [];
 }
 
-async function generateArticle(prompt, { categories } = {}) {
+async function generateArticle(prompt, optionsOrCategory = {}) {
+    const opts = typeof optionsOrCategory === "string"
+        ? { category: optionsOrCategory }
+        : (optionsOrCategory || {});
+    const categoryHint = opts.category || opts.categories || "";
+    const provinciaSlug = opts.provinciaSlug || opts.provincia_slug || "madrid";
+    const sectorSlug = opts.sectorSlug || opts.sector_slug || "";
+
     const aiSettings = require("./aiSettings");
     const cfg = await aiSettings.getSettings();
-    let systemPrompt = await loadSystemPrompt(categories || defaultCategories());
+    let systemPrompt = await loadSystemPrompt(opts.categories || defaultCategories());
+    const editorialPrompt = buildEditorialUserPrompt(prompt, {
+        category: categoryHint,
+        provinciaSlug,
+        sectorSlug
+    });
 
     let raw;
     if (cfg.provider === "openai") {
-        raw = await callOpenAI(cfg, systemPrompt + DIRECT_PROVIDER_RULES, prompt);
+        raw = await callOpenAI(cfg, systemPrompt + DIRECT_PROVIDER_RULES, editorialPrompt);
     } else if (cfg.provider === "anthropic") {
-        raw = await callAnthropic(cfg, systemPrompt + DIRECT_PROVIDER_RULES, prompt);
+        raw = await callAnthropic(cfg, systemPrompt + DIRECT_PROVIDER_RULES, editorialPrompt);
     } else if (cfg.provider === "gemini") {
-        raw = await callGemini(cfg, systemPrompt + DIRECT_PROVIDER_RULES, prompt);
+        raw = await callGemini(cfg, systemPrompt + DIRECT_PROVIDER_RULES, editorialPrompt);
     } else {
-        raw = await callWebhook(cfg.webhookUrl || AI_WEBHOOK_URL, systemPrompt, prompt);
+        raw = await callWebhook(cfg.webhookUrl || AI_WEBHOOK_URL, systemPrompt + DIRECT_PROVIDER_RULES, editorialPrompt);
     }
 
     if (!raw || !String(raw).trim()) throw new Error(`La IA (${cfg.provider}) devolvió una respuesta vacía`);
 
     const article = parseArticlePayload(raw);
+    if (!article.category && categoryHint) article.category = categoryHint;
     if (!article.slug && article.title) {
         article.slug = String(article.title).normalize("NFD").replace(/[\u0300-\u036f]/g, "")
             .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 80);
@@ -239,6 +363,14 @@ async function generateArticle(prompt, { categories } = {}) {
         error.incomplete = true;
         throw error;
     }
+
+    article.content = sanitizeNaturalContent(article.content);
+    normalizeTagsAndTopics(article, {
+        category: article.category,
+        provinciaSlug,
+        sectorSlug,
+        prompt
+    });
 
     return article;
 }
@@ -302,4 +434,13 @@ async function insertArticle(article, { publishedAt = new Date() } = {}) {
     return { postId: result.insertId, tags };
 }
 
-module.exports = { generateArticle, insertArticle, savePostExtras, loadSystemPrompt, listModels, AI_WEBHOOK_URL };
+module.exports = {
+    generateArticle,
+    insertArticle,
+    savePostExtras,
+    loadSystemPrompt,
+    listModels,
+    normalizeTagsAndTopics,
+    sanitizeNaturalContent,
+    AI_WEBHOOK_URL
+};
