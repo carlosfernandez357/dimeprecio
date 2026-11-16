@@ -1258,7 +1258,7 @@ app.get('/admin/login', (req, res) => {
   res.render('admin/login', { title: 'Acceso Panel DimePrecio.es', error: null });
 });
 
-app.post('/admin/login', async (req, res) => {
+const handleAdminLogin = async (req, res) => {
   const { username, password } = req.body;
   const adminUser = process.env.ADMIN_USER || process.env.ADMIN_USERNAME || 'kenzo';
   const adminPass = process.env.ADMIN_PASSWORD || 'juegoscuenta';
@@ -1267,7 +1267,10 @@ app.post('/admin/login', async (req, res) => {
     return res.redirect('/admin');
   }
   res.render('admin/login', { title: 'Acceso Panel DimePrecio.es', error: 'Credenciales incorrectas' });
-});
+};
+
+app.post('/admin/login', handleAdminLogin);
+app.post('/admin', handleAdminLogin);
 
 app.get('/admin/logout', (req, res) => {
   req.session.destroy();
