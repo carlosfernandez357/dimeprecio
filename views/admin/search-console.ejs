@@ -6,188 +6,336 @@
     <div class="admin-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
         <div>
             <div style="display: flex; align-items: center; gap: 10px;">
-                <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">Rendimiento Google Search Console</h1>
+                <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">Rendimiento Google Search Console & Auto-IA</h1>
                 <span style="display: inline-flex; align-items: center; gap: 6px; background: #ecfdf5; color: #059669; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid #a7f3d0;">
                     <span style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
-                    API Conectada
+                    sc-domain:dimeprecio.es
                 </span>
             </div>
             <p style="font-size: 14px; color: #64748b; margin-top: 4px;">
-                Consultas reales que la gente teclea en Google para encontrar <strong><%= data.siteUrl %></strong>.
-                Rango analizado: <strong><%= data.dateRange.startDate %></strong> al <strong><%= data.dateRange.endDate %></strong>.
+                Consultas reales guardadas en base de datos. Controla cuántas veces has utilizado cada búsqueda para crear artículos y programa generaciones masivas automáticas.
             </p>
         </div>
 
-        <!-- SELECTOR DE RANGO Y DIMENSIÓN -->
+        <!-- ACCIONES SUPERIORES -->
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 8px;">
-                <a href="/admin/search-console?days=7&dimension=<%= data.dimension %>" 
-                   style="padding: 6px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all .15s; <%= data.dateRange.days === 7 ? 'background:#fff; color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;' %>">
-                   7 Días
-                </a>
-                <a href="/admin/search-console?days=28&dimension=<%= data.dimension %>" 
-                   style="padding: 6px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all .15s; <%= data.dateRange.days === 28 ? 'background:#fff; color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;' %>">
-                   28 Días
-                </a>
-                <a href="/admin/search-console?days=90&dimension=<%= data.dimension %>" 
-                   style="padding: 6px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all .15s; <%= data.dateRange.days === 90 ? 'background:#fff; color:#0f172a; box-shadow:0 1px 3px rgba(0,0,0,0.1);' : 'color:#64748b;' %>">
-                   90 Días
-                </a>
-            </div>
+            <form method="POST" action="/admin/search-console/sync" style="margin:0;">
+                <button type="submit" style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                    🔄 Sincronizar desde Google GSC
+                </button>
+            </form>
 
-            <div style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 8px;">
-                <a href="/admin/search-console?days=<%= data.dateRange.days %>&dimension=query" 
-                   style="padding: 6px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all .15s; <%= data.dimension === 'query' ? 'background:#3b82f6; color:#fff; box-shadow:0 1px 3px rgba(59,130,246,0.3);' : 'color:#64748b;' %>">
-                   🔍 Consultas (Keywords)
-                </a>
-                <a href="/admin/search-console?days=<%= data.dateRange.days %>&dimension=page" 
-                   style="padding: 6px 14px; font-size: 13px; font-weight: 600; text-decoration: none; border-radius: 6px; transition: all .15s; <%= data.dimension === 'page' ? 'background:#3b82f6; color:#fff; box-shadow:0 1px 3px rgba(59,130,246,0.3);' : 'color:#64748b;' %>">
-                   📄 Páginas
-                </a>
-            </div>
+            <button type="button" onclick="openScheduleModal()" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; border: none; padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                ⏱️ Programar Auto-Lotes IA
+            </button>
         </div>
     </div>
 
-    <!-- TARJETAS DE MÉTRICAS -->
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px;">
-        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Clics Totales</div>
-            <div style="font-size: 32px; font-weight: 800; color: #0284c7; margin-top: 6px;">
-                <%= data.totals.totalClicks.toLocaleString() %>
+    <!-- TARJETAS DE ESTADÍSTICAS EN BASE DE DATOS -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total Búsquedas en BD</div>
+            <div style="font-size: 30px; font-weight: 800; color: #0284c7; margin-top: 4px;">
+                <%= Number(totals.totalQueries || 0).toLocaleString() %>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Visitas orgánicas directas</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Palabras clave monitorizadas</div>
         </div>
 
-        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Impresiones Totales</div>
-            <div style="font-size: 32px; font-weight: 800; color: #7c3aed; margin-top: 6px;">
-                <%= data.totals.totalImpressions.toLocaleString() %>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Impresiones Totales</div>
+            <div style="font-size: 30px; font-weight: 800; color: #7c3aed; margin-top: 4px;">
+                <%= Number(totals.totalImpressions || 0).toLocaleString() %>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Apariciones en búsquedas de Google</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Visibilidad en resultados de Google</div>
         </div>
 
-        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">CTR Medio</div>
-            <div style="font-size: 32px; font-weight: 800; color: #059669; margin-top: 6px;">
-                <%= data.totals.avgCtr %>%
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Pendientes de Crear</div>
+            <div style="font-size: 30px; font-weight: 800; color: #ea580c; margin-top: 4px;">
+                <%= Number(totals.totalPending || 0).toLocaleString() %>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">Porcentaje de clics por impresión</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Búsquedas con 0 artículos creados</div>
         </div>
 
-        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="font-size: 13px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Posición Media</div>
-            <div style="font-size: 32px; font-weight: 800; color: #ea580c; margin-top: 6px;">
-                <%= data.totals.avgPosition %>
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Artículos Ya Creados</div>
+            <div style="font-size: 30px; font-weight: 800; color: #059669; margin-top: 4px;">
+                <%= Number(totals.totalUsed || 0).toLocaleString() %>
             </div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">En las páginas de resultados (SERP)</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Búsquedas ya cubiertas</div>
         </div>
     </div>
 
-    <!-- TABLA DE RESULTADOS -->
+    <!-- BARRA DE ACCIÓN POR LOTES (SELECCIONAR TODAS / GENERAR) -->
+    <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+            <label style="display: inline-flex; align-items: center; gap: 8px; font-size: 13.5px; font-weight: 700; color: #1e293b; cursor: pointer;">
+                <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="width: 17px; height: 17px; cursor: pointer;">
+                Seleccionar todas (<span id="selectedCountText">0</span> seleccionadas)
+            </label>
+
+            <button type="button" id="btnBatchSelected" onclick="generateSelectedArticles()" disabled style="display: inline-flex; align-items: center; gap: 6px; background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer; opacity: 0.5; transition: all .15s;">
+                ⚡ Generar Artículos IA con Seleccionadas
+            </button>
+
+            <button type="button" onclick="generateTopBatch(100)" style="display: inline-flex; align-items: center; gap: 6px; background: #059669; color: #fff; border: none; padding: 8px 16px; border-radius: 7px; font-size: 13px; font-weight: 700; cursor: pointer;">
+                🚀 Generar Lote de las 100 Primeras Pendientes
+            </button>
+        </div>
+
+        <!-- FILTROS -->
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <select id="statusFilter" onchange="applyFilters()" style="padding: 7px 10px; font-size: 13px; font-weight: 600; border: 1px solid #cbd5e1; border-radius: 6px; background: #fff; color: #1e293b;">
+                <option value="all">Todas las consultas</option>
+                <option value="pending" selected>Solo Pendientes (0 usos)</option>
+                <option value="used">Ya Usadas (1+ usos)</option>
+            </select>
+
+            <input type="text" id="keywordSearch" placeholder="Buscar consulta o ciudad..." oninput="applyFilters()" style="padding: 7px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; width: 220px;">
+        </div>
+    </div>
+
+    <!-- TABLA DE CONSULTAS -->
     <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-        <div style="padding: 16px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
-            <div style="font-size: 15px; font-weight: 700; color: #1e293b;">
-                Listado de <%= data.dimension === 'query' ? 'Consultas (Búsquedas)' : 'Páginas' %> (<span id="visibleCount"><%= data.rows.length %></span> resultados)
-            </div>
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <input type="text" id="filterInput" placeholder="Filtrar por palabra o ciudad..." 
-                       style="padding: 8px 12px; font-size: 13px; border: 1px solid #cbd5e1; border-radius: 6px; width: 260px;"
-                       oninput="filterTable()">
-            </div>
+        <div style="padding: 14px 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 14px; font-weight: 700; color: #1e293b;">
+                Consultas (<span id="visibleRowCount"><%= queries.length %></span> mostradas)
+            </span>
+            <span id="batchProgressText" style="display:none; font-size:13px; font-weight:700; color:#2563eb;">
+                ⏳ Generando artículos con IA, por favor espera...
+            </span>
         </div>
 
-        <% if (!data.rows || data.rows.length === 0) { %>
-            <div style="padding: 48px 20px; text-align: center; color: #64748b;">
-                <span style="font-size: 36px; display: block; margin-bottom: 8px;">📊</span>
-                <p style="font-size: 15px; font-weight: 600;">No hay datos registrados para esta ventana de tiempo.</p>
-                <p style="font-size: 13px; color: #94a3b8;">Search Console suele tardar entre 2 y 3 días en consolidar las métricas de días recientes. Prueba a seleccionar el rango de 28 días.</p>
-            </div>
-        <% } else { %>
-            <div style="overflow-x: auto;">
-                <table id="gscTable" style="width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left;">
-                    <thead>
-                        <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">
-                            <th style="padding: 12px 20px;"><%= data.dimension === 'query' ? 'Consulta / Término de Búsqueda' : 'URL de la Página' %></th>
-                            <th style="padding: 12px 16px; text-align: right;">Clics</th>
-                            <th style="padding: 12px 16px; text-align: right;">Impresiones</th>
-                            <th style="padding: 12px 16px; text-align: right;">CTR</th>
-                            <th style="padding: 12px 16px; text-align: right;">Posición</th>
-                            <th style="padding: 12px 20px; text-align: center;">Acción Rápida</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% 
-                        const maxImps = Math.max(...data.rows.map(r => r.impressions), 1);
-                        data.rows.forEach(function(row, idx) { 
-                        %>
-                            <tr class="gsc-row" style="border-bottom: 1px solid #f1f5f9; transition: background .1s;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='#fff'">
-                                <td style="padding: 14px 20px; font-weight: 500; color: #0f172a;">
-                                    <% if (data.dimension === 'query') { %>
-                                        <span class="row-term"><%= row.item %></span>
-                                    <% } else { %>
-                                        <a href="<%= row.item %>" target="_blank" class="row-term" style="color: #2563eb; text-decoration: none; word-break: break-all;">
-                                            <%= row.item %> ↗
-                                        </a>
-                                    <% } %>
-                                </td>
-                                <td style="padding: 14px 16px; text-align: right; font-weight: 700; color: #0284c7;">
-                                    <%= row.clicks %>
-                                </td>
-                                <td style="padding: 14px 16px; text-align: right; font-weight: 600; color: #1e293b;">
-                                    <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
-                                        <span><%= row.impressions %></span>
-                                        <div style="width: 50px; height: 5px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
-                                            <div style="height: 100%; background: #7c3aed; width: <%= Math.min(100, Math.round((row.impressions / maxImps) * 100)) %>%;"></div>
-                                        </div>
+        <div style="overflow-x: auto;">
+            <table id="gscQueriesTable" style="width: 100%; border-collapse: collapse; font-size: 13.5px; text-align: left;">
+                <thead>
+                    <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569; font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px;">
+                        <th style="padding: 12px 14px; width: 40px; text-align: center;"></th>
+                        <th style="padding: 12px 16px;">Consulta de Búsqueda</th>
+                        <th style="padding: 12px 14px; text-align: right;">Impresiones</th>
+                        <th style="padding: 12px 14px; text-align: right;">Clics</th>
+                        <th style="padding: 12px 14px; text-align: right;">Posición</th>
+                        <th style="padding: 12px 16px; text-align: center;">Veces Usado</th>
+                        <th style="padding: 12px 18px; text-align: center;">Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% 
+                    const maxImps = Math.max(...queries.map(q => q.impressions), 1);
+                    queries.forEach(function(q, idx) { 
+                    %>
+                        <tr class="query-row" data-used="<%= q.used_count %>" data-text="<%= q.query_text.toLowerCase() %>" style="border-bottom: 1px solid #f1f5f9; transition: background .1s;" onmouseenter="this.style.background='#f8fafc'" onmouseleave="this.style.background='#fff'">
+                            <td style="padding: 12px 14px; text-align: center;">
+                                <input type="checkbox" class="query-checkbox" value="<%= q.query_text %>" onchange="updateSelectedCount()" style="width: 16px; height: 16px; cursor: pointer;">
+                            </td>
+                            <td style="padding: 12px 16px; font-weight: 600; color: #0f172a;">
+                                <%= q.query_text %>
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right; font-weight: 700; color: #7c3aed;">
+                                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px;">
+                                    <span><%= q.impressions %></span>
+                                    <div style="width: 44px; height: 5px; background: #e2e8f0; border-radius: 999px; overflow: hidden;">
+                                        <div style="height: 100%; background: #7c3aed; width: <%= Math.min(100, Math.round((q.impressions / maxImps) * 100)) %>%;"></div>
                                     </div>
-                                </td>
-                                <td style="padding: 14px 16px; text-align: right; color: #059669; font-weight: 600;">
-                                    <%= row.ctr %>%
-                                </td>
-                                <td style="padding: 14px 16px; text-align: right;">
-                                    <span style="display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; <%= Number(row.position) <= 3 ? 'background:#dcfce7; color:#15803d;' : (Number(row.position) <= 10 ? 'background:#fef3c7; color:#b45309;' : 'background:#f1f5f9; color:#475569;') %>">
-                                        #<%= row.position %>
+                                </div>
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right; font-weight: 600; color: #0284c7;">
+                                <%= q.clicks %>
+                            </td>
+                            <td style="padding: 12px 14px; text-align: right;">
+                                <span style="display: inline-block; padding: 2px 7px; border-radius: 999px; font-size: 11.5px; font-weight: 700; <%= Number(q.position) <= 3 ? 'background:#dcfce7; color:#15803d;' : (Number(q.position) <= 10 ? 'background:#fef3c7; color:#b45309;' : 'background:#f1f5f9; color:#475569;') %>">
+                                    #<%= q.position %>
+                                </span>
+                            </td>
+                            <td style="padding: 12px 16px; text-align: center;">
+                                <% if (q.used_count > 0) { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 4px; background: #ecfdf5; color: #059669; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #a7f3d0;" title="Último uso: <%= q.last_used_at ? new Date(q.last_used_at).toLocaleDateString('es-ES') : '' %>">
+                                        ✓ <%= q.used_count %> <%= q.used_count === 1 ? 'artículo' : 'artículos' %>
                                     </span>
-                                </td>
-                                <td style="padding: 14px 20px; text-align: center;">
-                                    <% if (data.dimension === 'query') { %>
-                                        <a href="/admin/create-article?topic=<%= encodeURIComponent(row.item) %>" 
-                                           style="display: inline-flex; align-items: center; gap: 5px; background: #3b82f6; color: #fff; text-decoration: none; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; transition: background .15s;"
-                                           onmouseenter="this.style.background='#2563eb'" onmouseleave="this.style.background='#3b82f6'">
-                                            <span>⚡</span> Crear Artículo IA
-                                        </a>
-                                    <% } else { %>
-                                        <a href="<%= row.item %>" target="_blank" 
-                                           style="display: inline-flex; align-items: center; gap: 4px; background: #f1f5f9; color: #334155; text-decoration: none; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px;">
-                                            Ver Página ↗
-                                        </a>
-                                    <% } %>
-                                </td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            </div>
-        <% } %>
+                                <% } else { %>
+                                    <span style="display: inline-flex; align-items: center; background: #fff1f2; color: #e11d48; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; border: 1px solid #fecdd3;">
+                                        Pendiente (0)
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 12px 18px; text-align: center;">
+                                <a href="/admin/create-article?topic=<%= encodeURIComponent(q.query_text) %>" 
+                                   style="display: inline-flex; align-items: center; gap: 4px; background: #3b82f6; color: #fff; text-decoration: none; font-size: 11.5px; font-weight: 600; padding: 5px 11px; border-radius: 6px;">
+                                    ⚡ Crear con IA
+                                </a>
+                            </td>
+                        </tr>
+                    <% }); %>
+                </tbody>
+            </table>
+        </div>
     </div>
 </main>
 
+<!-- MODAL PROGRAMAR AUTO-LOTES -->
+<div id="scheduleModalOverlay" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); z-index:99999; align-items:center; justify-content:center;">
+    <div style="background:#fff; border-radius:14px; max-width:520px; width:92%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
+            <h3 style="margin:0; font-size:18px; font-weight:700; color:#0f172a;">⏱️ Programación Automática de Artículos por Search Console</h3>
+            <button type="button" onclick="closeScheduleModal()" style="background:none; border:none; font-size:20px; cursor:pointer; color:#64748b;">✕</button>
+        </div>
+        <p style="font-size:13.5px; color:#475569; line-height:1.5; margin-bottom:18px;">
+            El sistema seleccionará automáticamente las consultas con <strong>más impresiones pendientes de crear</strong> y redactará los artículos con IA sin que tengas que hacerlo a mano.
+        </p>
+
+        <form method="POST" action="/admin/search-console/schedule" style="display:flex; flex-direction:column; gap:14px;">
+            <div>
+                <label style="font-size:13px; font-weight:700; color:#1e293b; display:block; margin-bottom:5px;">Activar generación programada</label>
+                <select name="enabled" style="width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px;">
+                    <option value="1" <%= (typeof scheduleConfig !== 'undefined' && scheduleConfig.enabled) ? 'selected' : '' %>>🟢 Activada (Generación continua)</option>
+                    <option value="0" <%= (typeof scheduleConfig !== 'undefined' && !scheduleConfig.enabled) ? 'selected' : '' %>>🔴 Desactivada</option>
+                </select>
+            </div>
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <div>
+                    <label style="font-size:13px; font-weight:700; color:#1e293b; display:block; margin-bottom:5px;">Artículos por lote</label>
+                    <input type="number" name="batch_size" min="1" max="100" value="<%= (typeof scheduleConfig !== 'undefined' && scheduleConfig.batch_size) ? scheduleConfig.batch_size : 100 %>" style="width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px; box-sizing:border-box;">
+                </div>
+                <div>
+                    <label style="font-size:13px; font-weight:700; color:#1e293b; display:block; margin-bottom:5px;">Frecuencia</label>
+                    <select name="interval_hours" style="width:100%; padding:9px; border:1px solid #cbd5e1; border-radius:8px; font-size:13.5px;">
+                        <option value="6">Cada 6 horas</option>
+                        <option value="12">Cada 12 horas</option>
+                        <option value="24" selected>Cada 24 horas (Diario)</option>
+                        <option value="48">Cada 2 días</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="margin-top:10px; display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="closeScheduleModal()" style="background:#f1f5f9; color:#334155; border:none; padding:10px 18px; border-radius:8px; font-weight:600; cursor:pointer;">Cancelar</button>
+                <button type="submit" style="background:#0f172a; color:#fff; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer;">Guardar Programación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-function filterTable() {
-    var q = document.getElementById('filterInput').value.toLowerCase().trim();
-    var rows = document.querySelectorAll('.gsc-row');
-    var count = 0;
-    rows.forEach(function(row) {
-        var text = row.querySelector('.row-term').textContent.toLowerCase();
-        if (!q || text.indexOf(q) !== -1) {
-            row.style.display = '';
-            count++;
-        } else {
-            row.style.display = 'none';
+function openScheduleModal() {
+    document.getElementById("scheduleModalOverlay").style.display = "flex";
+}
+function closeScheduleModal() {
+    document.getElementById("scheduleModalOverlay").style.display = "none";
+}
+
+function toggleSelectAll(master) {
+    var cbs = document.querySelectorAll(".query-checkbox");
+    cbs.forEach(function(cb) {
+        var row = cb.closest("tr");
+        if (row && row.style.display !== "none") {
+            cb.checked = master.checked;
         }
     });
-    document.getElementById('visibleCount').textContent = count;
+    updateSelectedCount();
 }
+
+function updateSelectedCount() {
+    var checked = document.querySelectorAll(".query-checkbox:checked");
+    var count = checked.length;
+    document.getElementById("selectedCountText").textContent = count;
+    var btn = document.getElementById("btnBatchSelected");
+    if (count > 0) {
+        btn.disabled = false;
+        btn.style.opacity = "1";
+    } else {
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+    }
+}
+
+function applyFilters() {
+    var status = document.getElementById("statusFilter").value;
+    var search = document.getElementById("keywordSearch").value.toLowerCase().trim();
+    var rows = document.querySelectorAll(".query-row");
+    var visible = 0;
+
+    rows.forEach(function(row) {
+        var used = Number(row.getAttribute("data-used") || 0);
+        var text = row.getAttribute("data-text") || "";
+        var matchStatus = true;
+        if (status === "pending") matchStatus = (used === 0);
+        else if (status === "used") matchStatus = (used > 0);
+
+        var matchSearch = !search || text.indexOf(search) !== -1;
+
+        if (matchStatus && matchSearch) {
+            row.style.display = "";
+            visible++;
+        } else {
+            row.style.display = "none";
+        }
+    });
+
+    document.getElementById("visibleRowCount").textContent = visible;
+    updateSelectedCount();
+}
+
+// Generar artículos para las consultas seleccionadas
+async function generateSelectedArticles() {
+    var checked = Array.from(document.querySelectorAll(".query-checkbox:checked")).map(cb => cb.value);
+    if (!checked.length) return;
+    if (!confirm("¿Deseas redactar y publicar automáticamente " + checked.length + " artículos con IA para las búsquedas seleccionadas?")) return;
+
+    var progressText = document.getElementById("batchProgressText");
+    progressText.style.display = "inline-block";
+    progressText.textContent = "⏳ Generando " + checked.length + " artículos con IA...";
+
+    try {
+        var res = await fetch("/admin/search-console/generate-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ queries: checked })
+        });
+        var data = await res.json();
+        if (data.ok) {
+            alert("¡Éxito! Se han creado " + data.success + " artículos nuevos con IA a partir de las búsquedas seleccionadas.");
+            window.location.reload();
+        } else {
+            alert("Error al generar artículos: " + (data.error || "Error desconocido"));
+        }
+    } catch (err) {
+        alert("Error de conexión: " + err.message);
+    } finally {
+        progressText.style.display = "none";
+    }
+}
+
+// Generar lote de los primeros N pendientes
+async function generateTopBatch(count) {
+    if (!confirm("¿Deseas generar automáticamente un lote de hasta " + count + " artículos para las búsquedas pendientes con más impresiones en Google?")) return;
+
+    var progressText = document.getElementById("batchProgressText");
+    progressText.style.display = "inline-block";
+    progressText.textContent = "⏳ Generando lote de hasta " + count + " artículos con IA en segundo plano...";
+
+    try {
+        var res = await fetch("/admin/search-console/generate-batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ limit: count })
+        });
+        var data = await res.json();
+        if (data.ok) {
+            alert("¡Lote completado! Se han creado " + data.success + " artículos nuevos basados en las búsquedas con más impresiones.");
+            window.location.reload();
+        } else {
+            alert("Error: " + (data.error || "Error al procesar el lote"));
+        }
+    } catch (err) {
+        alert("Error de conexión: " + err.message);
+    } finally {
+        progressText.style.display = "none";
+    }
+}
+
+// Iniciar con el filtro "Solo Pendientes" aplicado
+window.addEventListener("DOMContentLoaded", applyFilters);
 </script>
 
 <%- include("partials/footer") %>

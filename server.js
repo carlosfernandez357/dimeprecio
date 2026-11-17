@@ -1401,13 +1401,13 @@ app.post('/admin/formularios/guardar', requireAdmin, async (req, res) => {
 });
 
 // 5. BANDEJA DEL AGENTE (SOLICITUDES DE PRESUPUESTO + 4 MODELOS DE NEGOCIO)
-app.get('/admin/presupuestos', requireAdmin, (req, res) => {
+app.get('/admin/presupuestos', requireAdmin, async (req, res) => {
   const filters = {
     provincia_slug: req.query.provincia || '',
     sector_slug: req.query.sector || '',
     modelo_negocio: req.query.modelo || '',
   };
-  const quotes = rr.getQuoteRequests(filters);
+  const quotes = await rr.getQuoteRequestsAsync(filters);
   res.render('admin/presupuestos', {
     title: 'Bandeja del Agente — DimePrecio.es',
     quotes,
@@ -1417,6 +1417,11 @@ app.get('/admin/presupuestos', requireAdmin, (req, res) => {
 
 app.post('/admin/presupuestos/:id/actualizar', requireAdmin, (req, res) => {
   rr.updateQuoteRequestAgent(req.params.id, req.body || {});
+  res.redirect('/admin/presupuestos');
+});
+
+app.post('/admin/presupuestos/:id/eliminar', requireAdmin, async (req, res) => {
+  await rr.deleteQuoteRequest(req.params.id);
   res.redirect('/admin/presupuestos');
 });
 
@@ -1430,34 +1435,94 @@ app.get('/admin/live', requireAdmin, (req, res) => {
   });
 });
 
+// ============================================================================
+// CONFIGURACIÓN Y RUTAS: SEARCH CONSOLE, ESTADÍSTICAS BD Y AUTO-LOTES IA
+// ============================================================================
+let gscScheduleConfig = {
+  enabled: false,
+  batch_size: 100,
+  interval_hours: 24,
+  last_run: null
+};
+
 app.get('/admin/search-console', requireAdmin, async (req, res) => {
   try {
-    const days = Number(req.query.days) || 7;
-    const dimension = req.query.dimension === 'page' ? 'page' : 'query';
-    const limit = Number(req.query.limit) || 100;
-
-    const data = await gscService.getSearchPerformance({ days, dimension, limit });
+    let stored = await gscService.getStoredQueries({ limit: 500 });
+    // Si la tabla está vacía, sincronizar automáticamente desde Google Search Console
+    if (!stored.rows || stored.rows.length === 0) {
+      await gscService.syncQueriesToDatabase({ days: 28, limit: 500 });
+      stored = await gscService.getStoredQueries({ limit: 500 });
+    }
 
     res.render('admin/search-console', {
-      title: 'Búsquedas Google (Search Console) — DimePrecio.es',
-      data,
+      title: 'Búsquedas Google & Auto-IA — DimePrecio.es',
+      queries: stored.rows,
+      totals: stored.totals,
+      scheduleConfig: gscScheduleConfig,
     });
   } catch (err) {
     console.error('[Search Console Error]', err);
     res.render('admin/search-console', {
-      title: 'Búsquedas Google (Search Console) — DimePrecio.es',
-      data: {
-        ok: false,
-        siteUrl: 'sc-domain:dimeprecio.es',
-        dateRange: { startDate: '', endDate: '', days: 7 },
-        totals: { totalClicks: 0, totalImpressions: 0, avgCtr: '0.00', avgPosition: '0.0', totalRows: 0 },
-        dimension: 'query',
-        rows: [],
-        error: err.message,
-      },
+      title: 'Búsquedas Google & Auto-IA — DimePrecio.es',
+      queries: [],
+      totals: { totalQueries: 0, totalUsed: 0, totalPending: 0, totalImpressions: 0, totalClicks: 0 },
+      scheduleConfig: gscScheduleConfig,
+      error: err.message,
     });
   }
 });
+
+app.post('/admin/search-console/sync', requireAdmin, async (req, res) => {
+  try {
+    await gscService.syncQueriesToDatabase({ days: 28, limit: 500 });
+  } catch (err) {
+    console.error('[GSC Sync Manual Error]', err);
+  }
+  res.redirect('/admin/search-console');
+});
+
+app.post('/admin/search-console/generate-batch', requireAdmin, async (req, res) => {
+  try {
+    const { queries, limit } = req.body;
+    const results = await gscService.generateBatch({
+      queries: Array.isArray(queries) ? queries : [],
+      limit: Number(limit) || 100,
+    });
+    res.json({ ok: true, ...results });
+  } catch (err) {
+    console.error('[GSC Generate Batch Error]', err);
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
+
+app.post('/admin/search-console/schedule', requireAdmin, (req, res) => {
+  const { enabled, batch_size, interval_hours } = req.body;
+  gscScheduleConfig = {
+    enabled: enabled === '1',
+    batch_size: Math.min(Math.max(Number(batch_size) || 100, 1), 100),
+    interval_hours: Number(interval_hours) || 24,
+    last_run: gscScheduleConfig.last_run,
+  };
+  console.log('[GSC Auto-Schedule Config]', gscScheduleConfig);
+  res.redirect('/admin/search-console');
+});
+
+// Comprobador periódico en segundo plano para auto-lotes de Search Console
+setInterval(async () => {
+  if (!gscScheduleConfig.enabled) return;
+  const now = Date.now();
+  const intervalMs = (gscScheduleConfig.interval_hours || 24) * 3600 * 1000;
+  if (!gscScheduleConfig.last_run || (now - new Date(gscScheduleConfig.last_run).getTime() > intervalMs)) {
+    console.log('[GSC Auto-Schedule] Ejecutando lote programado de artículos...');
+    try {
+      gscScheduleConfig.last_run = new Date().toISOString();
+      await gscService.generateBatch({ limit: gscScheduleConfig.batch_size || 100 });
+      console.log('[GSC Auto-Schedule] Lote programado finalizado con éxito.');
+    } catch (e) {
+      console.error('[GSC Auto-Schedule Error]', e.message);
+    }
+  }
+}, 30 * 60 * 1000);
 
 app.get('/admin/articles', requireAdmin, async (req, res) => {
   const [posts] = await pool.query(`
@@ -1644,19 +1709,100 @@ app.post('/admin/articles/:id/delete', requireAdmin, async (req, res) => {
 app.get('/admin/edit-article/:id', requireAdmin, async (req, res) => {
   const [rows] = await pool.query('SELECT * FROM posts WHERE id = ?', [req.params.id]);
   if (!rows.length) return res.redirect('/admin/articles');
-  res.render('admin/create-article', { title: 'Editar Página — DimePrecio.es', post: rows[0], error: null });
+  res.render('admin/create-article', {
+    title: 'Editar Página — DimePrecio.es',
+    post: rows[0],
+    error: null,
+    allLocations: rr.getLocations(false),
+    allSectors: rr.getSectors(false)
+  });
 });
 
 app.post('/admin/edit-article/:id', requireAdmin, upload.single('featured_image_file'), async (req, res) => {
-  const { title, excerpt, content, category_id, status, is_featured, is_breaking, meta_title, meta_description, keywords, existing_image, ai_image_url, image_alt } = req.body;
-  const featured_image = req.file ? `/uploads/${req.file.filename}` : ai_image_url || existing_image || null;
-  const slug = rr.slugify(title) + '-' + req.params.id;
+  try {
+    const {
+      title,
+      slug: customSlug,
+      excerpt,
+      content,
+      image,
+      ai_image_url,
+      image_alt,
+      status,
+      is_featured,
+      is_breaking,
+      is_pinned,
+      is_selected,
+      priority_weight,
+      provincia_slug,
+      sector_slug,
+      meta_title,
+      meta_description,
+      keywords,
+      tags,
+      topics,
+      evergreen,
+      depth
+    } = req.body;
 
-  await pool.query(
-    `UPDATE posts SET title=?, slug=?, excerpt=?, content=?, featured_image=?, image_alt=?, category_id=?, status=?, is_featured=?, is_breaking=?, meta_title=?, meta_description=?, keywords=? WHERE id=?`,
-    [title, slug, excerpt, content, featured_image, image_alt || title, category_id || 1, status || 'published', is_featured ? 1 : 0, is_breaking ? 1 : 0, meta_title || title, meta_description || excerpt, keywords || '', req.params.id]
-  );
-  res.redirect('/admin/articles');
+    const slug = customSlug ? rr.slugify(customSlug) : (rr.slugify(title) + '-' + req.params.id);
+    const featured_image = req.file ? `/uploads/${req.file.filename}` : (image || ai_image_url || null);
+
+    await pool.query(
+      `UPDATE posts 
+       SET title=?, slug=?, excerpt=?, content=?, 
+           featured_image=COALESCE(?, featured_image), 
+           image_alt=?, status=?, is_featured=?, is_breaking=?, 
+           is_pinned=?, is_selected=?, priority_weight=?,
+           provincia_slug=?, sector_slug=?,
+           meta_title=?, meta_description=?, keywords=? 
+       WHERE id=?`,
+      [
+        title,
+        slug,
+        excerpt || '',
+        content || '',
+        featured_image,
+        image_alt || title,
+        status || 'published',
+        is_featured ? 1 : 0,
+        is_breaking ? 1 : 0,
+        is_pinned ? 1 : 0,
+        is_selected !== undefined ? (is_selected ? 1 : 0) : 1,
+        priority_weight || 9,
+        provincia_slug || 'madrid',
+        sector_slug || 'reformas-integrales',
+        meta_title || title,
+        meta_description || excerpt || '',
+        keywords || tags || '',
+        req.params.id
+      ]
+    );
+
+    rr.updatePostAlgorithmSettings(req.params.id, {
+      is_pinned: is_pinned ? 1 : 0,
+      is_selected: is_selected !== undefined ? (is_selected ? 1 : 0) : 1,
+      priority_weight: priority_weight || 9,
+      provincia_slug: provincia_slug || 'madrid',
+      sector_slug: sector_slug || 'reformas-integrales',
+    });
+
+    const ai = require('./utils/ai');
+    await ai.savePostExtras(req.params.id, {
+      evergreen: evergreen || 9,
+      depth: depth || 8,
+      provincia_slug: provincia_slug || 'madrid',
+      sector_slug: sector_slug || 'reformas-integrales',
+      topics: topics || '',
+      tags: keywords || tags || '',
+      content: content || ''
+    });
+
+    res.redirect('/admin/articles');
+  } catch (err) {
+    console.error('[Edit Article Error]', err);
+    res.redirect('/admin/articles');
+  }
 });
 
 app.post('/admin/delete-article/:id', requireAdmin, async (req, res) => {

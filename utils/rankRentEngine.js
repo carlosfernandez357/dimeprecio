@@ -1424,10 +1424,107 @@ function submitQuoteRequestToAgent(payload, uploadedFiles = []) {
 
   saveStore();
   syncEntityToDatabase('pp_quote_requests', record);
+
+  // Webhook automático al registrar presupuesto de cliente
+  const webhookUrl = process.env.LEAD_WEBHOOK_URL || process.env.WEBHOOK_URL || (s.settings && s.settings.lead_webhook_url) || null;
+  if (webhookUrl) {
+    try {
+      const axios = require('axios');
+      axios.post(webhookUrl, {
+        event: 'lead.created',
+        codigo: record.codigo,
+        created_at: record.created_at,
+        nombre_cliente: record.nombre_cliente,
+        telefono_whatsapp: record.telefono_whatsapp,
+        email_opcional: record.email_opcional,
+        provincia: record.provincia_nombre,
+        municipio: record.municipio,
+        sector: record.sector_nombre,
+        explicacion_cliente: record.explicacion_cliente,
+        campos_formulario: record.campos_formulario_json,
+        valor_estimado: record.valor_estimado_trabajo,
+        origen_url: record.origen_url,
+        origen_titulo: record.origen_titulo,
+        archivos: record.archivos_adjuntos,
+      }, { timeout: 8000 }).then(res => {
+        console.log(`[Lead Webhook] Notificado correctamente a ${webhookUrl} (Status ${res.status})`);
+      }).catch(err => {
+        console.error('[Lead Webhook Request Error]', err.message);
+      });
+    } catch (e) {
+      console.error('[Lead Webhook Dispatch Error]', e.message);
+    }
+  }
+
   return {
     ...record,
     mensajes_negocio: buildBusinessModelMessages(record),
   };
+}
+
+async function getQuoteRequestsAsync(filters = {}) {
+  try {
+    const db = require('../db');
+    if (db) {
+      let sql = 'SELECT * FROM pp_quote_requests WHERE 1=1';
+      const params = [];
+      if (filters.provincia_slug) {
+        sql += ' AND provincia_slug = ?';
+        params.push(filters.provincia_slug);
+      }
+      if (filters.sector_slug) {
+        sql += ' AND sector_slug = ?';
+        params.push(filters.sector_slug);
+      }
+      if (filters.modelo_negocio) {
+        sql += ' AND modelo_negocio_aplicado = ?';
+        params.push(filters.modelo_negocio);
+      }
+      if (filters.estado_agente) {
+        sql += ' AND estado_agente = ?';
+        params.push(filters.estado_agente);
+      }
+      sql += ' ORDER BY id DESC';
+      const [rows] = await db.query(sql, params);
+      if (rows && rows.length > 0) {
+        return rows.map(q => {
+          let campos = q.campos_formulario_json;
+          if (typeof campos === 'string') {
+            try { campos = JSON.parse(campos); } catch (e) { campos = {}; }
+          }
+          let archivos = q.archivos_adjuntos_json;
+          if (typeof archivos === 'string') {
+            try { archivos = JSON.parse(archivos); } catch (e) { archivos = []; }
+          }
+          return {
+            ...q,
+            campos_formulario_json: campos || {},
+            archivos_adjuntos: archivos || [],
+            mensajes_negocio: buildBusinessModelMessages(q),
+          };
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[getQuoteRequestsAsync DB Error]', err.message);
+  }
+  return getQuoteRequests(filters);
+}
+
+async function deleteQuoteRequest(id) {
+  const s = loadStore();
+  const numId = Number(id);
+  s.quote_requests = (s.quote_requests || []).filter(q => Number(q.id) !== numId && String(q.codigo) !== String(id));
+  saveStore();
+  try {
+    const db = require('../db');
+    if (db) {
+      await db.query('DELETE FROM pp_quote_requests WHERE id = ? OR codigo = ?', [id, id]);
+    }
+  } catch (e) {
+    console.error('[deleteQuoteRequest DB Error]', e.message);
+  }
+  return true;
 }
 
 function getQuoteRequests(filters = {}) {
@@ -1932,6 +2029,8 @@ module.exports = {
   getVisitorInterests,
   submitQuoteRequestToAgent,
   getQuoteRequests,
+  getQuoteRequestsAsync,
+  deleteQuoteRequest,
   updateQuoteRequestAgent,
   buildBusinessModelMessages,
   searchEverything,

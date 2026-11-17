@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -66,16 +66,23 @@
               </div>
             </div>
 
-            <form method="POST" action="/admin/presupuestos/<%= q.id %>/actualizar" style="display:flex;gap:8px;align-items:center;">
-              <select name="estado_agente" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:700;">
-                <option value="nuevo_en_bandeja" <%= q.estado_agente === 'nuevo_en_bandeja' ? 'selected' : '' %>>🔴 Pendiente de contactar</option>
-                <option value="enviado_profesional" <%= q.estado_agente === 'enviado_profesional' ? 'selected' : '' %>>🟡 En gestión</option>
-                <option value="desbloqueado_pagado" <%= q.estado_agente === 'desbloqueado_pagado' ? 'selected' : '' %>>🟢 Atendido / Cerrado</option>
-              </select>
-              <button type="submit" style="background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;">
-                Guardar Estado
-              </button>
-            </form>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <form method="POST" action="/admin/presupuestos/<%= q.id %>/actualizar" style="display:flex;gap:8px;align-items:center;margin:0;">
+                <select name="estado_agente" style="padding:8px 10px;border:1px solid #cbd5e1;border-radius:8px;font-size:12.5px;font-weight:700;">
+                  <option value="nuevo_en_bandeja" <%= q.estado_agente === 'nuevo_en_bandeja' ? 'selected' : '' %>>🔴 Pendiente de contactar</option>
+                  <option value="enviado_profesional" <%= q.estado_agente === 'enviado_profesional' ? 'selected' : '' %>>🟡 En gestión</option>
+                  <option value="desbloqueado_pagado" <%= q.estado_agente === 'desbloqueado_pagado' ? 'selected' : '' %>>🟢 Atendido / Cerrado</option>
+                </select>
+                <button type="submit" style="background:#0f172a;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;">
+                  Guardar Estado
+                </button>
+              </form>
+              <form method="POST" action="/admin/presupuestos/<%= q.id %>/eliminar" onsubmit="return confirm('¿Eliminar permanentemente este presupuesto del cliente <%= q.nombre_cliente %>?');" style="margin:0;">
+                <button type="submit" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;padding:8px 12px;border-radius:8px;font-weight:700;font-size:12.5px;cursor:pointer;" title="Eliminar este presupuesto">
+                  🗑️ Borrar
+                </button>
+              </form>
+            </div>
           </div>
 
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:16px;">

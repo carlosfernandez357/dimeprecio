@@ -92,12 +92,13 @@
 
         <div class="admin-card">
 
+            <% const isEditing = (typeof post !== 'undefined' && post && post.id); %>
             <div class="admin-card-header">
-                <h2>Información del Artículo, Sector, Formulario e Impulso en Algoritmo</h2>
+                <h2><%= isEditing ? ('Editar Artículo #' + post.id + ': ' + post.title) : 'Información del Artículo, Sector, Formulario e Impulso en Algoritmo' %></h2>
             </div>
 
             <form
-                action="/admin/articles/create"
+                action="<%= isEditing ? ('/admin/edit-article/' + post.id) : '/admin/articles/create' %>"
                 method="POST"
             >
 
@@ -107,6 +108,7 @@
                         type="text"
                         name="title"
                         id="title"
+                        value="<%= isEditing ? (post.title || '') : '' %>"
                         required
                     >
                 </div>
@@ -117,6 +119,7 @@
                         type="text"
                         name="slug"
                         id="slug"
+                        value="<%= isEditing ? (post.slug || '') : '' %>"
                         required
                     >
                 </div>
@@ -126,7 +129,7 @@
                         <label>Provincia SEO (interconexión local)</label>
                         <select name="provincia_slug" id="provincia_slug" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
                             <% (allLocations || []).forEach(function(loc) { %>
-                                <option value="<%= loc.slug %>"><%= loc.nombre %></option>
+                                <option value="<%= loc.slug %>" <%= (isEditing && post.provincia_slug === loc.slug) ? 'selected' : '' %>><%= loc.nombre %></option>
                             <% }) %>
                         </select>
                     </div>
@@ -134,7 +137,7 @@
                         <label>Sector (inserta abajo el formulario exclusivo de este sector)</label>
                         <select name="sector_slug" id="sector_slug" onchange="var sel=this.options[this.selectedIndex]; document.getElementById('category').value=sel.text;" style="width:100%;padding:10px;border:1px solid #d1d5db;border-radius:6px;">
                             <% (allSectors || []).forEach(function(sec) { %>
-                                <option value="<%= sec.slug %>"><%= sec.nombre %></option>
+                                <option value="<%= sec.slug %>" <%= (isEditing && post.sector_slug === sec.slug) ? 'selected' : '' %>><%= sec.nombre %></option>
                             <% }) %>
                         </select>
                     </div>
@@ -142,16 +145,16 @@
 
                 <div class="admin-form-group" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;">
                     <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
-                        <input type="checkbox" name="is_pinned" value="1">
+                        <input type="checkbox" name="is_pinned" value="1" <%= (isEditing && post.is_pinned) ? 'checked' : '' %>>
                         📌 Fijar arriba (Pinned)
                     </label>
                     <label style="display:flex;align-items:center;gap:8px;font-weight:700;cursor:pointer;">
-                        <input type="checkbox" name="is_selected" value="1" checked>
+                        <input type="checkbox" name="is_selected" value="1" <%= (!isEditing || post.is_selected) ? 'checked' : '' %>>
                         ⭐ Recomendar con algoritmo
                     </label>
                     <div>
                         <label style="font-size:12px;font-weight:700;">Peso en Algoritmo (1-10)</label>
-                        <input type="number" name="priority_weight" min="1" max="10" value="9" style="width:70px;padding:6px;">
+                        <input type="number" name="priority_weight" min="1" max="10" value="<%= isEditing ? (post.priority_weight || 9) : 9 %>" style="width:70px;padding:6px;">
                     </div>
                 </div>
 
@@ -161,7 +164,7 @@
                         type="text"
                         name="category"
                         id="category"
-                        value="Reformas Integrales y Baños/Cocinas"
+                        value="<%= isEditing ? (post.category_name || post.category || 'Reformas Integrales y Baños/Cocinas') : 'Reformas Integrales y Baños/Cocinas' %>"
                         required
                     >
                 </div>
@@ -172,6 +175,7 @@
                         type="text"
                         name="tags"
                         id="tags"
+                        value="<%= isEditing ? (post.keywords || post.tags || '') : '' %>"
                         placeholder="arreglar baño madrid, reforma pequeña casa, cambiar bañera por ducha"
                     >
                     <small>
@@ -185,6 +189,7 @@
                         type="text"
                         name="topics"
                         id="topics"
+                        value="<%= isEditing ? (post.topics || '') : '' %>"
                         placeholder="reformas baño:9, fontanería:7, humedades:6"
                     >
                     <small>
@@ -194,12 +199,12 @@
 
                 <div class="admin-form-group">
                     <label>Evergreen (0 = noticia puntual, 10 = guía siempre relevante para SEO)</label>
-                    <input type="number" name="evergreen" id="evergreen" min="0" max="10" value="9">
+                    <input type="number" name="evergreen" id="evergreen" min="0" max="10" value="<%= isEditing ? (post.evergreen || 9) : 9 %>">
                 </div>
 
                 <div class="admin-form-group">
                     <label>Depth (1 = corto, 10 = guía completa en profundidad)</label>
-                    <input type="number" name="depth" id="depth" min="1" max="10" value="8">
+                    <input type="number" name="depth" id="depth" min="1" max="10" value="<%= isEditing ? (post.depth || 8) : 8 %>">
                 </div>
 
                 <div class="admin-form-group">
@@ -208,7 +213,7 @@
                         name="excerpt"
                         id="excerpt"
                         rows="4"
-                    ></textarea>
+                    ><%= isEditing ? (post.excerpt || '') : '' %></textarea>
                 </div>
 
                 <div class="admin-form-group">
@@ -217,20 +222,22 @@
                         type="text"
                         name="image"
                         id="image"
+                        value="<%= isEditing ? (post.featured_image || post.image || '') : '' %>"
                         placeholder="https://..."
                     >
                 </div>
 
                 <div class="admin-form-group">
                     <label>Content (HTML)</label>
-                    <textarea name="content" id="content"></textarea>
+                    <textarea name="content" id="content"><%= isEditing ? (post.content || '') : '' %></textarea>
                 </div>
 
                 <button
                     type="submit"
                     class="admin-primary-button"
+                    style="background: <%= isEditing ? '#059669' : '#0f172a' %>; font-size:15px; font-weight:700; padding:12px 24px;"
                 >
-                    Publish Article
+                    <%= isEditing ? '💾 Guardar Cambios del Artículo' : 'Publish Article' %>
                 </button>
 
             </form>
