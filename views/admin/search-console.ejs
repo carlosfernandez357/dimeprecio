@@ -19,6 +19,10 @@
 
         <!-- ACCIONES SUPERIORES -->
         <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <a href="/admin/cola-articulos" style="display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; color: #1d4ed8; text-decoration: none; border: 1px solid #bfdbfe; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600;">
+                ⚡ Ver Cola de Creación IA
+            </a>
+
             <form method="POST" action="/admin/search-console/sync" style="margin:0;">
                 <button type="submit" style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 8px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                     🔄 Sincronizar desde Google GSC
@@ -294,10 +298,10 @@ async function generateSelectedArticles() {
         });
         var data = await res.json();
         if (data.ok) {
-            alert("¡Éxito! Se han creado " + data.success + " artículos nuevos con IA a partir de las búsquedas seleccionadas.");
-            window.location.reload();
+            alert("¡Éxito! Se han enviado a la cola de generación masiva IA (" + (data.total || checked.length) + " tareas). Podrás monitorear su progreso, editarlas o cancelarlas.");
+            window.location.href = "/admin/cola-articulos";
         } else {
-            alert("Error al generar artículos: " + (data.error || "Error desconocido"));
+            alert("Error al generar artículos: " + (data.error || data.message || "Error desconocido"));
         }
     } catch (err) {
         alert("Error de conexión: " + err.message);
@@ -322,10 +326,10 @@ async function generateTopBatch(count) {
         });
         var data = await res.json();
         if (data.ok) {
-            alert("¡Lote completado! Se han creado " + data.success + " artículos nuevos basados en las búsquedas con más impresiones.");
-            window.location.reload();
+            alert("¡Lote encolado! Se han enviado hasta " + (data.total || count) + " tareas a la cola de generación masiva IA.");
+            window.location.href = "/admin/cola-articulos";
         } else {
-            alert("Error: " + (data.error || "Error al procesar el lote"));
+            alert("Error: " + (data.error || data.message || "Error al procesar el lote"));
         }
     } catch (err) {
         alert("Error de conexión: " + err.message);

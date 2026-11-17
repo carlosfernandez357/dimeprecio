@@ -2300,3 +2300,176 @@ html, body {
         border-radius: 6px !important;
     }
 }
+
+/* ============================================================================
+   ELEMENTOS VISUALES Y DINÁMICOS PARA ARTÍCULOS IA Y BOTONES WHATSAPP
+   ============================================================================ */
+
+/* 1. Botón WhatsApp en Cabecera (Header) */
+.whatsapp-header-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #a7f3d0;
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+.whatsapp-header-btn:hover {
+    background: #25D366;
+    color: #ffffff;
+    border-color: #25D366;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(37, 211, 102, 0.25);
+}
+.whatsapp-header-btn svg {
+    color: #10b981;
+    transition: color 0.2s ease;
+    flex-shrink: 0;
+}
+.whatsapp-header-btn:hover svg {
+    color: #ffffff;
+}
+@media (max-width: 680px) {
+    .whatsapp-header-btn span.whatsapp-text {
+        display: none !important;
+    }
+    .whatsapp-header-btn {
+        padding: 7px 9px !important;
+    }
+}
+
+/* 2. Barra Gráfica de Desglose de Precios (Progress Bars) */
+.dp-price-breakdown {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 22px 24px;
+    margin: 26px 0;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+.dp-price-breakdown h4 {
+    margin: 0 0 16px 0;
+    font-size: 16px;
+    font-weight: 800;
+    color: #0f172a;
+}
+.dp-bar-item {
+    margin-bottom: 14px;
+}
+.dp-bar-item:last-child {
+    margin-bottom: 0;
+}
+.dp-bar-label {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: #334155;
+    margin-bottom: 6px;
+}
+.dp-bar-track {
+    width: 100%;
+    height: 10px;
+    background: #f1f5f9;
+    border-radius: 999px;
+    overflow: hidden;
+}
+.dp-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #10b981, #059669);
+    animation: dpFillBar 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes dpFillBar {
+    from { width: 0%; }
+}
+
+/* 3. Proceso Paso a Paso (Roadmap) */
+.dp-roadmap {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+    margin: 26px 0;
+}
+.dp-step {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.dp-step:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
+    border-color: #cbd5e1;
+}
+.dp-step-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: #0f172a;
+    color: #ffffff;
+    font-weight: 800;
+    font-size: 14px;
+    border-radius: 50%;
+    margin-bottom: 12px;
+}
+.dp-step h4 {
+    margin: 0 0 6px 0;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
+}
+.dp-step p {
+    margin: 0;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+/* 4. Aviso / Callout a Formulario y WhatsApp */
+.dp-cta-notice {
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-left: 5px solid #16a34a;
+    border-radius: 10px;
+    padding: 18px 22px;
+    margin: 26px 0;
+}
+.dp-cta-notice .dp-badge {
+    display: inline-block;
+    background: #16a34a;
+    color: #ffffff;
+    font-size: 11.5px;
+    font-weight: 700;
+    padding: 2px 8px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+}
+.dp-cta-notice p {
+    margin: 0;
+    font-size: 14px;
+    color: #166534;
+    line-height: 1.6;
+}
+
+/* 5. Tarjeta Final de Conversión con WhatsApp */
+.dp-final-cta {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    padding: 28px 24px;
+    margin: 32px 0;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}

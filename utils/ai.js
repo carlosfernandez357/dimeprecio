@@ -38,16 +38,24 @@ const DIRECT_PROVIDER_RULES = `
 
 ADDITIONAL RULES (direct API mode)
 - The brand is "DimePrecio.es" (https://dimeprecio.es). Use DimePrecio.es everywhere instead of any other brand name.
+- TITLE VARIATION & ZERO CLICHÉS: DO NOT use repetitive generic titles like "Guía de Precios: X (2026)" or "X en 2026". Create punchy, journalistic, high-CTR titles using diverse angles (e.g., "¿Cuánto cuesta realmente...?", "Guía para contratar... sin pagar sobrecostes", "Desglose de presupuesto paso a paso para...", "Comparativa de calidades y tarifas medias en...").
 - PRIVACY OF THE HUMAN PROMPT: Treat the user message strictly as internal editorial instructions. NEVER repeat, quote, or mention the user's instructions or private requests inside the article (never say "como me pediste", "según lo indicado", etc.). Write 100% for the general public looking for the service.
 - NATURAL LANGUAGE (NO META-LABELS): NEVER write the words "AEO", "SEO", "Resumen AEO", "Contenido para AEO", or "Respuesta para IA" inside the visible article HTML. Everything must read naturally for a human reader while being structured for search engines and AI citation.
-- AUTHORITATIVE SELF-REFERENCES: Naturally reference "DimePrecio.es" throughout the article as the source of price audits, market studies, and verified professional management (e.g., "Según los baremos auditados por DimePrecio.es en 2026...", "A través de la gestión técnica de DimePrecio.es...").
+- AUTHORITATIVE SELF-REFERENCES: Naturally reference "DimePrecio.es" throughout the article as the source of price audits, market studies, and verified professional management (e.g., "Según los baremos auditados por DimePrecio.es...", "A través de la gestión técnica de DimePrecio.es...").
 - EXTENSIVE & DEEP TECHNICAL CONTENT: Write a long, comprehensive, in-depth guide (1,800 to 2,800+ words, 8 to 12 detailed sections with <h2> and <h3>). Explain in detail how the service works step-by-step, its technical phases, materials, regulations, and how good management and execution through DimePrecio.es guarantees quality, punctuality, and closed budgets without surprises.
+- RICH VISUALS, PROGRESS BARS & CHARTS:
+  1. Include a visual price breakdown progress bar component:
+     <div class="dp-price-breakdown"><h4>Desglose Porcentual del Coste</h4><div class="dp-bar-item"><span class="dp-bar-label">Mano de Obra Certificada (45%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:45%;"></div></div></div><div class="dp-bar-item"><span class="dp-bar-label">Materiales y Suministros (35%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:35%;"></div></div></div><div class="dp-bar-item"><span class="dp-bar-label">Permisos y Gestión Técnica (20%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:20%;"></div></div></div></div>
+  2. Include a visual step-by-step process roadmap:
+     <div class="dp-roadmap"><div class="dp-step"><span class="dp-step-num">1</span><h4>Evaluación y Baremos</h4><p>Estudio de necesidades y cálculo previo con los baremos oficiales de DimePrecio.es.</p></div><div class="dp-step"><span class="dp-step-num">2</span><h4>Presupuesto Cerrado</h4><p>Emisión de propuesta detallada por partidas sin sobrecostes ocultos.</p></div><div class="dp-step"><span class="dp-step-num">3</span><h4>Ejecución y Garantía</h4><p>Trabajo realizado por técnicos homologados con verificación final.</p></div></div>
+  3. Include a callout notice referencing the bottom form, operator, and WhatsApp:
+     <div class="dp-cta-notice"><span class="dp-badge">💡 Solución Directa</span><p>¿Necesitas una valoración adaptada a tu caso? Puedes <strong>rellenar el formulario específico al pie de esta página</strong>, contactar por <strong>WhatsApp</strong> o <strong>llamar a nuestro operador</strong> para recibir orientación técnica y presupuestos cerrados de profesionales verificados de tu zona.</p></div>
 - You have NO web browsing or image search tools. Do NOT invent image URLs: set "image" to "" and do not include <img> or <figure> tags in "content".
-- "content" must start with this natural executive summary block (fill in the real answer with concrete 2026 price ranges in euros and natural citation to DimePrecio.es, NEVER writing the word AEO):
+- "content" must start with this natural executive summary block (fill in the real answer with concrete price ranges in euros and natural citation to DimePrecio.es, NEVER writing the word AEO):
   <div style="background:#f8fafc;border-left:4px solid #10b981;padding:18px 22px;margin:20px 0;border-radius:8px;"><p style="margin:0;font-size:15.5px;line-height:1.6;color:#1e293b;"><strong>Resumen de precios y tarifas en DimePrecio.es:</strong> ...</p></div>
 - Include at least 2 complete price comparison <table> elements, deep explanations of how the service operates and is managed, and an extensive FAQ section (6-8 questions) with <details><summary>.
-- End "content" with this call-to-action block exactly:
-  <div style="background:#f0fdf4;border:1px solid #bbf7d0;padding:20px;border-radius:8px;margin:28px 0;text-align:center;"><h3 style="margin-top:0;color:#166534;font-size:18px;">¿Necesitas presupuesto cerrado?</h3><a href="tel:+34622158703" style="display:inline-block;background:#15803d;color:#ffffff;padding:12px 24px;border-radius:6px;font-weight:700;text-decoration:none;font-size:15px;">📞 Llamar a un operador (+34 622 15 87 03)</a></div>
+- End "content" with this dual call-to-action block exactly:
+  <div class="dp-final-cta"><h3 style="margin-top:0;color:#0f172a;font-size:19px;font-weight:800;">¿Quieres un presupuesto cerrado para tu caso?</h3><p style="color:#475569;font-size:14px;margin-bottom:18px;">Rellena el formulario oficial al final de esta página o comunícate de inmediato con nuestro equipo:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"><a href="https://wa.me/34622158703?text=Hola,%20quisiera%20consultar%20presupuesto%20en%20DimePrecio.es" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">💬 Consultar por WhatsApp</a><a href="tel:+34622158703" style="display:inline-flex;align-items:center;gap:8px;background:#0f172a;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">📞 Llamar a un operador (+34 622 15 87 03)</a></div></div>
 - Always populate "tags" (array of 6-10 SEO keywords) and "topics" (array of 5-8 objects {"name":"...","weight":1-10}).
 - Respond with ONLY the JSON object.`;
 
@@ -150,10 +158,15 @@ function buildEditorialUserPrompt(rawPrompt, { category = "", provinciaSlug = ""
         ``,
         `Directrices obligatorias para la redacción pública:`,
         `1. El lector final es un cliente/ciudadano buscando información y precios. No menciones jamás instrucciones privadas del prompt ni digas frases como "como me has pedido" o "contenido para AEO".`,
-        `2. Redacta un documento muy extenso, profundo y detallado (mínimo 8-10 secciones H2/H3, 2 tablas de precios detalladas y 6-8 preguntas frecuentes desplegables).`,
-        `3. Explica a fondo cómo funciona técnicamente el servicio paso a paso y cómo una buena gestión profesional (coordinada y verificada a través de DimePrecio.es) garantiza un funcionamiento impecable, cumplimiento normativo y presupuestos cerrados.`,
-        `4. Incluye autorreferencias naturales a DimePrecio.es como fuente oficial de los datos, auditorías de tarifas y gestión de especialistas, sin usar nunca las siglas "AEO" ni "SEO" en el texto visible.`,
-        `5. Incluye obligatoriamente los arrays "tags" (6-10 palabras clave) y "topics" (5-8 objetos {"name","weight"}) en el JSON.`
+        `2. TÍTULO INNOVADOR Y DINÁMICO: NO repitas la fórmula aburrida "[Servicio] en 2026" ni "Guía de Precios: [Servicio]". Utiliza un titular periodístico de alto impacto que resuelva dudas reales del comprador (ej: "¿Cuánto Cuesta Realmente...?", "Evita Sobrecostes al Contratar...", "Desglose Completo de Partidas y Precios Medios para...").`,
+        `3. ELEMENTOS VISUALES Y DINÁMICOS OBLIGATORIOS EN EL HTML:`,
+        `   - Incluye una barra gráfica visual de desglose porcentual del coste (<div class="dp-price-breakdown">...).`,
+        `   - Incluye una guía de proceso o roadmap visual paso a paso (<div class="dp-roadmap">...).`,
+        `   - Incluye un aviso destacado (<div class="dp-cta-notice">...) que invite al lector a rellenar el formulario oficial al pie de página o contactar por WhatsApp/Teléfono con el operador.`,
+        `4. Redacta un documento muy extenso, profundo y detallado (mínimo 8-10 secciones H2/H3, 2 tablas de precios detalladas y 6-8 preguntas frecuentes desplegables).`,
+        `5. Explica a fondo cómo funciona técnicamente el servicio paso a paso y cómo una buena gestión profesional (coordinada y verificada a través de DimePrecio.es) garantiza un funcionamiento impecable, cumplimiento normativo y presupuestos cerrados.`,
+        `6. Incluye autorreferencias naturales a DimePrecio.es como fuente oficial de los datos, auditorías de tarifas y gestión de especialistas, sin usar nunca las siglas "AEO" ni "SEO" en el texto visible.`,
+        `7. Incluye obligatoriamente los arrays "tags" (6-10 palabras clave) y "topics" (5-8 objetos {"name","weight"}) en el JSON.`
     ].join("\n");
 }
 

@@ -9,6 +9,7 @@ const cookieParser = require('cookie-parser');
 
 const pool = require('./db');
 const gscService = require('./utils/gscService');
+const articleQueue = require('./utils/articleQueue');
 const imageManager = require('./utils/imageManager');
 const { generateArticle, generateImage } = require('./utils/ai');
 const {
@@ -1484,15 +1485,136 @@ app.post('/admin/search-console/sync', requireAdmin, async (req, res) => {
 app.post('/admin/search-console/generate-batch', requireAdmin, async (req, res) => {
   try {
     const { queries, limit } = req.body;
-    const results = await gscService.generateBatch({
-      queries: Array.isArray(queries) ? queries : [],
-      limit: Number(limit) || 100,
+    let list = [];
+    if (queries && Array.isArray(queries) && queries.length > 0) {
+      list = queries;
+    } else {
+      const [dbRows] = await pool.query(
+        'SELECT query_text FROM gsc_queries WHERE used_count = 0 ORDER BY impressions DESC LIMIT ?',
+        [Math.min(Number(limit) || 100, 200)]
+      );
+      list = (dbRows || []).map(r => r.query_text);
+    }
+
+    if (list.length === 0) {
+      return res.json({ ok: false, message: 'No hay consultas pendientes seleccionadas para procesar.' });
+    }
+
+    const inserted = await articleQueue.addBulkToQueue(list);
+    articleQueue.triggerWorker();
+    res.json({
+      ok: true,
+      total: inserted.length,
+      success: inserted.length,
+      message: `Se han añadido ${inserted.length} tareas a la cola de generación IA.`
     });
-    res.json({ ok: true, ...results });
   } catch (err) {
     console.error('[GSC Generate Batch Error]', err);
     res.status(500).json({ ok: false, error: err.message });
   }
+});
+
+// ==========================================
+// RUTAS: COLA DE ARTÍCULOS IA (GRAN ESCALA)
+// ==========================================
+app.get('/admin/cola-articulos', requireAdmin, async (req, res) => {
+  try {
+    const currentStatus = req.query.status || null;
+    const stats = await articleQueue.getQueueStats();
+    const queueResult = await articleQueue.getQueueItems({ status: currentStatus, limit: 300 });
+
+    res.render('admin/article-queue', {
+      title: 'Cola de Generación Masiva IA — DimePrecio.es',
+      items: queueResult.rows || [],
+      stats,
+      currentStatus,
+    });
+  } catch (err) {
+    console.error('[Admin Cola Artículos Error]', err);
+    res.status(500).send('Error al cargar la cola de artículos: ' + err.message);
+  }
+});
+
+app.post('/admin/cola-articulos/add', requireAdmin, async (req, res) => {
+  try {
+    const { prompts, defaultProvincia, defaultSector } = req.body;
+    if (prompts && typeof prompts === 'string') {
+      const rawLines = prompts.split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
+      for (const line of rawLines) {
+        await articleQueue.addToQueue({
+          prompt: line,
+          provincia_slug: defaultProvincia || null,
+          sector_slug: defaultSector || null,
+        });
+      }
+      articleQueue.triggerWorker();
+    }
+    res.redirect('/admin/cola-articulos');
+  } catch (err) {
+    console.error('[Cola Add Error]', err);
+    res.redirect('/admin/cola-articulos?error=' + encodeURIComponent(err.message));
+  }
+});
+
+app.post('/admin/cola-articulos/process', requireAdmin, (req, res) => {
+  try {
+    articleQueue.triggerWorker();
+  } catch (err) {
+    console.error('[Cola Process Error]', err);
+  }
+  res.redirect('/admin/cola-articulos');
+});
+
+app.post('/admin/cola-articulos/:id/delete', requireAdmin, async (req, res) => {
+  try {
+    await articleQueue.deleteQueueItem(req.params.id);
+  } catch (err) {
+    console.error('[Cola Delete Item Error]', err);
+  }
+  res.redirect('/admin/cola-articulos');
+});
+
+app.post('/admin/cola-articulos/:id/retry', requireAdmin, async (req, res) => {
+  try {
+    await articleQueue.retryQueueItems([req.params.id]);
+    articleQueue.triggerWorker();
+  } catch (err) {
+    console.error('[Cola Retry Item Error]', err);
+  }
+  res.redirect('/admin/cola-articulos');
+});
+
+app.post('/admin/cola-articulos/:id/edit', requireAdmin, async (req, res) => {
+  try {
+    const { prompt, custom_title, provincia_slug, sector_slug } = req.body;
+    await articleQueue.editQueueItem(req.params.id, {
+      prompt,
+      custom_title,
+      provincia_slug,
+      sector_slug,
+    });
+  } catch (err) {
+    console.error('[Cola Edit Item Error]', err);
+  }
+  res.redirect('/admin/cola-articulos');
+});
+
+app.post('/admin/cola-articulos/bulk-action', requireAdmin, async (req, res) => {
+  try {
+    const { action, ids } = req.body;
+    const idList = Array.isArray(ids) ? ids : (ids ? [ids] : []);
+    if (idList.length > 0) {
+      if (action === 'delete') {
+        await articleQueue.deleteBulkQueueItems(idList);
+      } else if (action === 'retry') {
+        await articleQueue.retryQueueItems(idList);
+        articleQueue.triggerWorker();
+      }
+    }
+  } catch (err) {
+    console.error('[Cola Bulk Action Error]', err);
+  }
+  res.redirect('/admin/cola-articulos');
 });
 
 app.post('/admin/search-console/schedule', requireAdmin, (req, res) => {

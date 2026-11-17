@@ -1,0 +1,390 @@
+<%- include("partials/header") %>
+<%- include("partials/sidebar") %>
+
+<main class="admin-main" style="padding: 24px; max-width: 1400px; margin: 0 auto;">
+    <!-- CABECERA -->
+    <div class="admin-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
+        <div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <h1 style="font-size: 24px; font-weight: 700; color: #1e293b; margin: 0;">⚡ Cola de Generación Masiva IA</h1>
+                <span style="display: inline-flex; align-items: center; gap: 6px; background: #eff6ff; color: #1d4ed8; font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 999px; border: 1px solid #bfdbfe;">
+                    <span style="width: 8px; height: 8px; background: #3b82f6; border-radius: 50%; display: inline-block;"></span>
+                    Gran Escala con Anti-Mismatch & Variedad
+                </span>
+            </div>
+            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">
+                Monitorea, edita, filtra y procesa en segundo plano la creación masiva de artículos. Los títulos se generan con ángulos periodísticos variados y las ciudades/sectores se sincronizan automáticamente.
+            </p>
+        </div>
+
+        <!-- ACCIONES SUPERIORES -->
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button type="button" onclick="document.getElementById('addManualModal').style.display='flex'" style="display: inline-flex; align-items: center; gap: 6px; background: #ffffff; color: #0f172a; border: 1px solid #cbd5e1; padding: 9px 15px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+                ➕ Añadir Tarea a la Cola
+            </button>
+            <form method="POST" action="/admin/cola-articulos/process" style="margin:0;">
+                <button type="submit" style="display: inline-flex; align-items: center; gap: 6px; background: #0f172a; color: #ffffff; border: none; padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    ▶️ Procesar Pendientes Ahora
+                </button>
+            </form>
+            <a href="/admin/cola-articulos" style="display: inline-flex; align-items: center; gap: 6px; background: #f1f5f9; color: #334155; text-decoration: none; padding: 9px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; border: 1px solid #e2e8f0;">
+                🔄 Actualizar Vista
+            </a>
+        </div>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS DE LA COLA -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #64748b; font-weight: 700; text-transform: uppercase;">Total en Cola</div>
+            <div style="font-size: 30px; font-weight: 800; color: #0f172a; margin-top: 4px;">
+                <%= Number(stats.total || 0).toLocaleString() %>
+            </div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 2px;">Artículos registrados</div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #fed7aa; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #ea580c; font-weight: 700; text-transform: uppercase;">Pendientes</div>
+            <div style="font-size: 30px; font-weight: 800; color: #ea580c; margin-top: 4px;">
+                <%= Number(stats.pending || 0).toLocaleString() %>
+            </div>
+            <div style="font-size: 12px; color: #9a3412; margin-top: 2px;">En espera de procesamiento</div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #bbf7d0; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #16a34a; font-weight: 700; text-transform: uppercase;">Completados</div>
+            <div style="font-size: 30px; font-weight: 800; color: #16a34a; margin-top: 4px;">
+                <%= Number(stats.completed || 0).toLocaleString() %>
+            </div>
+            <div style="font-size: 12px; color: #166534; margin-top: 2px;">Publicados con éxito</div>
+        </div>
+
+        <div style="background: #fff; border: 1px solid #fecaca; border-radius: 12px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+            <div style="font-size: 12px; color: #dc2626; font-weight: 700; text-transform: uppercase;">Con Errores</div>
+            <div style="font-size: 30px; font-weight: 800; color: #dc2626; margin-top: 4px;">
+                <%= Number(stats.failed || 0).toLocaleString() %>
+            </div>
+            <div style="font-size: 12px; color: #991b1b; margin-top: 2px;">Listos para reintentar</div>
+        </div>
+    </div>
+
+    <!-- BARRA DE FILTROS Y ACCIONES EN LOTE -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <span style="font-size: 13px; font-weight: 600; color: #475569;">Filtrar por estado:</span>
+            <a href="/admin/cola-articulos" style="padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; text-decoration: none; <%= (!currentStatus) ? 'background:#0f172a;color:#fff;' : 'background:#f1f5f9;color:#475569;' %>">
+                Todos (<%= stats.total %>)
+            </a>
+            <a href="/admin/cola-articulos?status=pending" style="padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; text-decoration: none; <%= (currentStatus === 'pending') ? 'background:#ea580c;color:#fff;' : 'background:#f1f5f9;color:#475569;' %>">
+                Pendientes (<%= stats.pending %>)
+            </a>
+            <a href="/admin/cola-articulos?status=completed" style="padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; text-decoration: none; <%= (currentStatus === 'completed') ? 'background:#16a34a;color:#fff;' : 'background:#f1f5f9;color:#475569;' %>">
+                Completados (<%= stats.completed %>)
+            </a>
+            <a href="/admin/cola-articulos?status=failed" style="padding: 5px 12px; border-radius: 6px; font-size: 12.5px; font-weight: 600; text-decoration: none; <%= (currentStatus === 'failed') ? 'background:#dc2626;color:#fff;' : 'background:#f1f5f9;color:#475569;' %>">
+                Errores (<%= stats.failed %>)
+            </a>
+        </div>
+
+        <!-- ACCIONES EN LOTE -->
+        <form id="bulkForm" method="POST" action="/admin/cola-articulos/bulk-action" style="display: flex; align-items: center; gap: 8px; margin: 0;">
+            <input type="hidden" name="action" id="bulkActionInput" value="">
+            <span id="selectedCountText" style="font-size: 12.5px; color: #64748b; font-weight: 600;">0 seleccionados</span>
+            <button type="button" onclick="executeBulkAction('retry')" id="bulkRetryBtn" disabled style="background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; opacity: 0.5;">
+                🔄 Reintentar seleccionados
+            </button>
+            <button type="button" onclick="executeBulkAction('delete')" id="bulkDeleteBtn" disabled style="background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; opacity: 0.5;">
+                🗑️ Borrar seleccionados
+            </button>
+        </form>
+    </div>
+
+    <!-- TABLA DE ARTÍCULOS EN COLA -->
+    <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13.5px;">
+            <thead>
+                <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569; font-size: 12px; font-weight: 700; text-transform: uppercase;">
+                    <th style="padding: 12px 16px; width: 40px; text-align: center;">
+                        <input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this)" style="cursor: pointer; width: 16px; height: 16px;">
+                    </th>
+                    <th style="padding: 12px 16px; width: 60px;">ID</th>
+                    <th style="padding: 12px 16px;">Tema / Búsqueda Original</th>
+                    <th style="padding: 12px 16px;">Sector</th>
+                    <th style="padding: 12px 16px;">Provincia</th>
+                    <th style="padding: 12px 16px;">Estado</th>
+                    <th style="padding: 12px 16px;">Resultado / Enlace</th>
+                    <th style="padding: 12px 16px; text-align: right;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (!items || items.length === 0) { %>
+                    <tr>
+                        <td colspan="8" style="padding: 40px; text-align: center; color: #94a3b8;">
+                            <div style="font-size: 32px; margin-bottom: 8px;">📭</div>
+                            <div style="font-weight: 600; color: #475569; font-size: 15px;">No hay tareas en esta vista</div>
+                            <div style="font-size: 13px; margin-top: 4px;">Puedes añadir nuevos temas o importar búsquedas desde Search Console.</div>
+                        </td>
+                    </tr>
+                <% } else { %>
+                    <% items.forEach(function(item) { %>
+                        <tr style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 14px 16px; text-align: center;">
+                                <input type="checkbox" name="ids[]" form="bulkForm" value="<%= item.id %>" class="item-checkbox" onchange="updateSelectedCount()" style="cursor: pointer; width: 16px; height: 16px;">
+                            </td>
+                            <td style="padding: 14px 16px; font-weight: 700; color: #64748b;">
+                                #<%= item.id %>
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <div style="font-weight: 700; color: #0f172a; font-size: 14px;">
+                                    <%= item.prompt %>
+                                </div>
+                                <% if (item.custom_title) { %>
+                                    <div style="font-size: 12px; color: #475569; margin-top: 3px; display: inline-flex; align-items: center; gap: 4px;">
+                                        <span style="color:#0284c7;">📌 Título:</span> <%= item.custom_title %>
+                                    </div>
+                                <% } %>
+                                <div style="font-size: 11.5px; color: #94a3b8; margin-top: 2px;">
+                                    Creado: <%= new Date(item.created_at).toLocaleString("es-ES") %>
+                                </div>
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <span style="background: #f1f5f9; color: #334155; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block;">
+                                    <%= item.sector_nombre || item.sector_slug || "Sin sector" %>
+                                </span>
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <span style="background: #ecfdf5; color: #047857; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-block;">
+                                    📍 <%= item.provincia_nombre || item.provincia_slug || "Madrid" %>
+                                </span>
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <% if (item.status === 'completed') { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; background: #dcfce7; color: #15803d; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;">
+                                        <span style="width: 6px; height: 6px; background: #22c55e; border-radius: 50%;"></span> Completado
+                                    </span>
+                                <% } else if (item.status === 'processing') { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; background: #dbeafe; color: #1d4ed8; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;">
+                                        <span style="width: 6px; height: 6px; background: #3b82f6; border-radius: 50%;"></span> Procesando
+                                    </span>
+                                <% } else if (item.status === 'failed') { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; background: #fee2e2; color: #b91c1c; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;" title="<%= item.error_message || '' %>">
+                                        <span style="width: 6px; height: 6px; background: #ef4444; border-radius: 50%;"></span> Fallido
+                                    </span>
+                                <% } else { %>
+                                    <span style="display: inline-flex; align-items: center; gap: 5px; background: #ffedd5; color: #c2410c; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 700;">
+                                        <span style="width: 6px; height: 6px; background: #f97316; border-radius: 50%;"></span> Pendiente
+                                    </span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 14px 16px;">
+                                <% if (item.post_id) { %>
+                                    <a href="/articulo/<%= item.post_slug || item.post_id %>" target="_blank" style="display: inline-flex; align-items: center; gap: 5px; color: #0284c7; font-weight: 600; text-decoration: none; font-size: 12.5px;">
+                                        Ver Artículo ↗
+                                    </a>
+                                <% } else if (item.error_message) { %>
+                                    <div style="color: #dc2626; font-size: 11.5px; max-width: 220px; word-break: break-word;">
+                                        <%= item.error_message %>
+                                    </div>
+                                <% } else { %>
+                                    <span style="color: #94a3b8; font-size: 12px;">En espera</span>
+                                <% } %>
+                            </td>
+                            <td style="padding: 14px 16px; text-align: right;">
+                                <div style="display: inline-flex; align-items: center; gap: 6px;">
+                                    <button
+                                        type="button"
+                                        onclick="openEditModal(<%= JSON.stringify(item) %>)"
+                                        style="background: #f8fafc; border: 1px solid #cbd5e1; padding: 5px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #334155; cursor: pointer;"
+                                        title="Editar detalles antes de procesar"
+                                    >
+                                        ✏️ Editar
+                                    </button>
+                                    <% if (item.status === 'failed' || item.status === 'completed') { %>
+                                        <form method="POST" action="/admin/cola-articulos/<%= item.id %>/retry" style="margin:0;">
+                                            <button type="submit" style="background: #e0f2fe; border: 1px solid #bae6fd; padding: 5px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #0369a1; cursor: pointer;" title="Volver a poner en pendiente">
+                                                🔄
+                                            </button>
+                                        </form>
+                                    <% } %>
+                                    <form method="POST" action="/admin/cola-articulos/<%= item.id %>/delete" style="margin:0;" onsubmit="return confirm('¿Seguro que deseas eliminar esta tarea de la cola?');">
+                                        <button type="submit" style="background: #fee2e2; border: 1px solid #fecaca; padding: 5px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; color: #b91c1c; cursor: pointer;" title="Eliminar">
+                                            🗑️
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</main>
+
+<!-- MODAL: AÑADIR MANUALMENTE A LA COLA -->
+<div id="addManualModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:14px; max-width:540px; width:100%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; font-size:18px; font-weight:700; color:#0f172a;">➕ Añadir Tarea o Lote a la Cola</h3>
+            <button type="button" onclick="document.getElementById('addManualModal').style.display='none'" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">✕</button>
+        </div>
+
+        <form method="POST" action="/admin/cola-articulos/add">
+            <div style="margin-bottom:14px;">
+                <label style="display:block; font-size:13px; font-weight:600; color:#334155; margin-bottom:5px;">
+                    Temas o Búsquedas (1 por línea o separado por comas):
+                </label>
+                <textarea name="prompts" rows="4" required placeholder="Ej: reformas de baños pequeños en barcelona&#10;cuanto cuesta pintar un piso en valencia&#10;precio instalacion fotovoltaica bilbao" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:10px; font-size:13.5px; box-sizing:border-box;"></textarea>
+                <div style="font-size:12px; color:#64748b; margin-top:4px;">
+                    El detector semántico identificará la provincia y el sector exacto de cada línea automáticamente.
+                </div>
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:18px;">
+                <div>
+                    <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                        Provincia por defecto (opcional):
+                    </label>
+                    <select name="defaultProvincia" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px;">
+                        <option value="">Auto-detectar por texto</option>
+                        <% (typeof allLocations !== 'undefined' ? allLocations : []).forEach(function(p) { %>
+                            <option value="<%= p.slug %>"><%= p.nombre %></option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                        Sector por defecto (opcional):
+                    </label>
+                    <select name="defaultSector" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px;">
+                        <option value="">Auto-detectar por texto</option>
+                        <% (typeof allSectors !== 'undefined' ? allSectors : []).forEach(function(s) { %>
+                            <option value="<%= s.slug %>"><%= s.nombre %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="document.getElementById('addManualModal').style.display='none'" style="background:#f1f5f9; color:#475569; border:none; padding:9px 16px; border-radius:8px; font-weight:600; cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="submit" style="background:#0f172a; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+                    Añadir a la Cola
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: EDITAR TAREA DE LA COLA -->
+<div id="editQueueModal" style="display:none; position:fixed; inset:0; z-index:10000; background:rgba(15,23,42,0.6); backdrop-filter:blur(3px); align-items:center; justify-content:center; padding:16px;">
+    <div style="background:#fff; border-radius:14px; max-width:540px; width:100%; padding:24px; box-shadow:0 20px 40px rgba(0,0,0,0.25);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <h3 style="margin:0; font-size:18px; font-weight:700; color:#0f172a;">✏️ Editar Elemento de la Cola</h3>
+            <button type="button" onclick="document.getElementById('editQueueModal').style.display='none'" style="background:none; border:none; font-size:20px; color:#94a3b8; cursor:pointer;">✕</button>
+        </div>
+
+        <form id="editQueueForm" method="POST" action="">
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                    Tema o Búsqueda:
+                </label>
+                <input type="text" id="editPromptInput" name="prompt" required style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px; box-sizing:border-box;">
+            </div>
+
+            <div style="margin-bottom:12px;">
+                <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                    Título Personalizado (Opcional - dejar vacío para autogeneración variada):
+                </label>
+                <input type="text" id="editCustomTitleInput" name="custom_title" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px; box-sizing:border-box;">
+            </div>
+
+            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom:18px;">
+                <div>
+                    <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                        Provincia / Zona:
+                    </label>
+                    <select id="editProvinciaSelect" name="provincia_slug" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px;">
+                        <% (typeof allLocations !== 'undefined' ? allLocations : []).forEach(function(p) { %>
+                            <option value="<%= p.slug %>"><%= p.nombre %></option>
+                        <% }) %>
+                    </select>
+                </div>
+
+                <div>
+                    <label style="display:block; font-size:12.5px; font-weight:600; color:#334155; margin-bottom:4px;">
+                        Sector / Especialidad:
+                    </label>
+                    <select id="editSectorSelect" name="sector_slug" style="width:100%; border:1px solid #cbd5e1; border-radius:8px; padding:8px 10px; font-size:13px;">
+                        <% (typeof allSectors !== 'undefined' ? allSectors : []).forEach(function(s) { %>
+                            <option value="<%= s.slug %>"><%= s.nombre %></option>
+                        <% }) %>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="document.getElementById('editQueueModal').style.display='none'" style="background:#f1f5f9; color:#475569; border:none; padding:9px 16px; border-radius:8px; font-weight:600; cursor:pointer;">
+                    Cancelar
+                </button>
+                <button type="submit" style="background:#0f172a; color:#fff; border:none; padding:9px 18px; border-radius:8px; font-weight:700; cursor:pointer;">
+                    Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleSelectAll(master) {
+    const boxes = document.querySelectorAll('.item-checkbox');
+    boxes.forEach(b => b.checked = master.checked);
+    updateSelectedCount();
+}
+
+function updateSelectedCount() {
+    const checked = document.querySelectorAll('.item-checkbox:checked');
+    const count = checked.length;
+    document.getElementById('selectedCountText').innerText = count + ' seleccionados';
+    const retryBtn = document.getElementById('bulkRetryBtn');
+    const deleteBtn = document.getElementById('bulkDeleteBtn');
+    if (count > 0) {
+        retryBtn.disabled = false;
+        retryBtn.style.opacity = '1';
+        deleteBtn.disabled = false;
+        deleteBtn.style.opacity = '1';
+    } else {
+        retryBtn.disabled = true;
+        retryBtn.style.opacity = '0.5';
+        deleteBtn.disabled = true;
+        deleteBtn.style.opacity = '0.5';
+    }
+}
+
+function executeBulkAction(action) {
+    const checked = document.querySelectorAll('.item-checkbox:checked');
+    if (checked.length === 0) return;
+    if (action === 'delete' && !confirm('¿Seguro que deseas eliminar los ' + checked.length + ' elementos seleccionados?')) {
+        return;
+    }
+    document.getElementById('bulkActionInput').value = action;
+    document.getElementById('bulkForm').submit();
+}
+
+function openEditModal(item) {
+    document.getElementById('editQueueForm').action = '/admin/cola-articulos/' + item.id + '/edit';
+    document.getElementById('editPromptInput').value = item.prompt || '';
+    document.getElementById('editCustomTitleInput').value = item.custom_title || '';
+    if (item.provincia_slug) {
+        document.getElementById('editProvinciaSelect').value = item.provincia_slug;
+    }
+    if (item.sector_slug) {
+        document.getElementById('editSectorSelect').value = item.sector_slug;
+    }
+    document.getElementById('editQueueModal').style.display = 'flex';
+}
+</script>
+
+<%- include("partials/footer") %>
