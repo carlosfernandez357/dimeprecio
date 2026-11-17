@@ -2,3 +2,6 @@ node_modules/
 .abacus.donotdelete
 .env
 google-analytics.json
+google-search-console.json
+*service-account*.json
+*credentials*.json

@@ -8,6 +8,7 @@ const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 
 const pool = require('./db');
+const gscService = require('./utils/gscService');
 const imageManager = require('./utils/imageManager');
 const { generateArticle, generateImage } = require('./utils/ai');
 const {
@@ -1427,6 +1428,35 @@ app.get('/admin/live', requireAdmin, (req, res) => {
     title: 'Visitantes en Vivo — DimePrecio.es',
     visitors: Array.from(activeVisitors.values()),
   });
+});
+
+app.get('/admin/search-console', requireAdmin, async (req, res) => {
+  try {
+    const days = Number(req.query.days) || 7;
+    const dimension = req.query.dimension === 'page' ? 'page' : 'query';
+    const limit = Number(req.query.limit) || 100;
+
+    const data = await gscService.getSearchPerformance({ days, dimension, limit });
+
+    res.render('admin/search-console', {
+      title: 'Búsquedas Google (Search Console) — DimePrecio.es',
+      data,
+    });
+  } catch (err) {
+    console.error('[Search Console Error]', err);
+    res.render('admin/search-console', {
+      title: 'Búsquedas Google (Search Console) — DimePrecio.es',
+      data: {
+        ok: false,
+        siteUrl: 'sc-domain:dimeprecio.es',
+        dateRange: { startDate: '', endDate: '', days: 7 },
+        totals: { totalClicks: 0, totalImpressions: 0, avgCtr: '0.00', avgPosition: '0.0', totalRows: 0 },
+        dimension: 'query',
+        rows: [],
+        error: err.message,
+      },
+    });
+  }
 });
 
 app.get('/admin/articles', requireAdmin, async (req, res) => {

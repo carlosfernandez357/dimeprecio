@@ -424,6 +424,28 @@ tinymce.init({
     plugins: ["lists", "link", "image", "table", "code", "fullscreen", "preview"],
     toolbar: "undo redo | styles | bold italic underline | alignleft aligncenter alignright | bullist numlist | link image table | code fullscreen preview"
 });
+
+// Auto-rellenar desde Search Console si viene ?topic=...
+(function() {
+    var params = new URLSearchParams(window.location.search);
+    var topic = params.get("topic");
+    if (topic) {
+        var aiPrompt = document.getElementById("aiPrompt");
+        if (aiPrompt) {
+            aiPrompt.value = topic;
+            aiPrompt.style.border = "2px solid #3b82f6";
+        }
+        var title = document.getElementById("title");
+        if (title && !title.value) {
+            var cap = topic.charAt(0).toUpperCase() + topic.slice(1);
+            title.value = cap + ": Precios y Guía (2026)";
+        }
+        var slug = document.getElementById("slug");
+        if (slug && !slug.value) {
+            slug.value = topic.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") + "-2026";
+        }
+    }
+})();
 </script>
 
 <%- include("partials/footer") %>
