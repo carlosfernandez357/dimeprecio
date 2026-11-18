@@ -134,121 +134,8 @@ function buildInitialStore() {
     };
   }
 
-  // Solicitudes de presupuesto de demostración (enviadas directamente al Agente en Admin, sin respuesta IA al usuario)
-  const quote_requests = [
-    {
-      id: 1,
-      codigo: 'PP-2026-0001',
-      provincia_id: 46,
-      provincia_slug: 'valencia',
-      provincia_nombre: 'Valencia',
-      municipio: 'Valencia Centro (Ruzafa)',
-      sector_id: 1,
-      sector_slug: 'reformas-integrales-banos-cocinas',
-      sector_nombre: 'Reformas Integrales y Baños/Cocinas',
-      anuncio_id: 5,
-      contenido_origen_id: 9,
-      origen_titulo: 'Guía de Precios 2026: Cuánto cuesta Reformas Integrales y Baños/Cocinas en Valencia',
-      nombre_cliente: 'Carlos Martínez',
-      telefono_whatsapp: '654889900',
-      email_opcional: 'carlos.m@ejemplo.es',
-      campos_formulario_json: {
-        tipo_inmueble: 'Vivienda particular / Piso',
-        dimension_alcance: 'Baño de 6 m² (cambiar bañera por plato de ducha)',
-        plazo_deseado: 'Este mes',
-        presupuesto_objetivo_cliente: '1.500 €',
-      },
-      explicacion_cliente: 'Quiero cambiar la bañera actual de 170x70 por un plato de ducha de resina antideslizante a ras de suelo con mampara fija de cristal y grifería termostática este mismo mes en Valencia centro.',
-      archivos_adjuntos: [
-        {
-          originalName: 'croquis-bano-valencia.pdf',
-          filename: 'demo-croquis-bano.pdf',
-          url: '/admin/archivos/forms/demo-croquis-bano.pdf',
-          size: 145200,
-        },
-      ],
-      modelo_negocio_aplicado: 'lead_directo',
-      precio_venta_lead: 25,
-      cuota_zona_mensual: 400,
-      comision_obra_pct: 10,
-      valor_estimado_trabajo: 1500,
-      estado_agente: 'nuevo_en_bandeja', // nuevo_en_bandeja | enviado_profesional | desbloqueado_pagado | en_seguimiento_comision
-      contacto_desbloqueado: false,
-      payment_link: 'https://DimePrecio.es/pago-lead/PP-2026-0001',
-      notas_agente: '',
-      created_at: new Date(Date.now() - 1000 * 60 * 35).toISOString(),
-    },
-    {
-      id: 2,
-      codigo: 'PP-2026-0002',
-      provincia_id: 50,
-      provincia_slug: 'zaragoza',
-      provincia_nombre: 'Zaragoza',
-      municipio: 'Zaragoza (Delicias)',
-      sector_id: 1,
-      sector_slug: 'reformas-integrales-banos-cocinas',
-      sector_nombre: 'Reformas Integrales y Baños/Cocinas',
-      anuncio_id: 10,
-      contenido_origen_id: 17,
-      origen_titulo: 'Guía de Precios 2026: Cuánto cuesta Reformas Integrales y Baños/Cocinas en Zaragoza',
-      nombre_cliente: 'Laura Gómez',
-      telefono_whatsapp: '611223344',
-      email_opcional: 'laura.gomez@ejemplo.es',
-      campos_formulario_json: {
-        tipo_inmueble: 'Vivienda particular / Piso',
-        dimension_alcance: 'Reforma integral piso 85 m² (cocina + 2 baños + suelos)',
-        plazo_deseado: 'En los próximos 15-30 días',
-        presupuesto_objetivo_cliente: '22.000 €',
-      },
-      explicacion_cliente: 'Hemos comprado un piso en Delicias (Zaragoza) de 85 m² y necesitamos reforma integral de cocina, dos baños, electricidad y tarima AC5. Adjunto plano con medidas.',
-      archivos_adjuntos: [],
-      modelo_negocio_aplicado: 'alquiler_zona',
-      precio_venta_lead: 85,
-      cuota_zona_mensual: 400,
-      comision_obra_pct: 12,
-      valor_estimado_trabajo: 22000,
-      estado_agente: 'nuevo_en_bandeja',
-      contacto_desbloqueado: true,
-      payment_link: '',
-      notas_agente: 'Zona alquilada en modalidad Rank & Rent (400 €/mes). Listo para reenviar al socio oficial de Zaragoza.',
-      created_at: new Date(Date.now() - 1000 * 60 * 110).toISOString(),
-    },
-    {
-      id: 3,
-      codigo: 'PP-2026-0003',
-      provincia_id: 28,
-      provincia_slug: 'madrid',
-      provincia_nombre: 'Madrid',
-      municipio: 'Pozuelo de Alarcón',
-      sector_id: 4,
-      sector_slug: 'tejados-cubiertas-impermeabilizaciones',
-      sector_nombre: 'Tejados, Cubiertas e Impermeabilizaciones',
-      anuncio_id: 3,
-      contenido_origen_id: 1,
-      origen_titulo: 'Proyectos Llave en Mano de Tejados y Cubiertas en Madrid',
-      nombre_cliente: 'Comunidad Prop. Avenida Europa',
-      telefono_whatsapp: '699112233',
-      email_opcional: 'presidente@comunidad-pozuelo.es',
-      campos_formulario_json: {
-        tipo_inmueble: 'Comunidad de propietarios',
-        dimension_alcance: 'Cubierta inclinada de teja de 260 m² con aislamiento XPS',
-        plazo_deseado: 'En los próximos 15-30 días',
-        presupuesto_objetivo_cliente: '15.000 €',
-      },
-      explicacion_cliente: 'Necesitamos rehabilitación completa e impermeabilización de cubierta de 260 m² en nuestra comunidad en Pozuelo. Tenemos aprobada derrama y buscamos presupuesto cerrado.',
-      archivos_adjuntos: [],
-      modelo_negocio_aplicado: 'comision_obra',
-      precio_venta_lead: 95,
-      cuota_zona_mensual: 500,
-      comision_obra_pct: 15,
-      valor_estimado_trabajo: 15000,
-      estado_agente: 'en_seguimiento_comision',
-      contacto_desbloqueado: true,
-      payment_link: '',
-      notas_agente: 'Operación a comisión del 15% (15.000 € presupuesto estimado -> 2.250 € comisión DimePrecio.es).',
-      created_at: new Date(Date.now() - 1000 * 60 * 260).toISOString(),
-    },
-  ];
+  // Solicitudes de presupuesto de clientes reales (vacío por defecto, sin datos ficticios)
+  const quote_requests = [];
 
   // Categorías base compatibles con socialsforce
   const categories = [
@@ -362,7 +249,7 @@ function syncEntityToDatabase(table, data) {
           data.notas_agente || ''
         ]
       ).catch(err => {
-        // En local silencioso si MySQL no está accesible
+        console.error('[syncEntityToDatabase pp_quote_requests error]', err.message);
       });
     } else if (table === 'pp_ads') {
       db.query(
@@ -516,6 +403,26 @@ async function syncFromDatabase() {
           keywords: kw,
           formula_precio_base_json: form,
           activo: Boolean(sec.activo),
+        };
+      });
+    }
+
+    // 5. Sincronizar solicitudes de presupuesto reales desde MySQL
+    const [quoteRows] = await db.query("SELECT * FROM pp_quote_requests ORDER BY id DESC");
+    if (Array.isArray(quoteRows)) {
+      s.quote_requests = quoteRows.map(q => {
+        let campos = q.campos_formulario_json;
+        if (typeof campos === 'string') {
+          try { campos = JSON.parse(campos); } catch (e) { campos = {}; }
+        }
+        let archivos = q.archivos_adjuntos_json;
+        if (typeof archivos === 'string') {
+          try { archivos = JSON.parse(archivos); } catch (e) { archivos = []; }
+        }
+        return {
+          ...q,
+          campos_formulario_json: campos || {},
+          archivos_adjuntos: archivos || [],
         };
       });
     }
@@ -1486,7 +1393,7 @@ async function getQuoteRequestsAsync(filters = {}) {
       }
       sql += ' ORDER BY id DESC';
       const [rows] = await db.query(sql, params);
-      if (rows && rows.length > 0) {
+      if (Array.isArray(rows)) {
         return rows.map(q => {
           let campos = q.campos_formulario_json;
           if (typeof campos === 'string') {
