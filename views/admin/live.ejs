@@ -1,8 +1,18 @@
-<%- include("partials/header") %>
-<%- include("partials/sidebar") %>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Visitantes en Vivo — DimePrecio.es</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
 
-<main class="admin-main">
-    <link rel="stylesheet" href="/css/admin.css">
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
 
     <div class="admin-page-header">
         <div>
@@ -306,6 +316,9 @@
             filterClients();
         })();
     </script>
-</main>
+    </main>
+  </div>
 
-<%- include("partials/footer") %>
+  <%- include("partials/footer") %>
+</body>
+</html>

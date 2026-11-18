@@ -1,9 +1,19 @@
-<%- include("partials/header") %>
-<%- include("partials/sidebar") %>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Programación Automática IA — DimePrecio.es' %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+  <link rel="stylesheet" href="/css/rankrent.css">
+</head>
+<body>
+  <%- include("partials/header") %>
 
-<main class="admin-main">
-    <link rel="stylesheet" href="/css/admin.css">
-    <link rel="stylesheet" href="/css/rankrent.css">
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main">
     
     <div class="admin-page-header">
         <div>
@@ -226,4 +236,9 @@ document.querySelectorAll(".btn-run-schedule").forEach(btn => {
 });
 </script>
 
-<%- include("partials/footer") %>
+    </main>
+  </div>
+
+  <%- include("partials/footer") %>
+</body>
+</html>

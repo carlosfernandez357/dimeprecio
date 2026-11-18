@@ -1,7 +1,18 @@
-<%- include("partials/header") %>
-<%- include("partials/sidebar") %>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Cola de Creación IA — DimePrecio.es' %></title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+  <%- include("partials/header") %>
 
-<main class="admin-main" style="padding: 24px; max-width: 1400px; margin: 0 auto;">
+  <div class="admin-layout">
+    <%- include("partials/sidebar") %>
+
+    <main class="admin-main" style="padding: 28px;">
     <!-- CABECERA -->
     <div class="admin-page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 24px;">
         <div>
@@ -387,4 +398,9 @@ function openEditModal(item) {
 }
 </script>
 
-<%- include("partials/footer") %>
+    </main>
+  </div>
+
+  <%- include("partials/footer") %>
+</body>
+</html>
