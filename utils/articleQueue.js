@@ -213,16 +213,18 @@ async function processQueueItem(item) {
     // Sincronizar título y provincia para que jamás choquen
     const rawTitle = item.custom_title || generated.title || semanticMatcher.generateDynamicTitle(text, province.nombre);
     provSlug = semanticMatcher.syncTitleAndProvince(rawTitle, provSlug);
+    const finalProvince = rr.getLocationBySlug(provSlug) || province;
+    const finalSector = rr.getSectorBySlug(secSlug) || sector;
 
     const title = rawTitle;
     const slug = (generated.slug || rr.slugify(text)) + '-' + Date.now().toString(36);
-    const excerpt = generated.excerpt || generated.meta_description || `Guía técnica y precios para ${text} en ${province.nombre} con DimePrecio.es.`;
+    const excerpt = generated.excerpt || generated.meta_description || `Análisis local y precios de ${finalSector.nombre} en ${finalProvince.nombre} en DimePrecio.es.`;
     const content = generated.content || `<p>Información detallada sobre ${text}.</p>`;
     const featured_image = generated.image || imageManager.getRandomFallbackImage(slug);
 
     const [ins] = await pool.query(
-      `INSERT INTO posts (title, slug, excerpt, content, featured_image, image_alt, category_id, author_id, status, is_featured, is_breaking, meta_title, meta_description, keywords, published_at, provincia_slug, sector_slug)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published', 1, 0, ?, ?, ?, NOW(), ?, ?)`,
+      `INSERT INTO posts (title, slug, excerpt, content, featured_image, image_alt, category_id, author_id, status, is_featured, is_breaking, meta_title, meta_description, keywords, published_at, provincia_slug, provincia_nombre, sector_slug, sector_nombre, municipio_tag)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'published', 1, 0, ?, ?, ?, NOW(), ?, ?, ?, ?, ?)`,
       [
         title,
         slug,
@@ -236,7 +238,10 @@ async function processQueueItem(item) {
         generated.meta_description || excerpt,
         generated.keywords || text,
         provSlug,
-        secSlug
+        finalProvince.nombre,
+        secSlug,
+        finalSector.nombre,
+        finalProvince.nombre
       ]
     );
 

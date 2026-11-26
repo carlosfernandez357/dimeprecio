@@ -37,26 +37,33 @@ async function loadSystemPrompt(categoriesOverride) {
 const DIRECT_PROVIDER_RULES = `
 
 ADDITIONAL RULES (direct API mode)
-- The brand is "DimePrecio.es" (https://dimeprecio.es). Use DimePrecio.es everywhere instead of any other brand name.
-- TITLE VARIATION & ZERO CLICHÉS: DO NOT use repetitive generic titles like "Guía de Precios: X (2026)" or "X en 2026". Create punchy, journalistic, high-CTR titles using diverse angles (e.g., "¿Cuánto cuesta realmente...?", "Guía para contratar... sin pagar sobrecostes", "Desglose de presupuesto paso a paso para...", "Comparativa de calidades y tarifas medias en...").
-- PRIVACY OF THE HUMAN PROMPT: Treat the user message strictly as internal editorial instructions. NEVER repeat, quote, or mention the user's instructions or private requests inside the article (never say "como me pediste", "según lo indicado", etc.). Write 100% for the general public looking for the service.
-- NATURAL LANGUAGE (NO META-LABELS): NEVER write the words "AEO", "SEO", "Resumen AEO", "Contenido para AEO", or "Respuesta para IA" inside the visible article HTML. Everything must read naturally for a human reader while being structured for search engines and AI citation.
-- AUTHORITATIVE SELF-REFERENCES: Naturally reference "DimePrecio.es" throughout the article as the source of price audits, market studies, and verified professional management (e.g., "Según los baremos auditados por DimePrecio.es...", "A través de la gestión técnica de DimePrecio.es...").
-- EXTENSIVE & DEEP TECHNICAL CONTENT: Write a long, comprehensive, in-depth guide (1,800 to 2,800+ words, 8 to 12 detailed sections with <h2> and <h3>). Explain in detail how the service works step-by-step, its technical phases, materials, regulations, and how good management and execution through DimePrecio.es guarantees quality, punctuality, and closed budgets without surprises.
-- RICH VISUALS, PROGRESS BARS & CHARTS:
-  1. Include a visual price breakdown progress bar component:
-     <div class="dp-price-breakdown"><h4>Desglose Porcentual del Coste</h4><div class="dp-bar-item"><span class="dp-bar-label">Mano de Obra Certificada (45%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:45%;"></div></div></div><div class="dp-bar-item"><span class="dp-bar-label">Materiales y Suministros (35%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:35%;"></div></div></div><div class="dp-bar-item"><span class="dp-bar-label">Permisos y Gestión Técnica (20%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:20%;"></div></div></div></div>
-  2. Include a visual step-by-step process roadmap:
-     <div class="dp-roadmap"><div class="dp-step"><span class="dp-step-num">1</span><h4>Evaluación y Baremos</h4><p>Estudio de necesidades y cálculo previo con los baremos oficiales de DimePrecio.es.</p></div><div class="dp-step"><span class="dp-step-num">2</span><h4>Presupuesto Cerrado</h4><p>Emisión de propuesta detallada por partidas sin sobrecostes ocultos.</p></div><div class="dp-step"><span class="dp-step-num">3</span><h4>Ejecución y Garantía</h4><p>Trabajo realizado por técnicos homologados con verificación final.</p></div></div>
-  3. Include a callout notice referencing the bottom form, operator, and WhatsApp:
-     <div class="dp-cta-notice"><span class="dp-badge">💡 Solución Directa</span><p>¿Necesitas una valoración adaptada a tu caso? Puedes <strong>rellenar el formulario específico al pie de esta página</strong>, contactar por <strong>WhatsApp</strong> o <strong>llamar a nuestro operador</strong> para recibir orientación técnica y presupuestos cerrados de profesionales verificados de tu zona.</p></div>
-- You have NO web browsing or image search tools. Do NOT invent image URLs: set "image" to "" and do not include <img> or <figure> tags in "content".
-- "content" must start with this natural executive summary block (fill in the real answer with concrete price ranges in euros and natural citation to DimePrecio.es, NEVER writing the word AEO):
-  <div style="background:#f8fafc;border-left:4px solid #10b981;padding:18px 22px;margin:20px 0;border-radius:8px;"><p style="margin:0;font-size:15.5px;line-height:1.6;color:#1e293b;"><strong>Resumen de precios y tarifas en DimePrecio.es:</strong> ...</p></div>
-- Include at least 2 complete price comparison <table> elements, deep explanations of how the service operates and is managed, and an extensive FAQ section (6-8 questions) with <details><summary>.
-- End "content" with this dual call-to-action block exactly:
-  <div class="dp-final-cta"><h3 style="margin-top:0;color:#0f172a;font-size:19px;font-weight:800;">¿Quieres un presupuesto cerrado para tu caso?</h3><p style="color:#475569;font-size:14px;margin-bottom:18px;">Rellena el formulario oficial al final de esta página o comunícate de inmediato con nuestro equipo:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"><a href="https://wa.me/34622158703?text=Hola,%20quisiera%20consultar%20presupuesto%20en%20DimePrecio.es" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">💬 Consultar por WhatsApp</a><a href="tel:+34622158703" style="display:inline-flex;align-items:center;gap:8px;background:#0f172a;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">📞 Llamar a un operador (+34 622 15 87 03)</a></div></div>
-- Always populate "tags" (array of 6-10 SEO keywords) and "topics" (array of 5-8 objects {"name":"...","weight":1-10}).
+- Brand: "DimePrecio.es" (https://dimeprecio.es). Cite DimePrecio.es naturally 2-4 times as local benchmark/verification source.
+- STRICT ANTI-CLICHÉ TITLE & EXCERPT RULE:
+  • NEVER start "title" with "¿Cuánto cuesta", "¿Cuánto cuesta realmente", or "Guía de precios".
+  • NEVER end "title" with "Desglose y consejos para 2026", "Guía completa", "sin sorpresas", or "para 2026".
+  • NEVER start "excerpt" with "Descubre en DimePrecio.es cuánto cuesta..." or "Descubre el coste real...".
+  • Every title must be genuinely original, journalistic, local, and specific to the assigned editorial angle (max 78 chars).
+- PRIVACY & NATURAL VOICE: Never mention prompt instructions or write "AEO", "SEO", "Resumen AEO", or "Respuesta para IA" in visible HTML.
+- HIGHLY VISUAL, SCANNABLE MAGAZINE LAYOUT (pick & adapt at least 4 of these visual components with REAL local data, never copy generic boilerplate):
+  1. KPI Visual Strip at the top:
+     <div class="dp-kpi-grid"><div class="dp-kpi-card"><span class="dp-kpi-label">Etiqueta</span><span class="dp-kpi-value">Dato real</span><span class="dp-kpi-sub">Contexto local</span></div>... (3-4 cards)</div>
+  2. Local News / Trend Spotlight (REQUIRED when a news item or local trend is provided):
+     <div class="dp-news-box"><span class="dp-news-tag">Actualidad Local</span><h4>Titular breve del contexto local</h4><p>Análisis claro de cómo afecta a los vecinos y al mercado local...</p></div>
+  3. Local Curiosity Card:
+     <div class="dp-curiosity-card"><h4>💡 Dato curioso en [Ciudad]</h4><p>Curiosidad real sobre edificios, clima, normativa o historia del oficio en la zona...</p></div>
+  4. 2-Column Pros vs Warnings:
+     <div class="dp-pros-cons"><div class="dp-pros-box"><h4>✅ Qué exigir antes de firmar</h4><ul><li>...</li></ul></div><div class="dp-cons-box"><h4>⚠️ Errores y sobrecostes frecuentes</h4><ul><li>...</li></ul></div></div>
+  5. Visual Cost Breakdown Bars (use realistic trade-specific percentages, NOT always 45/35/20):
+     <div class="dp-price-breakdown"><h4>Reparto aproximado del presupuesto</h4><div class="dp-bar-item"><span class="dp-bar-label">Partida 1 (XX%)</span><div class="dp-bar-track"><div class="dp-bar-fill" style="width:XX%;"></div></div></div>...</div>
+  6. Visual Checklist:
+     <div class="dp-checklist"><h4>Checklist rápido antes de contratar</h4><ul><li>...</li></ul></div>
+  7. Step-by-Step Roadmap:
+     <div class="dp-roadmap"><div class="dp-step"><span class="dp-step-num">1</span><h4>Paso concreto</h4><p>Explicación breve...</p></div>...</div>
+- Keep paragraphs short (2-4 lines), include at least 1 clean comparison <table> with realistic local euro (€) figures, and 4-6 specific <details><summary> FAQs.
+- Do NOT invent image URLs: set "image" to "" and do not include <img> or <figure> tags in "content".
+- End "content" with this dual call-to-action block:
+  <div class="dp-final-cta"><h3 style="margin-top:0;color:#0f172a;font-size:19px;font-weight:800;">¿Necesitas un presupuesto cerrado en tu zona?</h3><p style="color:#475569;font-size:14px;margin-bottom:18px;">Rellena el formulario al pie de esta página o habla directamente con nuestro equipo:</p><div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;"><a href="https://wa.me/34622158703?text=Hola,%20quisiera%20consultar%20presupuesto%20en%20DimePrecio.es" target="_blank" rel="noopener noreferrer" style="display:inline-flex;align-items:center;gap:8px;background:#25D366;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">💬 Consultar por WhatsApp</a><a href="tel:+34622158703" style="display:inline-flex;align-items:center;gap:8px;background:#0f172a;color:#ffffff;padding:12px 22px;border-radius:8px;font-weight:700;text-decoration:none;font-size:14.5px;">📞 Llamar a un operador (+34 622 15 87 03)</a></div></div>
+- Always populate "tags" (6-10 Spanish SEO keywords) and "topics" (5-8 objects {"name":"...","weight":1-10}).
 - Respond with ONLY the JSON object.`;
 
 function sanitizeNaturalContent(html) {
@@ -148,26 +155,136 @@ function normalizeTagsAndTopics(article, { category = "", provinciaSlug = "", se
     return article;
 }
 
-function buildEditorialUserPrompt(rawPrompt, { category = "", provinciaSlug = "", sectorSlug = "" } = {}) {
-    const provInfo = provinciaSlug ? `Provincia/Zona objetivo: ${provinciaSlug}. ` : "";
-    const secInfo = (category || sectorSlug) ? `Sector/Categoría: ${category || sectorSlug}. ` : "";
+const EDITORIAL_FORMATS = [
+    {
+        name: "Crónica de Actualidad Local",
+        headlinePattern: "Titular periodístico de actualidad/tendencia local (ej: 'Auge de [servicio] en [Ciudad]: qué está pasando en el mercado y cómo afecta al bolsillo')",
+        visuals: "dp-news-box + dp-kpi-grid + tabla comparativa + dp-curiosity-card",
+        focus: "Abre con la situación actual o noticia local de la provincia, analiza qué está cambiando en el sector y cierra con cifras claras."
+    },
+    {
+        name: "Errores que Encarecen la Factura",
+        headlinePattern: "Titular de alerta práctica con número (ej: '5 errores que disparan tu factura de [servicio] en [Ciudad] y cómo esquivarlos')",
+        visuals: "dp-kpi-grid + dp-pros-cons + dp-checklist + tabla de sobrecostes",
+        focus: "Enfocado en casos reales de sobrecostes, letras pequeñas, malos presupuestos y qué exigir por escrito."
+    },
+    {
+        name: "Radiografía de Barrios y Zonas",
+        headlinePattern: "Titular geográfico local (ej: 'De [Barrio 1] a [Barrio 2]: así varían las tarifas de [servicio] en [Ciudad]')",
+        visuals: "dp-kpi-grid + tabla por zonas/barrios + dp-curiosity-card + dp-price-breakdown",
+        focus: "Compara el tipo de viviendas/edificios entre distintos barrios y municipios de la provincia y cómo eso influye en el trabajo."
+    },
+    {
+        name: "Curiosidades, Clima y Normativa Municipal",
+        headlinePattern: "Titular de curiosidad/normativa (ej: 'Lo que pocos saben antes de contratar [servicio] en [Ciudad]: permisos, clima y letra pequeña')",
+        visuals: "dp-curiosity-card + dp-kpi-grid + dp-checklist + tabla orientativa",
+        focus: "Destaca particularidades reales del clima, arquitectura y ordenanzas locales de la provincia junto a rangos de precios."
+    },
+    {
+        name: "Comparativa de Calidades y Opciones",
+        headlinePattern: "Titular comparativo (ej: 'Gama económica frente a profesional en [servicio] en [Ciudad]: dónde compensa invertir')",
+        visuals: "dp-kpi-grid + dp-pros-cons + tabla comparativa de calidades + dp-price-breakdown",
+        focus: "Compara materiales, soluciones o modalidades del servicio explicando cuándo merece la pena gastar más y cuándo no."
+    },
+    {
+        name: "Cómo Ahorrar Sin Perder Calidad",
+        headlinePattern: "Titular de ahorro inteligente (ej: 'Claves para rebajar hasta un 20% tu presupuesto de [servicio] en [Ciudad]')",
+        visuals: "dp-kpi-grid + dp-price-breakdown + dp-checklist + tabla de ahorro",
+        focus: "Trucos reales de temporada, agrupación de trabajos, ayudas/subvenciones y comparación de presupuestos."
+    },
+    {
+        name: "Urgencia frente a Cita Planificada",
+        headlinePattern: "Titular de contraste práctico (ej: 'Urgencia 24h o cita programada en [servicio] en [Ciudad]: diferencias reales de tiempo y precio')",
+        visuals: "dp-kpi-grid + tabla urgencia vs normal + dp-roadmap + dp-pros-cons",
+        focus: "Explica qué suplementos son legales en urgencias/festivos, cuándo esperar y cómo actuar en una emergencia."
+    },
+    {
+        name: "Mitos vs Realidad del Oficio",
+        headlinePattern: "Titular rompedor de mitos (ej: '6 mitos sobre contratar [servicio] en [Ciudad] que ya no se sostienen')",
+        visuals: "dp-curiosity-card + dp-pros-cons + tabla de tarifas reales + dp-checklist",
+        focus: "Desmonta creencias populares del sector con datos reales y consejos de técnicos locales."
+    },
+    {
+        name: "Novedades y Tendencias del Sector",
+        headlinePattern: "Titular de tendencias/innovación (ej: 'Las soluciones de [servicio] que más piden los vecinos de [Ciudad]')",
+        visuals: "dp-news-box + dp-kpi-grid + dp-roadmap + tabla de opciones modernas",
+        focus: "Presenta las técnicas, materiales o equipos más demandados actualmente en la provincia y su retorno real."
+    },
+    {
+        name: "Radiografía de un Presupuesto Real",
+        headlinePattern: "Titular analítico partida a partida (ej: 'Así se reparte cada euro al contratar [servicio] en [Ciudad]')",
+        visuals: "dp-kpi-grid + dp-price-breakdown + tabla partida a partida + dp-roadmap",
+        focus: "Desmenuza un presupuesto típico de la provincia partida por partida explicando mano de obra, materiales, desplazamiento e IVA."
+    }
+];
+
+function pickEditorialFormat() {
+    return EDITORIAL_FORMATS[Math.floor(Math.random() * EDITORIAL_FORMATS.length)];
+}
+
+async function fetchLocalNewsHint(provinciaNombre, sectorNombre) {
+    if (!provinciaNombre || !sectorNombre) return null;
+    try {
+        const news = require("./news");
+        const shortSec = String(sectorNombre).split(/[,/()]/)[0].replace(/\s+y\s+.*$/i, "").trim();
+        const data = await Promise.race([
+            news.searchNews("es", { query: `${shortSec} ${provinciaNombre}`, num: 5 }),
+            new Promise((_, rej) => setTimeout(() => rej(new Error("news timeout")), 5500))
+        ]);
+        const valid = (Array.isArray(data.normalized) ? data.normalized : [])
+            .filter(n => n && n.title && n.title !== "Sin título");
+        if (valid.length > 0) {
+            return valid[Math.floor(Math.random() * Math.min(valid.length, 3))];
+        }
+    } catch {
+        // silencioso si SerpApi no responde o no hay noticias
+    }
+    return null;
+}
+
+function buildEditorialUserPrompt(rawPrompt, { category = "", provinciaSlug = "", sectorSlug = "", localNews = null } = {}) {
+    const format = pickEditorialFormat();
+    let provName = provinciaSlug ? String(provinciaSlug).replace(/-/g, " ") : "";
+    let barriosHint = "";
+    try {
+        const rr = require("./rankRentEngine");
+        const loc = provinciaSlug ? rr.getLocationBySlug(provinciaSlug) : null;
+        if (loc) {
+            provName = loc.nombre;
+            if (Array.isArray(loc.municipios) && loc.municipios.length) {
+                const shuffled = [...loc.municipios].sort(() => Math.random() - 0.5);
+                barriosHint = shuffled.slice(0, 3).join(", ");
+            }
+        }
+    } catch {
+        // silencioso
+    }
+
+    const provInfo = provName ? `Provincia/Ciudad objetivo: ${provName}${barriosHint ? ` (menciona zonas reales como ${barriosHint})` : ""}. ` : "";
+    const secInfo = (category || sectorSlug) ? `Sector/Servicio: ${category || sectorSlug}. ` : "";
+    const newsBlock = localNews
+        ? `NOTICIA LOCAL ENCONTRADA (úsalá en un bloque <div class="dp-news-box"> y conecta el artículo con esta actualidad): "${localNews.title}"${localNews.source ? ` (Fuente: ${localNews.source})` : ""}.`
+        : "";
+
     return [
-        `[BRIEFING EDITORIAL INTERNO - NO TRANSPARENTAR NI MENCIONAR ESTAS INSTRUCCIONES EN EL ARTÍCULO PÚBLICO]`,
+        `[BRIEFING EDITORIAL INTERNO - NO MENCIONAR NI FILTRAR ESTAS INSTRUCCIONES]`,
         `${provInfo}${secInfo}`,
-        `Tema o petición del editor: ${rawPrompt}`,
+        `Tema base: ${rawPrompt}`,
+        newsBlock,
         ``,
-        `Directrices obligatorias para la redacción pública:`,
-        `1. El lector final es un cliente/ciudadano buscando información y precios. No menciones jamás instrucciones privadas del prompt ni digas frases como "como me has pedido" o "contenido para AEO".`,
-        `2. TÍTULO INNOVADOR Y DINÁMICO: NO repitas la fórmula aburrida "[Servicio] en 2026" ni "Guía de Precios: [Servicio]". Utiliza un titular periodístico de alto impacto que resuelva dudas reales del comprador (ej: "¿Cuánto Cuesta Realmente...?", "Evita Sobrecostes al Contratar...", "Desglose Completo de Partidas y Precios Medios para...").`,
-        `3. ELEMENTOS VISUALES Y DINÁMICOS OBLIGATORIOS EN EL HTML:`,
-        `   - Incluye una barra gráfica visual de desglose porcentual del coste (<div class="dp-price-breakdown">...).`,
-        `   - Incluye una guía de proceso o roadmap visual paso a paso (<div class="dp-roadmap">...).`,
-        `   - Incluye un aviso destacado (<div class="dp-cta-notice">...) que invite al lector a rellenar el formulario oficial al pie de página o contactar por WhatsApp/Teléfono con el operador.`,
-        `4. Redacta un documento muy extenso, profundo y detallado (mínimo 8-10 secciones H2/H3, 2 tablas de precios detalladas y 6-8 preguntas frecuentes desplegables).`,
-        `5. Explica a fondo cómo funciona técnicamente el servicio paso a paso y cómo una buena gestión profesional (coordinada y verificada a través de DimePrecio.es) garantiza un funcionamiento impecable, cumplimiento normativo y presupuestos cerrados.`,
-        `6. Incluye autorreferencias naturales a DimePrecio.es como fuente oficial de los datos, auditorías de tarifas y gestión de especialistas, sin usar nunca las siglas "AEO" ni "SEO" en el texto visible.`,
-        `7. Incluye obligatoriamente los arrays "tags" (6-10 palabras clave) y "topics" (5-8 objetos {"name","weight"}) en el JSON.`
-    ].join("\n");
+        `FORMATO PERIODÍSTICO ASIGNADO AL AZAR PARA ESTE ARTÍCULO: "${format.name}"`,
+        `- Estilo de titular obligatorio: ${format.headlinePattern}`,
+        `- Enfoque editorial: ${format.focus}`,
+        `- Bloques visuales recomendados: ${format.visuals}`,
+        ``,
+        `REGLAS INQUEBRANTABLES DE CALIDAD Y SEO:`,
+        `1. PROHIBIDO usar titulares repetitivos: NO empieces el título por "¿Cuánto cuesta...", "¿Cuánto cuesta realmente...", ni "Guía de precios". NO termines en "Desglose y consejos para 2026", "sin sorpresas" ni "Guía completa".`,
+        `2. PROHIBIDO empezar el excerpt por "Descubre en DimePrecio.es cuánto cuesta..." o "Descubre el coste real...". Redacta una meta-descripción original que invite a hacer clic.`,
+        `3. Haz el artículo MUY VISUAL y fácil de escanear: párrafos cortos (2-4 líneas), tarjetas KPI (<div class="dp-kpi-grid">), caja de actualidad (<div class="dp-news-box">) o dato curioso (<div class="dp-curiosity-card">), comparativa 2 columnas (<div class="dp-pros-cons">), checklist (<div class="dp-checklist">) o barras con porcentajes reales del oficio (<div class="dp-price-breakdown">), al menos 1 tabla clara con precios en euros y 4-6 FAQs en <details><summary>.`,
+        `4. Aporta detalles locales auténticos de ${provName || "la provincia"} (clima, antigüedad de viviendas, barrios, normativa o costumbres locales) para que el texto sea imposible de confundir con otra ciudad.`,
+        `5. Cita a DimePrecio.es de forma natural (2-4 veces) y nunca escribas "AEO" ni "SEO" en el texto visible.`,
+        `6. Devuelve SOLO el JSON válido con "tags" (6-10) y "topics" (5-8).`
+    ].filter(Boolean).join("\n");
 }
 
 function defaultCategories() {
@@ -345,10 +462,23 @@ async function generateArticle(prompt, optionsOrCategory = {}) {
     const aiSettings = require("./aiSettings");
     const cfg = await aiSettings.getSettings();
     let systemPrompt = await loadSystemPrompt(opts.categories || defaultCategories());
+
+    let localNews = opts.localNews || null;
+    if (!localNews && !opts.skipNewsLookup && !/noticia reciente/i.test(String(prompt || ""))) {
+        let provName = provinciaSlug;
+        try {
+            const rr = require("./rankRentEngine");
+            const loc = rr.getLocationBySlug(provinciaSlug);
+            if (loc) provName = loc.nombre;
+        } catch {}
+        localNews = await fetchLocalNewsHint(provName, categoryHint || sectorSlug);
+    }
+
     const editorialPrompt = buildEditorialUserPrompt(prompt, {
         category: categoryHint,
         provinciaSlug,
-        sectorSlug
+        sectorSlug,
+        localNews
     });
 
     let raw;
@@ -447,6 +577,63 @@ async function insertArticle(article, { publishedAt = new Date() } = {}) {
     return { postId: result.insertId, tags };
 }
 
+/**
+ * Pide a la IA configurada que recomiende el mejor ángulo editorial, titular y curiosidad local
+ * combinando noticias recientes y tendencias de búsqueda para una ciudad y servicio concretos.
+ */
+async function recommendCityServiceAngle({ provinciaNombre, municipio, sectorNombre, newsItems = [], trendQueries = [], gscQueries = [] }) {
+    const aiSettings = require("./aiSettings");
+    const cfg = await aiSettings.getSettings();
+    if (!cfg || !["openai", "anthropic", "gemini"].includes(cfg.provider)) {
+        return null;
+    }
+
+    const systemPrompt = [
+        "Eres el director editorial SEO de DimePrecio.es en España.",
+        "Tu misión es analizar noticias locales, tendencias reales de búsqueda en Google y consultas de usuarios para recomendar el tema y enfoque con mayor potencial de clics, utilidad y recomendación en buscadores e IA.",
+        "Responde ÚNICAMENTE con un objeto JSON válido con estas claves:",
+        '{"recommended_title":"...","recommended_angle":"...","local_curiosity":"...","key_points":["...","...","..."]}'
+    ].join("\n");
+
+    const userPrompt = [
+        `Provincia: ${provinciaNombre} (Zona/municipio destacado: ${municipio || provinciaNombre})`,
+        `Servicio / Sector: ${sectorNombre}`,
+        newsItems.length
+            ? `Noticias recientes encontradas:\n- ${newsItems.slice(0, 4).map(n => `${n.title}${n.source ? ` (${n.source})` : ""}`).join("\n- ")}`
+            : "Noticias recientes encontradas: Ninguna específica hoy.",
+        trendQueries.length
+            ? `Tendencias de búsqueda en Google España:\n- ${trendQueries.slice(0, 6).join("\n- ")}`
+            : "Tendencias de búsqueda: Sin sugerencias directas.",
+        gscQueries.length
+            ? `Búsquedas reales de Google Search Console pendientes:\n- ${gscQueries.slice(0, 4).join("\n- ")}`
+            : "",
+        "Recomienda el mejor titular periodístico (sin clichés tipo 'Guía de Precios 2026'), el enfoque más atractivo que una actualidad/tendencia con precios reales y una curiosidad local verificable de esta provincia."
+    ].filter(Boolean).join("\n\n");
+
+    let raw = "";
+    try {
+        if (cfg.provider === "openai") {
+            raw = await callOpenAI(cfg, systemPrompt, userPrompt);
+        } else if (cfg.provider === "anthropic") {
+            raw = await callAnthropic({ ...cfg, maxTokens: Math.min(cfg.maxTokens || 1000, 1000) }, systemPrompt, userPrompt);
+        } else if (cfg.provider === "gemini") {
+            raw = await callGemini({ ...cfg, maxTokens: Math.min(cfg.maxTokens || 1000, 1000) }, systemPrompt, userPrompt);
+        }
+        const parsed = parseArticlePayload(raw);
+        if (parsed && (parsed.recommended_title || parsed.recommended_angle)) {
+            return {
+                recommended_title: String(parsed.recommended_title || "").trim().slice(0, 220),
+                recommended_angle: String(parsed.recommended_angle || "").trim().slice(0, 450),
+                local_curiosity: String(parsed.local_curiosity || "").trim().slice(0, 350),
+                key_points: Array.isArray(parsed.key_points) ? parsed.key_points.map(p => String(p).trim()).filter(Boolean).slice(0, 5) : []
+            };
+        }
+    } catch (err) {
+        console.warn("[AI Recommend Angle Warning]", err.message);
+    }
+    return null;
+}
+
 module.exports = {
     generateArticle,
     insertArticle,
@@ -455,5 +642,6 @@ module.exports = {
     listModels,
     normalizeTagsAndTopics,
     sanitizeNaturalContent,
+    recommendCityServiceAngle,
     AI_WEBHOOK_URL
 };

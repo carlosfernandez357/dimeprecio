@@ -10,6 +10,7 @@ const cookieParser = require('cookie-parser');
 const pool = require('./db');
 const gscService = require('./utils/gscService');
 const articleQueue = require('./utils/articleQueue');
+const cityServiceLoop = require('./utils/cityServiceLoop');
 const imageManager = require('./utils/imageManager');
 const { generateArticle, generateImage } = require('./utils/ai');
 const {
@@ -663,12 +664,22 @@ app.get('/provincia/:provinciaSlug/:sectorSlug', async (req, res, next) => {
 // PÁGINAS DE ARTÍCULOS Y GUÍAS CREADAS POR IA (/article/:slug y /guia/:slug)
 async function handleArticleView(req, res) {
   try {
-    const [rows] = await pool.query(
+    let [rows] = await pool.query(
       `SELECT p.*, c.name as category_name, c.slug as category_slug, c.color as category_color
        FROM posts p LEFT JOIN categories c ON p.category_id = c.id
        WHERE p.slug = ? AND p.status = 'published'`,
       [req.params.slug]
     );
+
+    if (!rows.length && /^\d+$/.test(String(req.params.slug || ''))) {
+      const [idRows] = await pool.query(
+        `SELECT slug FROM posts WHERE id = ? AND status = 'published' LIMIT 1`,
+        [Number(req.params.slug)]
+      );
+      if (idRows.length && idRows[0].slug) {
+        return res.redirect(301, `/article/${idRows[0].slug}`);
+      }
+    }
 
     if (!rows.length) {
       return res.status(404).render('error', { title: 'No encontrado', message: 'La página solicitada no existe en DimePrecio.es' });
@@ -734,6 +745,7 @@ async function handleArticleView(req, res) {
 }
 
 app.get('/article/:slug', handleArticleView);
+app.get('/articulo/:slug', handleArticleView);
 app.get('/guia/:slug', handleArticleView);
 app.get('/contenido/:slug', handleArticleView);
 
@@ -1437,214 +1449,12 @@ app.get('/admin/live', requireAdmin, (req, res) => {
 });
 
 // ============================================================================
-// CONFIGURACIÓN Y RUTAS: SEARCH CONSOLE, ESTADÍSTICAS BD Y AUTO-LOTES IA
+// RUTAS MODULARES ADMIN: SEARCH CONSOLE, COLA IA Y RECORRIDO CIUDADES × SERVICIOS
 // ============================================================================
-let gscScheduleConfig = {
-  enabled: false,
-  batch_size: 100,
-  interval_hours: 24,
-  last_run: null
-};
-
-app.get('/admin/search-console', requireAdmin, async (req, res) => {
-  try {
-    let stored = await gscService.getStoredQueries({ limit: 500 });
-    // Si la tabla está vacía, sincronizar automáticamente desde Google Search Console
-    if (!stored.rows || stored.rows.length === 0) {
-      await gscService.syncQueriesToDatabase({ days: 28, limit: 500 });
-      stored = await gscService.getStoredQueries({ limit: 500 });
-    }
-
-    res.render('admin/search-console', {
-      title: 'Búsquedas Google & Auto-IA — DimePrecio.es',
-      queries: stored.rows,
-      totals: stored.totals,
-      scheduleConfig: gscScheduleConfig,
-    });
-  } catch (err) {
-    console.error('[Search Console Error]', err);
-    res.render('admin/search-console', {
-      title: 'Búsquedas Google & Auto-IA — DimePrecio.es',
-      queries: [],
-      totals: { totalQueries: 0, totalUsed: 0, totalPending: 0, totalImpressions: 0, totalClicks: 0 },
-      scheduleConfig: gscScheduleConfig,
-      error: err.message,
-    });
-  }
-});
-
-app.post('/admin/search-console/sync', requireAdmin, async (req, res) => {
-  try {
-    await gscService.syncQueriesToDatabase({ days: 28, limit: 500 });
-  } catch (err) {
-    console.error('[GSC Sync Manual Error]', err);
-  }
-  res.redirect('/admin/search-console');
-});
-
-app.post('/admin/search-console/generate-batch', requireAdmin, async (req, res) => {
-  try {
-    const { queries, limit } = req.body;
-    let list = [];
-    if (queries && Array.isArray(queries) && queries.length > 0) {
-      list = queries;
-    } else {
-      const [dbRows] = await pool.query(
-        'SELECT query_text FROM gsc_queries WHERE used_count = 0 ORDER BY impressions DESC LIMIT ?',
-        [Math.min(Number(limit) || 100, 200)]
-      );
-      list = (dbRows || []).map(r => r.query_text);
-    }
-
-    if (list.length === 0) {
-      return res.json({ ok: false, message: 'No hay consultas pendientes seleccionadas para procesar.' });
-    }
-
-    const inserted = await articleQueue.addBulkToQueue(list);
-    articleQueue.triggerWorker();
-    res.json({
-      ok: true,
-      total: inserted.length,
-      success: inserted.length,
-      message: `Se han añadido ${inserted.length} tareas a la cola de generación IA.`
-    });
-  } catch (err) {
-    console.error('[GSC Generate Batch Error]', err);
-    res.status(500).json({ ok: false, error: err.message });
-  }
-});
-
-// ==========================================
-// RUTAS: COLA DE ARTÍCULOS IA (GRAN ESCALA)
-// ==========================================
-app.get('/admin/cola-articulos', requireAdmin, async (req, res) => {
-  try {
-    const currentStatus = req.query.status || null;
-    const stats = await articleQueue.getQueueStats();
-    const queueResult = await articleQueue.getQueueItems({ status: currentStatus, limit: 300 });
-
-    res.render('admin/article-queue', {
-      title: 'Cola de Generación Masiva IA — DimePrecio.es',
-      items: queueResult.rows || [],
-      stats,
-      currentStatus,
-    });
-  } catch (err) {
-    console.error('[Admin Cola Artículos Error]', err);
-    res.status(500).send('Error al cargar la cola de artículos: ' + err.message);
-  }
-});
-
-app.post('/admin/cola-articulos/add', requireAdmin, async (req, res) => {
-  try {
-    const { prompts, defaultProvincia, defaultSector } = req.body;
-    if (prompts && typeof prompts === 'string') {
-      const rawLines = prompts.split(/\r?\n|,/).map(s => s.trim()).filter(Boolean);
-      for (const line of rawLines) {
-        await articleQueue.addToQueue({
-          prompt: line,
-          provincia_slug: defaultProvincia || null,
-          sector_slug: defaultSector || null,
-        });
-      }
-      articleQueue.triggerWorker();
-    }
-    res.redirect('/admin/cola-articulos');
-  } catch (err) {
-    console.error('[Cola Add Error]', err);
-    res.redirect('/admin/cola-articulos?error=' + encodeURIComponent(err.message));
-  }
-});
-
-app.post('/admin/cola-articulos/process', requireAdmin, (req, res) => {
-  try {
-    articleQueue.triggerWorker();
-  } catch (err) {
-    console.error('[Cola Process Error]', err);
-  }
-  res.redirect('/admin/cola-articulos');
-});
-
-app.post('/admin/cola-articulos/:id/delete', requireAdmin, async (req, res) => {
-  try {
-    await articleQueue.deleteQueueItem(req.params.id);
-  } catch (err) {
-    console.error('[Cola Delete Item Error]', err);
-  }
-  res.redirect('/admin/cola-articulos');
-});
-
-app.post('/admin/cola-articulos/:id/retry', requireAdmin, async (req, res) => {
-  try {
-    await articleQueue.retryQueueItems([req.params.id]);
-    articleQueue.triggerWorker();
-  } catch (err) {
-    console.error('[Cola Retry Item Error]', err);
-  }
-  res.redirect('/admin/cola-articulos');
-});
-
-app.post('/admin/cola-articulos/:id/edit', requireAdmin, async (req, res) => {
-  try {
-    const { prompt, custom_title, provincia_slug, sector_slug } = req.body;
-    await articleQueue.editQueueItem(req.params.id, {
-      prompt,
-      custom_title,
-      provincia_slug,
-      sector_slug,
-    });
-  } catch (err) {
-    console.error('[Cola Edit Item Error]', err);
-  }
-  res.redirect('/admin/cola-articulos');
-});
-
-app.post('/admin/cola-articulos/bulk-action', requireAdmin, async (req, res) => {
-  try {
-    const { action, ids } = req.body;
-    const idList = Array.isArray(ids) ? ids : (ids ? [ids] : []);
-    if (idList.length > 0) {
-      if (action === 'delete') {
-        await articleQueue.deleteBulkQueueItems(idList);
-      } else if (action === 'retry') {
-        await articleQueue.retryQueueItems(idList);
-        articleQueue.triggerWorker();
-      }
-    }
-  } catch (err) {
-    console.error('[Cola Bulk Action Error]', err);
-  }
-  res.redirect('/admin/cola-articulos');
-});
-
-app.post('/admin/search-console/schedule', requireAdmin, (req, res) => {
-  const { enabled, batch_size, interval_hours } = req.body;
-  gscScheduleConfig = {
-    enabled: enabled === '1',
-    batch_size: Math.min(Math.max(Number(batch_size) || 100, 1), 100),
-    interval_hours: Number(interval_hours) || 24,
-    last_run: gscScheduleConfig.last_run,
-  };
-  console.log('[GSC Auto-Schedule Config]', gscScheduleConfig);
-  res.redirect('/admin/search-console');
-});
-
-// Comprobador periódico en segundo plano para auto-lotes de Search Console
-setInterval(async () => {
-  if (!gscScheduleConfig.enabled) return;
-  const now = Date.now();
-  const intervalMs = (gscScheduleConfig.interval_hours || 24) * 3600 * 1000;
-  if (!gscScheduleConfig.last_run || (now - new Date(gscScheduleConfig.last_run).getTime() > intervalMs)) {
-    console.log('[GSC Auto-Schedule] Ejecutando lote programado de artículos...');
-    try {
-      gscScheduleConfig.last_run = new Date().toISOString();
-      await gscService.generateBatch({ limit: gscScheduleConfig.batch_size || 100 });
-      console.log('[GSC Auto-Schedule] Lote programado finalizado con éxito.');
-    } catch (e) {
-      console.error('[GSC Auto-Schedule Error]', e.message);
-    }
-  }
-}, 30 * 60 * 1000);
+const createAdminSearchConsoleRouter = require('./routes/admin/searchConsole');
+const createAdminAutomationRouter = require('./routes/admin/automation');
+app.use(createAdminSearchConsoleRouter({ requireAdmin }));
+app.use(createAdminAutomationRouter({ requireAdmin }));
 
 app.get('/admin/articles', requireAdmin, async (req, res) => {
   const [posts] = await pool.query(`
@@ -2169,4 +1979,5 @@ server.listen(PORT, async () => {
     await rr.syncFromDatabase().catch(err => console.error('[Sync DB Error]', err.message));
   }
   setupCronJobs();
+  cityServiceLoop.init().catch(err => console.error('[CityServiceLoop Init Error]', err.message));
 });

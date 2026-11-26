@@ -245,4 +245,51 @@ CREATE TABLE IF NOT EXISTS rec_impressions (
   INDEX idx_ri_shown (shown_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- 13) RECORRIDO EN BUCLE CIUDADES × SERVICIOS (Noticias y Curiosidades IA) -----
+CREATE TABLE IF NOT EXISTS city_service_loop_config (
+  id TINYINT PRIMARY KEY,
+  status VARCHAR(20) NOT NULL DEFAULT 'idle',
+  cycle_number INT NOT NULL DEFAULT 1,
+  current_index INT NOT NULL DEFAULT 0,
+  order_mode VARCHAR(20) NOT NULL DEFAULT 'city_first',
+  content_mode VARCHAR(20) NOT NULL DEFAULT 'mixto',
+  interval_seconds INT NOT NULL DEFAULT 300,
+  auto_publish TINYINT(1) NOT NULL DEFAULT 1,
+  loop_forever TINYINT(1) NOT NULL DEFAULT 1,
+  use_fallback TINYINT(1) NOT NULL DEFAULT 1,
+  selected_provinces JSON NULL,
+  selected_sectors JSON NULL,
+  current_provincia_slug VARCHAR(80) NULL,
+  current_sector_slug VARCHAR(100) NULL,
+  current_step_message VARCHAR(255) NULL,
+  total_generated INT NOT NULL DEFAULT 0,
+  total_failed INT NOT NULL DEFAULT 0,
+  last_run_at DATETIME NULL,
+  next_run_at DATETIME NULL,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS city_service_loop_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  cycle_number INT NOT NULL DEFAULT 1,
+  step_index INT NOT NULL,
+  provincia_slug VARCHAR(80) NOT NULL,
+  provincia_nombre VARCHAR(120) NOT NULL,
+  sector_slug VARCHAR(100) NOT NULL,
+  sector_nombre VARCHAR(190) NOT NULL,
+  status ENUM('pending', 'processing', 'completed', 'failed', 'skipped') NOT NULL DEFAULT 'pending',
+  source_type VARCHAR(32) NULL,
+  source_title VARCHAR(500) NULL,
+  source_url VARCHAR(500) NULL,
+  post_id INT NULL,
+  post_slug VARCHAR(255) NULL,
+  post_title VARCHAR(255) NULL,
+  error_message TEXT NULL,
+  started_at DATETIME NULL,
+  finished_at DATETIME NULL,
+  UNIQUE KEY uniq_cycle_step (cycle_number, step_index),
+  INDEX idx_cycle_status (cycle_number, status),
+  INDEX idx_prov_sec (provincia_slug, sector_slug)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 SET FOREIGN_KEY_CHECKS = 1;
